@@ -6,6 +6,9 @@ import { afterAll, afterEach, beforeAll, expect, it } from 'vitest'
 import { App } from './App'
 
 const server = setupServer(
+  http.get('*/api/items', () => HttpResponse.json({ items: [], page: 1, pageSize: 20, total: 0 })),
+  http.get('*/api/tags', () => HttpResponse.json([])),
+  http.get('*/api/collections', () => HttpResponse.json([])),
   http.get('*/api/me', () =>
     HttpResponse.json({
       id: '1',

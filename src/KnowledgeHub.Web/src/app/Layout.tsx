@@ -5,6 +5,7 @@ import { useMe } from '../features/auth/useMe'
 
 const links = [
   { to: '/', label: 'Записи' },
+  { to: '/collections', label: 'Коллекции' },
   { to: '/search', label: 'Поиск' },
   { to: '/settings', label: 'Настройки' },
 ]

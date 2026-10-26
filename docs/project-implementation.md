@@ -386,7 +386,7 @@ infra/                                — Bicep
 
 ---
 
-### Фича 11: SPA — записи, теги, коллекции
+### Фича 11: SPA — записи, теги, коллекции ✅
 
 **Цель:** в вебе можно просматривать список записей, создавать и редактировать заметки, фрагменты кода и ссылки, назначать теги и коллекции, отмечать прочитанное.
 
@@ -398,18 +398,18 @@ infra/                                — Bicep
 - Тесты: `src/KnowledgeHub.Web/src/shared/Markdown.test.tsx`, `src/KnowledgeHub.Web/src/features/items/ItemForm.test.tsx`, `src/KnowledgeHub.Web/src/features/items/ItemsPage.test.tsx`
 
 **Шаги:**
-- [ ] Зависимости: `react-markdown`, `dompurify`, `highlight.js`
-- [ ] `Markdown.tsx`: единственное место рендера Markdown — `react-markdown` без `rehype-raw` + DOMPurify для любого HTML; ссылки `target="_blank" rel="noopener noreferrer"`
-- [ ] `CodeBlock.tsx`: подсветка `highlight.js` по `code_language`, код всегда как текст (никакого `dangerouslySetInnerHTML` без DOMPurify)
-- [ ] `ItemsPage`: список с фильтрами (тип, тег, коллекция, «непрочитанное»), пагинация; `ItemCard` — тип, заголовок, теги, дата, отметка «прочитано»
-- [ ] `ItemForm`: выбор типа, поля по типу, `TagInput` (автодополнение из `/api/tags`), выбор коллекций; ошибки валидации из `ProblemDetails` у полей
-- [ ] `ItemPage`: просмотр, редактирование, удаление, кнопка «Прочитано»; для ссылок — ссылка на источник
-- [ ] `CollectionsPage`: CRUD коллекций и переход к записям коллекции
-- [ ] Тесты: `<script>` и `onerror=` в Markdown не попадают в DOM; форма показывает ошибку поля из `ProblemDetails`; фильтр «непрочитанное» передаёт `unread=true`
+- [x] Зависимости: `react-markdown`, `dompurify`, `highlight.js`
+- [x] `Markdown.tsx`: единственное место рендера Markdown — `react-markdown` без `rehype-raw` + DOMPurify для любого HTML; ссылки `target="_blank" rel="noopener noreferrer"`
+- [x] `CodeBlock.tsx`: подсветка `highlight.js` по `code_language`, код всегда как текст (никакого `dangerouslySetInnerHTML` без DOMPurify)
+- [x] `ItemsPage`: список с фильтрами (тип, тег, коллекция, «непрочитанное»), пагинация; `ItemCard` — тип, заголовок, теги, дата, отметка «прочитано»
+- [x] `ItemForm`: выбор типа, поля по типу, `TagInput` (автодополнение из `/api/tags`), выбор коллекций; ошибки валидации из `ProblemDetails` у полей
+- [x] `ItemPage`: просмотр, редактирование, удаление, кнопка «Прочитано»; для ссылок — ссылка на источник
+- [x] `CollectionsPage`: CRUD коллекций и переход к записям коллекции
+- [x] Тесты: `<script>` и `onerror=` в Markdown не попадают в DOM; форма показывает ошибку поля из `ProblemDetails`; фильтр «непрочитанное» передаёт `unread=true`
 
 **Проверка:**
-- [ ] `npm --prefix src/KnowledgeHub.Web test` — все тесты проходят
-- [ ] `npm --prefix src/KnowledgeHub.Web run build` — без ошибок TypeScript
+- [x] `npm --prefix src/KnowledgeHub.Web test` — все тесты проходят
+- [x] `npm --prefix src/KnowledgeHub.Web run build` — без ошибок TypeScript
 
 ---
 

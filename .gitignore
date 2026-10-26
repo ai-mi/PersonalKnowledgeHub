@@ -490,3 +490,4 @@ node_modules/
 src/KnowledgeHub.Api/wwwroot/
 playwright-report/
 test-results/
+coverage/

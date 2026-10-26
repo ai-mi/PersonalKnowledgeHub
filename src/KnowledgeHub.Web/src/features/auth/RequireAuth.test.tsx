@@ -4,6 +4,7 @@ import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterAll, afterEach, beforeAll, expect, it } from 'vitest'
+import { UNAUTHORIZED_EVENT } from '../../api/client'
 import { RequireAuth } from './RequireAuth'
 
 const server = setupServer()
@@ -52,4 +53,15 @@ it('shows an error instead of redirecting on a server failure', async () => {
   renderAt('/private')
 
   expect(await screen.findByRole('alert')).toBeInTheDocument()
+})
+
+it('redirects to /login when a request returns 401 while signed in', async () => {
+  server.use(http.get('*/api/me', () => HttpResponse.json({ id: '1', displayName: 'A', email: null, settings: {} })))
+  const router = renderAt('/private?x=1')
+  await screen.findByRole('heading', { name: 'Private' })
+
+  window.dispatchEvent(new Event(UNAUTHORIZED_EVENT))
+
+  expect(await screen.findByRole('heading', { name: 'Login' })).toBeInTheDocument()
+  expect(router.state.location.search).toBe('?returnUrl=%2Fprivate%3Fx%3D1')
 })

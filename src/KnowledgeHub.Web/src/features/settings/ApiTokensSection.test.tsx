@@ -85,3 +85,63 @@ it('revokes a token only after confirmation', async () => {
   await waitFor(() => expect(revoked).toBe(1))
   expect(confirm).toHaveBeenCalledTimes(2)
 })
+
+it('sends expiresInDays as a number when set', async () => {
+  let body: unknown
+  server.use(
+    http.get('*/api/me/tokens', () => HttpResponse.json([])),
+    http.post('*/api/me/tokens', async ({ request }) => {
+      body = await request.json()
+      return HttpResponse.json({ id: 't1', name: 'CI', token: 'kh_x' })
+    }),
+  )
+  renderSection()
+
+  await userEvent.type(await screen.findByLabelText('Название'), 'CI')
+  await userEvent.type(screen.getByLabelText('Срок, дней'), '30')
+  await userEvent.click(screen.getByRole('button', { name: 'Создать токен' }))
+
+  await screen.findByText('kh_x')
+  expect(body).toEqual({ name: 'CI', expiresInDays: 30 })
+})
+
+it('shows the empty state, a load error and a create error', async () => {
+  server.use(
+    http.get('*/api/me/tokens', () => HttpResponse.json([])),
+    http.post('*/api/me/tokens', () => HttpResponse.json({ title: 'Too many' }, { status: 400 })),
+  )
+  renderSection()
+  expect(await screen.findByText('Токенов пока нет.')).toBeInTheDocument()
+
+  await userEvent.type(screen.getByLabelText('Название'), 'CI')
+  await userEvent.click(screen.getByRole('button', { name: 'Создать токен' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Too many')
+})
+
+it('shows a load error', async () => {
+  server.use(http.get('*/api/me/tokens', () => HttpResponse.json({ title: 'Boom' }, { status: 500 })))
+  renderSection()
+
+  expect(await screen.findByRole('alert')).toHaveTextContent('Boom')
+})
+
+it('shows dates, marks revoked tokens and reports a revoke error', async () => {
+  server.use(
+    http.get('*/api/me/tokens', () =>
+      HttpResponse.json([
+        { ...listed, id: 't1', name: 'Old', revokedAt: '2026-02-01T00:00:00Z', expiresAt: '2026-03-01T00:00:00Z', lastUsedAt: '2026-01-15T00:00:00Z' },
+        { ...listed, id: 't2', name: 'Live' },
+      ]),
+    ),
+    http.delete('*/api/me/tokens/t2', () => HttpResponse.json({ title: 'Gone' }, { status: 404 })),
+  )
+  vi.spyOn(window, 'confirm').mockReturnValue(true)
+  renderSection()
+
+  expect(await screen.findByText('Отозван')).toBeInTheDocument()
+  expect(screen.getAllByRole('button', { name: 'Отозвать' })).toHaveLength(1)
+  expect(screen.getByText('01.03.2026')).toBeInTheDocument()
+
+  await userEvent.click(screen.getByRole('button', { name: 'Отозвать' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Gone')
+})
