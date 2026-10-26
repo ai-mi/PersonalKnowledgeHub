@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: src/KnowledgeHub.Web/package-lock.json
+
+      - name: Web — install, test, build
+        run: |
+          npm --prefix src/KnowledgeHub.Web ci
+          npm --prefix src/KnowledgeHub.Web test
+          npm --prefix src/KnowledgeHub.Web run build
+
+      - name: API — build
+        run: dotnet build KnowledgeHub.slnx -warnaserror
+
+      # Интеграционные тесты поднимают PostgreSQL через Testcontainers (Docker есть на ubuntu-latest).
+      - name: API — test
+        run: dotnet test KnowledgeHub.slnx --no-build
+
+      - name: Bicep — build
+        run: |
+          az bicep build --file infra/main.bicep --outfile "$RUNNER_TEMP/main.json"
+          az bicep build-params --file infra/main.bicepparam --outfile "$RUNNER_TEMP/main.parameters.json"
