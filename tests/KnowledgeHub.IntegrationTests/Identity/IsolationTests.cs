@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using KnowledgeHub.IntegrationTests.Infrastructure;
 
@@ -111,6 +111,18 @@ public sealed class IsolationTests(ApiFactory factory) : IntegrationTest(factory
 
         meA.GetProperty("settings").GetProperty("email").GetString().ShouldBe("a@example.com");
         meB.GetProperty("settings").GetProperty("email").GetString().ShouldBe("b@example.com");
+    }
+
+    [Fact]
+    public async Task Search_NeverReturnsItemsOfOtherUsers()
+    {
+        // Поиск не обращается к ресурсу по id, поэтому в общую таблицу случаев не вписывается: проверяем выдачу.
+        using var a = await Factory.CreateClientForAsync(Guid.CreateVersion7());
+        using var b = await Factory.CreateClientForAsync(Guid.CreateVersion7());
+        await Items.ItemEndpointsTests.CreateAsync(a, new { type = "note", title = "zebra", body = "zebra", tags = new[] { "zebra" } });
+
+        (await Search.SearchTests.SearchAsync(a, "zebra")).GetProperty("total").GetInt32().ShouldBe(1);
+        (await Search.SearchTests.SearchAsync(b, "zebra")).GetProperty("total").GetInt32().ShouldBe(0);
     }
 
     private static Task<HttpResponseMessage> Send(HttpClient client, HttpMethod method, string url, object? body)

@@ -413,7 +413,7 @@ infra/                                — Bicep
 
 ---
 
-### Фича 12: Полнотекстовый поиск — бэкенд
+### Фича 12: Полнотекстовый поиск — бэкенд ✅
 
 **Цель:** `GET /api/search` находит записи по словам из заголовка, тегов, заметки и текста с учётом морфологии RU/EN, ранжирует, фильтрует и подсвечивает фрагменты.
 
@@ -423,16 +423,16 @@ infra/                                — Bicep
 - Тесты: `tests/KnowledgeHub.IntegrationTests/Search/SearchTests.cs`, изменить `.../Identity/IsolationTests.cs`
 
 **Шаги:**
-- [ ] Колонка `search_vector tsvector` + `CREATE INDEX ... USING GIN (search_vector)`; миграция `Search`
-- [ ] `SearchIndexer.ReindexAsync(itemIds)` — **один** SQL `UPDATE items SET search_vector = setweight(to_tsvector('russian', title),'A') || setweight(to_tsvector('russian', user_note || ' ' || tags || ' ' || url),'B') || setweight(to_tsvector('russian', left(body, 500000)),'C')` (теги через подзапрос `string_agg`, `coalesce` для null); вызывается после создания/изменения записи, изменения тегов записи, переименования/удаления тега
-- [ ] В той же миграции — пересчёт для существующих записей
-- [ ] `SearchService`: шаг 1 — `websearch_to_tsquery('russian', q)` + фильтры (`type`, `tags`, `collection`, `from`, `to`, `unread`) + `ts_rank_cd` → страница id; шаг 2 — `ts_headline` только для id страницы (`MaxFragments=2, MaxWords=30, StartSel=<mark>, StopSel=</mark>`); пустой `q` → `400`
-- [ ] Подсветка возвращается как текст с маркерами `<mark>`; остальной HTML в фрагменте экранируется на бэкенде (фронт разрешает только `<mark>`)
-- [ ] `GET /api/search?q=&type=&tags=&collection=&from=&to=&unread=&page=&pageSize=` → `{ total, items: [{ item, rank, highlights }] }`
-- [ ] Тесты: «очереди» находит «очередь сообщений»; «messages» находит «message»; смешанный запрос «очереди service bus»; совпадение в заголовке выше, чем только в тексте; поиск по тегу и по заметке; кавычки `"service bus"` — фраза; `-azure` исключает; переименование тега обновляет выдачу; HTML из текста экранирован в `highlights`; запись пользователя A не находится пользователем B
+- [x] Колонка `search_vector tsvector` + `CREATE INDEX ... USING GIN (search_vector)`; миграция `Search`
+- [x] `SearchIndexer.ReindexAsync(itemIds)` — **один** SQL `UPDATE items SET search_vector = setweight(to_tsvector('russian', title),'A') || setweight(to_tsvector('russian', user_note || ' ' || tags || ' ' || url),'B') || setweight(to_tsvector('russian', left(body, 500000)),'C')` (теги через подзапрос `string_agg`, `coalesce` для null); вызывается после создания/изменения записи, изменения тегов записи, переименования/удаления тега
+- [x] В той же миграции — пересчёт для существующих записей
+- [x] `SearchService`: шаг 1 — `websearch_to_tsquery('russian', q)` + фильтры (`type`, `tags`, `collection`, `from`, `to`, `unread`) + `ts_rank_cd` → страница id; шаг 2 — `ts_headline` только для id страницы (`MaxFragments=2, MaxWords=30, StartSel=<mark>, StopSel=</mark>`); пустой `q` → `400`
+- [x] Подсветка возвращается как текст с маркерами `<mark>`; остальной HTML в фрагменте экранируется на бэкенде (фронт разрешает только `<mark>`)
+- [x] `GET /api/search?q=&type=&tags=&collection=&from=&to=&unread=&page=&pageSize=` → `{ total, items: [{ item, rank, highlights }] }`
+- [x] Тесты: «очереди» находит «очередь сообщений»; «messages» находит «message»; смешанный запрос «очереди service bus»; совпадение в заголовке выше, чем только в тексте; поиск по тегу и по заметке; кавычки `"service bus"` — фраза; `-azure` исключает; переименование тега обновляет выдачу; HTML из текста экранирован в `highlights`; запись пользователя A не находится пользователем B
 
 **Проверка:**
-- [ ] `dotnet test tests/KnowledgeHub.IntegrationTests --filter "FullyQualifiedName~Search|FullyQualifiedName~Isolation"` — `Passed!  - Failed:     0`
+- [x] `dotnet test tests/KnowledgeHub.IntegrationTests --filter "FullyQualifiedName~Search|FullyQualifiedName~Isolation"` — `Passed!  - Failed:     0`
 
 ---
 

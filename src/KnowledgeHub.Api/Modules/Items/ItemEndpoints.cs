@@ -5,7 +5,7 @@ namespace KnowledgeHub.Api.Modules.Items;
 
 public static class ItemEndpoints
 {
-    private const int DefaultPageSize = 20;
+    internal const int DefaultPageSize = 20;
     private const int MaxPageSize = 100;
 
     public static void MapItemEndpoints(this IEndpointRouteBuilder routes)
@@ -32,7 +32,19 @@ public static class ItemEndpoints
         string? tags = null, Guid? collection = null)
     {
         var errors = new Dictionary<string, string[]>();
-        // Значения enum в API — camelCase ("note"), а биндер query-параметров сравнивает регистр строго.
+        var itemType = ParseType(type, errors);
+        ValidatePaging(page, pageSize, errors);
+        if (errors.Count > 0)
+        {
+            throw Errors.Validation(errors);
+        }
+
+        return TypedResults.Ok(await items.ListAsync(new ListItemsQuery(itemType, unread, page, pageSize, ParseTags(tags), collection), ct));
+    }
+
+    // Значения enum в API — camelCase ("note"), а биндер query-параметров сравнивает регистр строго.
+    internal static ItemType? ParseType(string? type, Dictionary<string, string[]> errors)
+    {
         var itemType = Enum.GetValues<ItemType>().Cast<ItemType?>()
             .FirstOrDefault(t => string.Equals(t.ToString(), type, StringComparison.OrdinalIgnoreCase));
         if (type is not null && itemType is null)
@@ -40,6 +52,11 @@ public static class ItemEndpoints
             errors["type"] = [$"Allowed values: {string.Join(", ", Enum.GetNames<ItemType>().Select(n => n.ToLowerInvariant()))}."];
         }
 
+        return itemType;
+    }
+
+    internal static void ValidatePaging(int page, int pageSize, Dictionary<string, string[]> errors)
+    {
         if (page < 1)
         {
             errors["page"] = ["Must be at least 1."];
@@ -49,17 +66,10 @@ public static class ItemEndpoints
         {
             errors["pageSize"] = [$"Must be between 1 and {MaxPageSize}."];
         }
-
-        if (errors.Count > 0)
-        {
-            throw Errors.Validation(errors);
-        }
-
-        return TypedResults.Ok(await items.ListAsync(new ListItemsQuery(itemType, unread, page, pageSize, ParseTags(tags), collection), ct));
     }
 
     /// <summary>Фильтр <c>tags=a,b</c>: имена нормализуются так же, как при сохранении.</summary>
-    private static List<string> ParseTags(string? tags) =>
+    internal static List<string> ParseTags(string? tags) =>
         (tags ?? "").Split(',').Select(TagName.Normalize).Where(t => t.Length > 0).ToList();
 
     private static async Task<Results<Ok<ItemResponse>, NotFound>> Get(Guid id, IItemService items, CancellationToken ct) =>

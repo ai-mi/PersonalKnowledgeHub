@@ -1,3 +1,5 @@
+using System.Linq.Expressions;
+
 namespace KnowledgeHub.Api.Modules.Items;
 
 /// <summary>
@@ -49,7 +51,14 @@ public sealed record ItemSummary(
     DateTimeOffset? ReadAt,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
-    IReadOnlyList<string> Tags);
+    IReadOnlyList<string> Tags)
+{
+    public static readonly Expression<Func<Item, ItemSummary>> Projection = i => new ItemSummary(
+        i.Id, i.Type, i.Title, i.Url, i.Status, i.ReadAt, i.CreatedAt, i.UpdatedAt, i.Tags.Select(t => t.Name).ToList());
+
+    /// <summary>Порядок тегов в SQL не определён, поэтому после выборки сортируем.</summary>
+    public ItemSummary WithSortedTags() => this with { Tags = TagName.Sort(Tags) };
+}
 
 public sealed record CollectionRef(Guid Id, string Name);
 

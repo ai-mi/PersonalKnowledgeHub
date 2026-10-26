@@ -1,4 +1,5 @@
 using KnowledgeHub.Api.Common;
+using NpgsqlTypes;
 
 namespace KnowledgeHub.Api.Modules.Items;
 
@@ -32,6 +33,9 @@ public class Item : IUserOwned
     public DateTimeOffset? ReadAt { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
+
+    /// <summary>Поисковый индекс. Пересчитывается только SQL-ом (<c>ISearchIndexer</c>); EF его не записывает.</summary>
+    public NpgsqlTsVector? SearchVector { get; set; }
 
     public List<Tag> Tags { get; } = [];
     public List<Collection> Collections { get; } = [];

@@ -1,11 +1,12 @@
 using KnowledgeHub.Api.Common;
 using KnowledgeHub.Api.Infrastructure.Persistence;
+using KnowledgeHub.Api.Modules.Search;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
 namespace KnowledgeHub.Api.Modules.Items;
 
-public sealed class TagService(AppDbContext db)
+public sealed class TagService(AppDbContext db, ISearchIndexer searchIndexer)
 {
     /// <summary>
     /// Находит теги пользователя по именам без учёта регистра, недостающие добавляет в контекст (сохраняет вызывающий).
@@ -69,11 +70,25 @@ public sealed class TagService(AppDbContext db)
             throw Errors.Conflict("A tag with this name already exists.");
         }
 
+        // Имя тега входит в поисковый индекс всех его записей.
+        await searchIndexer.ReindexAsync(await ItemIdsAsync(id, ct), ct);
         var count = await db.Tags.Where(t => t.Id == id).Select(t => t.Items.Count).SingleAsync(ct);
         return new TagResponse(id, tag.Name, count);
     }
 
     /// <summary>Удаляет тег и снимает его со всех записей. <c>false</c> — тега нет.</summary>
-    public async Task<bool> DeleteAsync(Guid id, CancellationToken ct) =>
-        await db.Tags.Where(t => t.Id == id).ExecuteDeleteAsync(ct) > 0;
+    public async Task<bool> DeleteAsync(Guid id, CancellationToken ct)
+    {
+        var itemIds = await ItemIdsAsync(id, ct);
+        if (await db.Tags.Where(t => t.Id == id).ExecuteDeleteAsync(ct) == 0)
+        {
+            return false;
+        }
+
+        await searchIndexer.ReindexAsync(itemIds, ct);
+        return true;
+    }
+
+    private Task<List<Guid>> ItemIdsAsync(Guid tagId, CancellationToken ct) =>
+        db.Tags.Where(t => t.Id == tagId).SelectMany(t => t.Items).Select(i => i.Id).ToListAsync(ct);
 }

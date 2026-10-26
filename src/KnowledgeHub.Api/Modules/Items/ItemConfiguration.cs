@@ -1,6 +1,7 @@
 using KnowledgeHub.Api.Infrastructure.Persistence;
 using KnowledgeHub.Api.Modules.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace KnowledgeHub.Api.Modules.Items;
@@ -22,6 +23,10 @@ public sealed class ItemConfiguration : IEntityTypeConfiguration<Item>
         builder.Property(i => i.ContentHash).HasMaxLength(64);
         builder.Property(i => i.Error).HasMaxLength(2000);
 
+        builder.Property(i => i.SearchVector).HasColumnType("tsvector")
+            .Metadata.SetBeforeSaveBehavior(PropertySaveBehavior.Ignore);
+        builder.Property(i => i.SearchVector).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
+        builder.HasIndex(i => i.SearchVector).HasMethod("GIN");
         builder.HasIndex(i => new { i.UserId, i.Url }).IsUnique().HasFilter("url IS NOT NULL");
         builder.HasIndex(i => new { i.UserId, i.ContentHash }).IsUnique().HasFilter("content_hash IS NOT NULL");
         builder.HasIndex(i => new { i.UserId, i.CreatedAt }).IsDescending(false, true);

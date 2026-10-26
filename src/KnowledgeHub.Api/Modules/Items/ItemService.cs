@@ -1,11 +1,12 @@
 using KnowledgeHub.Api.Common;
 using KnowledgeHub.Api.Infrastructure.Persistence;
+using KnowledgeHub.Api.Modules.Search;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
 namespace KnowledgeHub.Api.Modules.Items;
 
-public sealed class ItemService(AppDbContext db, TagService tags, TimeProvider timeProvider) : IItemService
+public sealed class ItemService(AppDbContext db, TagService tags, ISearchIndexer searchIndexer, TimeProvider timeProvider) : IItemService
 {
     /// <summary>Записи вместе с тегами и коллекциями (нужны для <see cref="ItemResponse"/>).</summary>
     private IQueryable<Item> WithRelations() => db.Items.Include(i => i.Tags).Include(i => i.Collections).AsSplitQuery();
@@ -77,6 +78,7 @@ public sealed class ItemService(AppDbContext db, TagService tags, TimeProvider t
         try
         {
             await db.SaveChangesAsync(ct);
+            await searchIndexer.ReindexAsync([item.Id], ct);
         }
         catch (DbUpdateException e) when (url is not null && IsUnique(e, UrlIndex))
         {
@@ -94,27 +96,7 @@ public sealed class ItemService(AppDbContext db, TagService tags, TimeProvider t
 
     public async Task<PagedResult<ItemSummary>> ListAsync(ListItemsQuery query, CancellationToken ct)
     {
-        var items = db.Items.AsNoTracking();
-        if (query.Type is { } type)
-        {
-            items = items.Where(i => i.Type == type);
-        }
-
-        if (query.Unread)
-        {
-            items = items.Where(i => i.ReadAt == null);
-        }
-
-        foreach (var tag in query.Tags ?? [])
-        {
-            var key = tag.ToLowerInvariant();
-            items = items.Where(i => i.Tags.Any(t => t.Name.ToLower() == key));
-        }
-
-        if (query.CollectionId is { } collectionId)
-        {
-            items = items.Where(i => i.Collections.Any(c => c.Id == collectionId));
-        }
+        var items = db.Items.AsNoTracking().Filter(query.Type, query.Unread, query.Tags, query.CollectionId);
 
         var total = await items.CountAsync(ct);
 
@@ -130,12 +112,10 @@ public sealed class ItemService(AppDbContext db, TagService tags, TimeProvider t
             .ThenByDescending(i => i.Id)
             .Skip((int)skip)
             .Take(query.PageSize)
-            .Select(i => new ItemSummary(
-                i.Id, i.Type, i.Title, i.Url, i.Status, i.ReadAt, i.CreatedAt, i.UpdatedAt, i.Tags.Select(t => t.Name).ToList()))
+            .Select(ItemSummary.Projection)
             .ToListAsync(ct);
 
-        return new PagedResult<ItemSummary>(
-            page.Select(s => s with { Tags = TagName.Sort(s.Tags) }).ToList(), query.Page, query.PageSize, total);
+        return new PagedResult<ItemSummary>(page.Select(s => s.WithSortedTags()).ToList(), query.Page, query.PageSize, total);
     }
 
     private async Task<Item?> UpdateOnceAsync(Guid id, UpdateItemCommand command, CancellationToken ct)
@@ -177,6 +157,7 @@ public sealed class ItemService(AppDbContext db, TagService tags, TimeProvider t
 
         item.UpdatedAt = timeProvider.GetUtcNow();
         await db.SaveChangesAsync(ct);
+        await searchIndexer.ReindexAsync([item.Id], ct);
         return item;
     }
 
@@ -217,6 +198,7 @@ public sealed class ItemService(AppDbContext db, TagService tags, TimeProvider t
 
         item.UpdatedAt = timeProvider.GetUtcNow();
         await db.SaveChangesAsync(ct);
+        await searchIndexer.ReindexAsync([item.Id], ct);
         return true;
     }
 
