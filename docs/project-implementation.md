@@ -313,7 +313,7 @@ infra/                                — Bicep
 
 ---
 
-### Фича 8: SPA — вход, профиль, токены
+### Фича 8: SPA — вход, профиль, токены ✅
 
 **Цель:** в браузере работает вход через Microsoft/Google, выход, страница настроек с профилем, часовым поясом и управлением API-токенами.
 
@@ -324,16 +324,16 @@ infra/                                — Bicep
 - Тесты: `src/KnowledgeHub.Web/src/api/client.test.ts`, `src/KnowledgeHub.Web/src/features/auth/RequireAuth.test.tsx`, `src/KnowledgeHub.Web/src/features/settings/ApiTokensSection.test.tsx`
 
 **Шаги:**
-- [ ] `LoginPage`: кнопки «Войти через Microsoft/Google» → `window.location = /api/auth/login/{provider}?returnUrl=...`; в dev — форма dev-login (если `import.meta.env.DEV`)
-- [ ] `useMe` (React Query) + `RequireAuth`: `401` → редирект на `/login`
-- [ ] `ProfileSection`: e-mail, имя, выбор часового пояса (`Intl.supportedValuesOf('timeZone')`), сохранение через `PUT /api/me/settings`
-- [ ] `ApiTokensSection`: список, создание (показ токена один раз с кнопкой «Скопировать» и предупреждением), отзыв с подтверждением
-- [ ] Выход: `POST /api/auth/logout` → сброс кэша React Query → `/login`
-- [ ] Тесты (msw): XSRF-заголовок добавляется к `POST` и не добавляется к `GET`; `RequireAuth` редиректит при `401`; новый токен показывается один раз и пропадает после закрытия
+- [x] `LoginPage`: кнопки «Войти через Microsoft/Google» → `window.location = /api/auth/login/{provider}?returnUrl=...`; в dev — форма dev-login (если `import.meta.env.DEV`)
+- [x] `useMe` (React Query) + `RequireAuth`: `401` → редирект на `/login`
+- [x] `ProfileSection`: e-mail, имя, выбор часового пояса (`Intl.supportedValuesOf('timeZone')`), сохранение через `PUT /api/me/settings`
+- [x] `ApiTokensSection`: список, создание (показ токена один раз с кнопкой «Скопировать» и предупреждением), отзыв с подтверждением
+- [x] Выход: `POST /api/auth/logout` → сброс кэша React Query → `/login`
+- [x] Тесты (msw): XSRF-заголовок добавляется к `POST` и не добавляется к `GET`; `RequireAuth` редиректит при `401`; новый токен показывается один раз и пропадает после закрытия
 
 **Проверка:**
-- [ ] `npm --prefix src/KnowledgeHub.Web test` — все тесты проходят
-- [ ] Вручную: `docker compose up -d`, `dotnet run --project src/KnowledgeHub.Api`, `npm --prefix src/KnowledgeHub.Web run dev` → dev-login → страница настроек открывается, токен создаётся
+- [x] `npm --prefix src/KnowledgeHub.Web test` — все тесты проходят
+- [x] Вручную: `docker compose up -d`, `dotnet run --project src/KnowledgeHub.Api`, `npm --prefix src/KnowledgeHub.Web run dev` → dev-login → страница настроек открывается, токен создаётся
 
 ---
 

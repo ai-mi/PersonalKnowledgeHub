@@ -117,6 +117,30 @@ it('rejects with a non-ApiError and no unauthorized event on network failure', a
   window.removeEventListener(UNAUTHORIZED_EVENT, listener)
 })
 
+const clearXsrfCookie = () => {
+  document.cookie = 'XSRF-TOKEN=; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+}
+
+it.each(['POST', 'PUT', 'PATCH', 'DELETE'])('adds the XSRF header to %s requests', async (method) => {
+  document.cookie = 'XSRF-TOKEN=abc%3D123'
+  server.use(
+    http.all('*/api/x', ({ request }) => HttpResponse.json({ xsrf: request.headers.get('X-XSRF-TOKEN') })),
+  )
+
+  await expect(apiFetch('/api/x', { method })).resolves.toEqual({ xsrf: 'abc=123' })
+  clearXsrfCookie()
+})
+
+it('does not add the XSRF header to GET requests', async () => {
+  document.cookie = 'XSRF-TOKEN=abc'
+  server.use(
+    http.get('*/api/x', ({ request }) => HttpResponse.json({ xsrf: request.headers.get('X-XSRF-TOKEN') })),
+  )
+
+  await expect(apiFetch('/api/x')).resolves.toEqual({ xsrf: null })
+  clearXsrfCookie()
+})
+
 it('aborts the request when the signal is aborted', async () => {
   server.use(http.get('*/api/slow', async () => new Promise<Response>(() => {})))
   const controller = new AbortController()

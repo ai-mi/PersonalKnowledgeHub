@@ -1,5 +1,15 @@
 export const UNAUTHORIZED_EVENT = 'kh:unauthorized'
 
+const XSRF_COOKIE = 'XSRF-TOKEN'
+const XSRF_HEADER = 'X-XSRF-TOKEN'
+const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
+
+function readCookie(name: string): string | undefined {
+  const prefix = `${name}=`
+  const entry = document.cookie.split('; ').find((c) => c.startsWith(prefix))
+  return entry === undefined ? undefined : decodeURIComponent(entry.slice(prefix.length))
+}
+
 interface ProblemDetails {
   title?: string
   detail?: string
@@ -42,6 +52,12 @@ export async function apiFetch<T>(path: string, { method = 'GET', body, signal }
   const headers: Record<string, string> = { Accept: 'application/json' }
   if (body !== undefined) {
     headers['Content-Type'] = 'application/json'
+  }
+  if (!SAFE_METHODS.has(method.toUpperCase())) {
+    const xsrf = readCookie(XSRF_COOKIE)
+    if (xsrf !== undefined) {
+      headers[XSRF_HEADER] = xsrf
+    }
   }
 
   const response = await fetch(new URL(path, window.location.origin), {
