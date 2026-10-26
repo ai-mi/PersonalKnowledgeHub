@@ -165,6 +165,55 @@ namespace KnowledgeHub.Api.Infrastructure.Persistence.Migrations
                     b.ToTable("user_settings", (string)null);
                 });
 
+            modelBuilder.Entity("KnowledgeHub.Api.Modules.Items.Collection", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("description");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_collections");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_collections_user_id");
+
+                    b.ToTable("collections", (string)null);
+                });
+
+            modelBuilder.Entity("KnowledgeHub.Api.Modules.Items.CollectionItem", b =>
+                {
+                    b.Property<Guid>("CollectionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("collection_id");
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("item_id");
+
+                    b.HasKey("CollectionId", "ItemId")
+                        .HasName("pk_collection_items");
+
+                    b.HasIndex("ItemId")
+                        .HasDatabaseName("ix_collection_items_item_id");
+
+                    b.ToTable("collection_items", (string)null);
+                });
+
             modelBuilder.Entity("KnowledgeHub.Api.Modules.Items.Item", b =>
                 {
                     b.Property<Guid>("Id")
@@ -258,6 +307,50 @@ namespace KnowledgeHub.Api.Infrastructure.Persistence.Migrations
                     b.ToTable("items", (string)null);
                 });
 
+            modelBuilder.Entity("KnowledgeHub.Api.Modules.Items.ItemTag", b =>
+                {
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("item_id");
+
+                    b.Property<Guid>("TagId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tag_id");
+
+                    b.HasKey("ItemId", "TagId")
+                        .HasName("pk_item_tags");
+
+                    b.HasIndex("TagId")
+                        .HasDatabaseName("ix_item_tags_tag_id");
+
+                    b.ToTable("item_tags", (string)null);
+                });
+
+            modelBuilder.Entity("KnowledgeHub.Api.Modules.Items.Tag", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("name");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_tags");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_tags_user_id");
+
+                    b.ToTable("tags", (string)null);
+                });
+
             modelBuilder.Entity("KnowledgeHub.Api.Modules.Identity.ApiToken", b =>
                 {
                     b.HasOne("KnowledgeHub.Api.Modules.Identity.User", null)
@@ -288,6 +381,33 @@ namespace KnowledgeHub.Api.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_user_settings_users_user_id");
                 });
 
+            modelBuilder.Entity("KnowledgeHub.Api.Modules.Items.Collection", b =>
+                {
+                    b.HasOne("KnowledgeHub.Api.Modules.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_collections_users_user_id");
+                });
+
+            modelBuilder.Entity("KnowledgeHub.Api.Modules.Items.CollectionItem", b =>
+                {
+                    b.HasOne("KnowledgeHub.Api.Modules.Items.Collection", null)
+                        .WithMany()
+                        .HasForeignKey("CollectionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_collection_items_collections_collection_id");
+
+                    b.HasOne("KnowledgeHub.Api.Modules.Items.Item", null)
+                        .WithMany()
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_collection_items_items_item_id");
+                });
+
             modelBuilder.Entity("KnowledgeHub.Api.Modules.Items.Item", b =>
                 {
                     b.HasOne("KnowledgeHub.Api.Modules.Identity.User", null)
@@ -296,6 +416,33 @@ namespace KnowledgeHub.Api.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_items_users_user_id");
+                });
+
+            modelBuilder.Entity("KnowledgeHub.Api.Modules.Items.ItemTag", b =>
+                {
+                    b.HasOne("KnowledgeHub.Api.Modules.Items.Item", null)
+                        .WithMany()
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_item_tags_items_item_id");
+
+                    b.HasOne("KnowledgeHub.Api.Modules.Items.Tag", null)
+                        .WithMany()
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_item_tags_tags_tag_id");
+                });
+
+            modelBuilder.Entity("KnowledgeHub.Api.Modules.Items.Tag", b =>
+                {
+                    b.HasOne("KnowledgeHub.Api.Modules.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_tags_users_user_id");
                 });
 #pragma warning restore 612, 618
         }

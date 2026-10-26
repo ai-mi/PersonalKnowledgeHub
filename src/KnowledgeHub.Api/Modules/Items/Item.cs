@@ -32,4 +32,7 @@ public class Item : IUserOwned
     public DateTimeOffset? ReadAt { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
+
+    public List<Tag> Tags { get; } = [];
+    public List<Collection> Collections { get; } = [];
 }

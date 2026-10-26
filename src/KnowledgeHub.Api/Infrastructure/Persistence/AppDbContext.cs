@@ -16,6 +16,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ICurrentUser c
     public DbSet<UserSettings> UserSettings => Set<UserSettings>();
     public DbSet<ApiToken> ApiTokens => Set<ApiToken>();
     public DbSet<Item> Items => Set<Item>();
+    public DbSet<Tag> Tags => Set<Tag>();
+    public DbSet<Collection> Collections => Set<Collection>();
 
     // Свойства читаются при выполнении запроса: EF подставляет их значения из текущего экземпляра контекста.
     private Guid? CurrentUserId => currentUser.UserId;

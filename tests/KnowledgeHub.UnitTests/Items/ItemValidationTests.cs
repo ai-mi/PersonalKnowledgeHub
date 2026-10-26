@@ -29,6 +29,18 @@ public class ItemValidationTests
     }
 
     [Fact]
+    public void Tags_LongerThanLimitAfterNormalization_AreRejected()
+    {
+        var ok = ItemValidation.ValidateCreate(
+            new CreateItemCommand(ItemType.Note, Tags: ["#" + Long(TagName.MaxLength), "", "  "]), out _, out _);
+        var tooLong = ItemValidation.ValidateCreate(
+            new CreateItemCommand(ItemType.Note, Tags: [Long(TagName.MaxLength + 1)]), out _, out _);
+
+        ok.ShouldBeEmpty();
+        tooLong.ShouldContainKey("tags");
+    }
+
+    [Fact]
     public void Link_RejectsNonHttpUrl()
     {
         ItemValidation.ValidateCreate(new CreateItemCommand(ItemType.Link, Url: "ftp://example.com"), out _, out _)

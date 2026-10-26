@@ -28,7 +28,8 @@ public static class ItemEndpoints
     }
 
     private static async Task<Ok<PagedResult<ItemSummary>>> List(
-        IItemService items, CancellationToken ct, string? type = null, bool unread = false, int page = 1, int pageSize = DefaultPageSize)
+        IItemService items, CancellationToken ct, string? type = null, bool unread = false, int page = 1, int pageSize = DefaultPageSize,
+        string? tags = null, Guid? collection = null)
     {
         var errors = new Dictionary<string, string[]>();
         // Значения enum в API — camelCase ("note"), а биндер query-параметров сравнивает регистр строго.
@@ -54,8 +55,12 @@ public static class ItemEndpoints
             throw Errors.Validation(errors);
         }
 
-        return TypedResults.Ok(await items.ListAsync(new ListItemsQuery(itemType, unread, page, pageSize), ct));
+        return TypedResults.Ok(await items.ListAsync(new ListItemsQuery(itemType, unread, page, pageSize, ParseTags(tags), collection), ct));
     }
+
+    /// <summary>Фильтр <c>tags=a,b</c>: имена нормализуются так же, как при сохранении.</summary>
+    private static List<string> ParseTags(string? tags) =>
+        (tags ?? "").Split(',').Select(TagName.Normalize).Where(t => t.Length > 0).ToList();
 
     private static async Task<Results<Ok<ItemResponse>, NotFound>> Get(Guid id, IItemService items, CancellationToken ct) =>
         Found(await items.GetAsync(id, ct));

@@ -38,6 +38,36 @@ public static class IsolationCases
                 (HttpMethod.Patch, $"/api/items/{id}", new { read = true }),
                 (HttpMethod.Delete, $"/api/items/{id}", null),
             ]),
+        new("Tags",
+            async a =>
+            {
+                await Items.ItemEndpointsTests.CreateAsync(a, new { type = "note", tags = new[] { "secret" } });
+                return await Items.TagsTests.TagIdAsync(a, "secret");
+            },
+            id =>
+            [
+                (HttpMethod.Put, $"/api/tags/{id}", new { name = "renamed" }),
+                (HttpMethod.Delete, $"/api/tags/{id}", null),
+            ]),
+        new("Collections",
+            async a => await Items.CollectionsTests.CreateCollectionIdAsync(a),
+            id =>
+            [
+                (HttpMethod.Put, $"/api/collections/{id}", new { name = "renamed" }),
+                (HttpMethod.Delete, $"/api/collections/{id}", null),
+            ]),
+        // Идентификатор здесь составной — «коллекция/items/запись»: так один случай проверяет оба конца связи.
+        new("CollectionItems",
+            async a =>
+            {
+                var collection = await Items.CollectionsTests.CreateCollectionIdAsync(a);
+                return $"{collection}/items/{await Items.ItemEndpointsTests.CreateNoteIdAsync(a)}";
+            },
+            id =>
+            [
+                (HttpMethod.Post, $"/api/collections/{id}", null),
+                (HttpMethod.Delete, $"/api/collections/{id}", null),
+            ]),
     ];
 
     public static IsolationCase Get(string name) => All.Single(c => c.Name == name);

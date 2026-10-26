@@ -31,7 +31,17 @@ public static class ItemValidation
             }
         }
 
+        ValidateTags(errors, command.Tags);
         return errors;
+    }
+
+    /// <summary>Пустые имена тегов игнорируются, слишком длинные — ошибка поля <c>tags</c>.</summary>
+    public static void ValidateTags(Dictionary<string, string[]> errors, IReadOnlyList<string>? tags)
+    {
+        if (tags is not null && tags.Any(t => TagName.Normalize(t).Length > TagName.MaxLength))
+        {
+            errors["tags"] = [$"Each tag must be at most {TagName.MaxLength} characters."];
+        }
     }
 
     /// <summary>Проверяет длины полей. Тело проверяется только у заметок и фрагментов кода — у остальных оно не редактируется.</summary>

@@ -361,7 +361,7 @@ infra/                                — Bicep
 
 ---
 
-### Фича 10: Теги и коллекции
+### Фича 10: Теги и коллекции ✅
 
 **Цель:** записи можно помечать тегами и добавлять в несколько плоских коллекций; есть списки тегов/коллекций и фильтрация записей по ним.
 
@@ -371,18 +371,18 @@ infra/                                — Bicep
 - Тесты: `tests/KnowledgeHub.UnitTests/Items/TagNameTests.cs`, `tests/KnowledgeHub.IntegrationTests/Items/TagsTests.cs`, `tests/KnowledgeHub.IntegrationTests/Items/CollectionsTests.cs`, изменить `.../Identity/IsolationTests.cs`
 
 **Шаги:**
-- [ ] Таблицы `tags` (unique `(user_id, lower(name))`), `item_tags`, `collections`, `collection_items`; миграция с `EnableUserRls` для `tags` и `collections` (связующие таблицы защищаются через внешние ключи на защищённые таблицы + проверку в сервисе)
-- [ ] Нормализация имени тега: trim, без `#` в начале, ≤ 50 символов, без пробелов внутри (пробелы → `-`) — один метод `TagName.Normalize`, используется API и ботом
-- [ ] `TagService.ResolveAsync(names)` — находит или создаёт теги пользователя (DRY для API и бота)
-- [ ] `CreateItemCommand`/`UpdateItem` принимают `tags: string[]` и `collectionIds: Guid[]`; DTO записи возвращает теги и коллекции
-- [ ] `GET /api/tags` (с количеством записей), `PUT /api/tags/{id}` (переименование), `DELETE /api/tags/{id}`
-- [ ] `GET/POST /api/collections`, `PUT/DELETE /api/collections/{id}`, `POST /api/collections/{id}/items/{itemId}`, `DELETE /api/collections/{id}/items/{itemId}`
-- [ ] Фильтры `GET /api/items?tags=a,b&collection={id}` (теги — логическое И)
-- [ ] Тесты: `Azure` и `azure` — один тег; запись в двух коллекциях; удаление коллекции не удаляет записи; нельзя добавить чужую запись в свою коллекцию (`404`); фильтры; эндпоинты в `IsolationTests`
+- [x] Таблицы `tags` (unique `(user_id, lower(name))`), `item_tags`, `collections`, `collection_items`; миграция с `EnableUserRls` для `tags` и `collections` (связующие таблицы защищаются через внешние ключи на защищённые таблицы + проверку в сервисе)
+- [x] Нормализация имени тега: trim, без `#` в начале, ≤ 50 символов, без пробелов внутри (пробелы → `-`) — один метод `TagName.Normalize`, используется API и ботом
+- [x] `TagService.ResolveAsync(names)` — находит или создаёт теги пользователя (DRY для API и бота)
+- [x] `CreateItemCommand`/`UpdateItem` принимают `tags: string[]` и `collectionIds: Guid[]`; DTO записи возвращает теги и коллекции
+- [x] `GET /api/tags` (с количеством записей), `PUT /api/tags/{id}` (переименование), `DELETE /api/tags/{id}`
+- [x] `GET/POST /api/collections`, `PUT/DELETE /api/collections/{id}`, `POST /api/collections/{id}/items/{itemId}`, `DELETE /api/collections/{id}/items/{itemId}`
+- [x] Фильтры `GET /api/items?tags=a,b&collection={id}` (теги — логическое И)
+- [x] Тесты: `Azure` и `azure` — один тег; запись в двух коллекциях; удаление коллекции не удаляет записи; нельзя добавить чужую запись в свою коллекцию (`404`); фильтры; эндпоинты в `IsolationTests`
 
 **Проверка:**
-- [ ] `dotnet test tests/KnowledgeHub.UnitTests --filter "FullyQualifiedName~Items"` — `Passed!  - Failed:     0`
-- [ ] `dotnet test tests/KnowledgeHub.IntegrationTests --filter "FullyQualifiedName~Items|FullyQualifiedName~Isolation"` — `Passed!  - Failed:     0`
+- [x] `dotnet test tests/KnowledgeHub.UnitTests --filter "FullyQualifiedName~Items"` — `Passed!  - Failed:     0`
+- [x] `dotnet test tests/KnowledgeHub.IntegrationTests --filter "FullyQualifiedName~Items|FullyQualifiedName~Isolation"` — `Passed!  - Failed:     0`
 
 ---
 
