@@ -48,16 +48,50 @@ async function readProblem(response: Response): Promise<ProblemDetails> {
   }
 }
 
+function xsrfHeaders(method: string): Record<string, string> {
+  const xsrf = SAFE_METHODS.has(method.toUpperCase()) ? undefined : readCookie(XSRF_COOKIE)
+  return xsrf === undefined ? {} : { [XSRF_HEADER]: xsrf }
+}
+
+function toApiError(status: number, problem: ProblemDetails): ApiError {
+  if (status === 401) {
+    window.dispatchEvent(new Event(UNAUTHORIZED_EVENT))
+  }
+  return new ApiError(status, problem)
+}
+
+/** Отправка `multipart/form-data` через XHR — `fetch` не умеет сообщать прогресс отправки. */
+export function apiUpload<T>(path: string, form: FormData, onProgress?: (fraction: number) => void): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', new URL(path, window.location.origin))
+    xhr.withCredentials = true
+    xhr.setRequestHeader('Accept', 'application/json')
+    for (const [name, value] of Object.entries(xsrfHeaders('POST'))) {
+      xhr.setRequestHeader(name, value)
+    }
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress?.(e.loaded / e.total)
+    }
+    xhr.onerror = () => reject(new ApiError(0, { title: 'Не удалось отправить файл' }))
+    xhr.onload = () => {
+      let parsed: unknown = {}
+      try {
+        parsed = JSON.parse(xhr.responseText)
+      } catch {
+        // Пустое или не JSON-тело: ошибка опишется статусом.
+      }
+      if (xhr.status >= 200 && xhr.status < 300) resolve(parsed as T)
+      else reject(toApiError(xhr.status, parsed as ProblemDetails))
+    }
+    xhr.send(form)
+  })
+}
+
 export async function apiFetch<T>(path: string, { method = 'GET', body, signal }: RequestOptions = {}): Promise<T> {
-  const headers: Record<string, string> = { Accept: 'application/json' }
+  const headers: Record<string, string> = { Accept: 'application/json', ...xsrfHeaders(method) }
   if (body !== undefined) {
     headers['Content-Type'] = 'application/json'
-  }
-  if (!SAFE_METHODS.has(method.toUpperCase())) {
-    const xsrf = readCookie(XSRF_COOKIE)
-    if (xsrf !== undefined) {
-      headers[XSRF_HEADER] = xsrf
-    }
   }
 
   const response = await fetch(new URL(path, window.location.origin), {
@@ -69,10 +103,7 @@ export async function apiFetch<T>(path: string, { method = 'GET', body, signal }
   })
 
   if (!response.ok) {
-    if (response.status === 401) {
-      window.dispatchEvent(new Event(UNAUTHORIZED_EVENT))
-    }
-    throw new ApiError(response.status, await readProblem(response))
+    throw toApiError(response.status, await readProblem(response))
   }
 
   return response.status === 204 ? (undefined as T) : ((await response.json()) as T)

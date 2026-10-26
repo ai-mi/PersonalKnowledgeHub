@@ -1,5 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { apiFetch } from '../../api/client'
+import { apiFetch, apiUpload } from '../../api/client'
 
 export type ItemType = 'link' | 'note' | 'snippet' | 'document'
 
@@ -60,6 +60,24 @@ export interface ItemInput {
   collectionIds: string[]
 }
 
+export interface UploadInput {
+  file: File
+  title: string | null
+  userNote: string | null
+  tags: string[]
+  collectionIds: string[]
+}
+
+function toFormData({ file, title, userNote, tags, collectionIds }: UploadInput): FormData {
+  const form = new FormData()
+  form.append('file', file)
+  if (title) form.append('title', title)
+  if (userNote) form.append('userNote', userNote)
+  tags.forEach((t) => form.append('tags', t))
+  collectionIds.forEach((id) => form.append('collectionIds', id))
+  return form
+}
+
 export interface ItemFilters {
   type: string
   tag: string
@@ -84,10 +102,20 @@ export const useItems = (filters: ItemFilters) =>
     queryKey: ['items', 'list', filters],
     queryFn: () => apiFetch<Paged<ItemSummary>>(itemsUrl(filters)),
     placeholderData: keepPreviousData,
+    refetchInterval: (query) => (query.state.data?.items.some((i) => isInProgress(i.status)) ? POLL_INTERVAL_MS : false),
   })
 
+export const isInProgress = (status: string) => status === 'pending' || status === 'processing'
+
+const POLL_INTERVAL_MS = 2000
+
+/** Пока запись обрабатывается, опрашивает её раз в 2 с; на `ready`/`failed` опрос прекращается. */
 export const useItem = (id: string) =>
-  useQuery({ queryKey: ['items', 'one', id], queryFn: () => apiFetch<Item>(`/api/items/${id}`) })
+  useQuery({
+    queryKey: ['items', 'one', id],
+    queryFn: () => apiFetch<Item>(`/api/items/${id}`),
+    refetchInterval: (query) => (query.state.data && isInProgress(query.state.data.status) ? POLL_INTERVAL_MS : false),
+  })
 
 export const useTags = () => useQuery({ queryKey: ['tags'], queryFn: () => apiFetch<TagInfo[]>('/api/tags') })
 
@@ -114,6 +142,15 @@ export function useItemMutations() {
     setRead: useMutation({
       mutationFn: ({ id, read }: { id: string; read: boolean }) =>
         apiFetch<Item>(`/api/items/${id}`, { method: 'PATCH', body: { read } }),
+      onSuccess,
+    }),
+    reprocess: useMutation({
+      mutationFn: (id: string) => apiFetch<Item>(`/api/items/${id}/reprocess`, { method: 'POST' }),
+      onSuccess,
+    }),
+    upload: useMutation({
+      mutationFn: ({ input, onProgress }: { input: UploadInput; onProgress?: (fraction: number) => void }) =>
+        apiUpload<Item>('/api/items/upload', toFormData(input), onProgress),
       onSuccess,
     }),
     remove: useMutation({

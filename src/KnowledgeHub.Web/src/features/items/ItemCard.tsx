@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import { ItemStatusBadge } from './ItemStatusBadge'
 import { itemTypeLabels, useItemMutations, type ItemSummary } from './itemsApi'
 
 export function ItemCard({ item }: { item: ItemSummary }) {
@@ -14,6 +15,7 @@ export function ItemCard({ item }: { item: ItemSummary }) {
           #{tag}{' '}
         </Link>
       ))}
+      {item.type !== 'note' && item.type !== 'snippet' && <ItemStatusBadge item={item} />}{' '}
       <small>{new Date(item.createdAt).toLocaleDateString('ru-RU')}</small>{' '}
       <button type="button" disabled={setRead.isPending} onClick={() => setRead.mutate({ id: item.id, read: !isRead })}>
         {isRead ? 'Вернуть в непрочитанное' : 'Прочитано'}

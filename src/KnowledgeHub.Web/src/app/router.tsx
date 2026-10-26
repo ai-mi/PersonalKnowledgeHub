@@ -2,7 +2,7 @@ import { createBrowserRouter } from 'react-router'
 import { LoginPage } from '../features/auth/LoginPage'
 import { RequireAuth } from '../features/auth/RequireAuth'
 import { CollectionsPage } from '../features/collections/CollectionsPage'
-import { ItemPage, NewItemPage } from '../features/items/ItemPage'
+import { ItemPage, NewItemPage, UploadItemPage } from '../features/items/ItemPage'
 import { ItemsPage } from '../features/items/ItemsPage'
 import { SearchPage } from '../features/search/SearchPage'
 import { SettingsPage } from '../features/settings/SettingsPage'
@@ -18,6 +18,7 @@ export const router = createBrowserRouter([
         children: [
           { path: '/', element: <ItemsPage /> },
           { path: '/items/new', element: <NewItemPage /> },
+          { path: '/items/upload', element: <UploadItemPage /> },
           { path: '/items/:id', element: <ItemPage /> },
           { path: '/collections', element: <CollectionsPage /> },
           { path: '/search', element: <SearchPage /> },

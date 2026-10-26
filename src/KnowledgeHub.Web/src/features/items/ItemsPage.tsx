@@ -30,7 +30,7 @@ export function ItemsPage() {
     <>
       <h1>Записи</h1>
       <p>
-        <Link to="/items/new">Новая запись</Link>
+        <Link to="/items/new">Новая запись</Link> · <Link to="/items/upload">Загрузить документ</Link>
       </p>
       <ItemFiltersBar filters={filters} onChange={setParam} />
 

@@ -3,6 +3,8 @@ import { Link, useNavigate, useParams } from 'react-router'
 import { CodeBlock } from '../../shared/CodeBlock'
 import { Markdown } from '../../shared/Markdown'
 import { ItemForm } from './ItemForm'
+import { ItemStatusBadge } from './ItemStatusBadge'
+import { UploadForm } from './UploadForm'
 import { itemTypeLabels, useItem, useItemMutations, type Item, type ItemInput } from './itemsApi'
 
 const displayTitle = (item: Item) => item.title ?? item.url ?? 'Без названия'
@@ -25,6 +27,17 @@ export function NewItemPage() {
   )
 }
 
+export function UploadItemPage() {
+  const navigate = useNavigate()
+
+  return (
+    <>
+      <h1>Загрузить документ</h1>
+      <UploadForm onUploaded={(item) => void navigate(`/items/${item.id}`)} />
+    </>
+  )
+}
+
 function ItemView({ item }: { item: Item }) {
   return (
     <>
@@ -35,7 +48,18 @@ function ItemView({ item }: { item: Item }) {
           </a>
         </p>
       )}
-      {item.status === 'failed' && <p role="alert">Не удалось обработать ссылку: {item.error}</p>}
+      {(item.type === 'link' || item.type === 'document') && (
+        <p>
+          <ItemStatusBadge item={item} withRetry />
+        </p>
+      )}
+      {item.type === 'document' && (
+        <p>
+          <a href={`/api/items/${item.id}/file`} download>
+            Скачать
+          </a>
+        </p>
+      )}
       {item.userNote && <Markdown>{item.userNote}</Markdown>}
       {item.body &&
         (item.type === 'snippet' ? <CodeBlock code={item.body} language={item.codeLanguage} /> : <Markdown>{item.body}</Markdown>)}
