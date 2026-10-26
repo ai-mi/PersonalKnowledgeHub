@@ -11,7 +11,7 @@ public static class AuthSchemes
     /// <summary>Policy scheme по умолчанию: выбирает <see cref="ApiToken"/> или <see cref="Cookies"/> по заголовку.</summary>
     public const string Smart = "Smart";
 
-    /// <summary>Персональные API-токены (фича 7).</summary>
+    /// <summary>Персональные API-токены.</summary>
     public const string ApiToken = "ApiToken";
 
     public const string Microsoft = "Microsoft";

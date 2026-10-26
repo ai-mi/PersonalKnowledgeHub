@@ -29,6 +29,21 @@ public sealed class UserLoginConfiguration : IEntityTypeConfiguration<UserLogin>
     }
 }
 
+public sealed class ApiTokenConfiguration : IEntityTypeConfiguration<ApiToken>
+{
+    public void Configure(EntityTypeBuilder<ApiToken> builder)
+    {
+        builder.ToTable("api_tokens");
+        builder.HasKey(t => t.Id);
+        builder.Property(t => t.Id).ValueGeneratedNever();
+        builder.Property(t => t.Name).HasMaxLength(ApiToken.MaxNameLength);
+        builder.Property(t => t.TokenHash).HasMaxLength(64);
+        builder.HasIndex(t => t.TokenHash).IsUnique();
+        builder.HasIndex(t => t.UserId);
+        builder.HasOne<User>().WithMany().HasForeignKey(t => t.UserId).OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
 public sealed class UserSettingsConfiguration : IEntityTypeConfiguration<UserSettings>
 {
     public void Configure(EntityTypeBuilder<UserSettings> builder)

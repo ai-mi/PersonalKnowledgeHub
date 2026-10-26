@@ -1,5 +1,6 @@
 using KnowledgeHub.Api.Common;
 using KnowledgeHub.Api.Infrastructure.Web;
+using Microsoft.AspNetCore.Authentication;
 
 namespace KnowledgeHub.Api.Modules.Identity;
 
@@ -11,6 +12,7 @@ public static class IdentityModule
         services.AddScoped<SystemContext>();
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddScoped<UserProvisioningService>();
+        services.AddScoped<ApiTokenService>();
 
         services.AddAuthentication(AuthSchemes.Smart)
             .AddPolicyScheme(AuthSchemes.Smart, displayName: null, o =>
@@ -18,6 +20,7 @@ public static class IdentityModule
                     context.Request.Headers.Authorization.ToString().StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase)
                         ? AuthSchemes.ApiToken
                         : AuthSchemes.Cookies)
+            .AddScheme<AuthenticationSchemeOptions, ApiTokenAuthenticationHandler>(AuthSchemes.ApiToken, _ => { })
             .AddCookie(AuthSchemes.Cookies, o =>
             {
                 o.Cookie.Name = "kh.auth";
@@ -56,6 +59,7 @@ public static class IdentityModule
     {
         routes.MapAuthEndpoints();
         routes.MapMeEndpoints();
+        routes.MapApiTokenEndpoints();
         return routes;
     }
 }

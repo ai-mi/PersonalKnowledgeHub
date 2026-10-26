@@ -32,11 +32,9 @@ public static class IsolationCases
     /// </summary>
     public static readonly IReadOnlyList<IsolationCase> All =
     [
-        // ЗАГЛУШКА: у /api/me/settings нет «чужого» ресурса по идентификатору (настройки всегда свои), поэтому реальных ресурсов пока нет.
-        new("Placeholder (замените настоящими ресурсами)",
-            _ => Task.FromResult(Guid.CreateVersion7().ToString()),
-            id => [(HttpMethod.Get, $"/api/isolation-placeholder/{id}", null)],
-            IsPlaceholder: true),
+        new("ApiTokens",
+            async a => (await ApiTokenTests.CreateTokenAsync(a)).Id,
+            id => [(HttpMethod.Delete, $"/api/me/tokens/{id}", null)]),
     ];
 
     public static IsolationCase Get(string name) => All.Single(c => c.Name == name);

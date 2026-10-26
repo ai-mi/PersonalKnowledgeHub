@@ -290,7 +290,7 @@ infra/                                — Bicep
 
 ---
 
-### Фича 7: Персональные API-токены
+### Фича 7: Персональные API-токены ✅
 
 **Цель:** пользователь создаёт, просматривает и отзывает API-токены; запросы с `Authorization: Bearer <token>` аутентифицированы без antiforgery.
 
@@ -300,16 +300,16 @@ infra/                                — Bicep
 - Тесты: `tests/KnowledgeHub.UnitTests/Identity/ApiTokenServiceTests.cs`, `tests/KnowledgeHub.IntegrationTests/Identity/ApiTokenTests.cs`
 
 **Шаги:**
-- [ ] Таблица `api_tokens` (`token_hash` unique, `expires_at` nullable); миграция с `EnableUserRls`
-- [ ] Формат токена: `kh_` + 32 случайных байта (`RandomNumberGenerator`, Base64Url); хранится SHA-256 hex
-- [ ] `POST /api/me/tokens { name, expiresInDays? }` → `{ id, name, token }` (токен — только в этом ответе); `GET /api/me/tokens` — без токенов; `DELETE /api/me/tokens/{id}` — проставляет `revoked_at`
-- [ ] `ApiTokenAuthenticationHandler`: поиск по хэшу в **системном** контексте (пользователь ещё неизвестен), проверка `revoked_at`/`expires_at`, обновление `last_used_at` не чаще раза в минуту; claim `kh_user_id`
-- [ ] Antiforgery-фильтр пропускает схему `ApiToken` (уже реализовано условием «только Cookies» — покрыть тестом)
-- [ ] Тесты: создание → запрос `/api/me` с токеном → `200`; отозванный/просроченный/неизвестный → `401`; `POST` с токеном без XSRF → успех; чужой токен нельзя отозвать (`404`); добавить эндпоинт в `IsolationTests`
+- [x] Таблица `api_tokens` (`token_hash` unique, `expires_at` nullable); миграция с `EnableUserRls`
+- [x] Формат токена: `kh_` + 32 случайных байта (`RandomNumberGenerator`, Base64Url); хранится SHA-256 hex
+- [x] `POST /api/me/tokens { name, expiresInDays? }` → `{ id, name, token }` (токен — только в этом ответе); `GET /api/me/tokens` — без токенов; `DELETE /api/me/tokens/{id}` — проставляет `revoked_at`
+- [x] `ApiTokenAuthenticationHandler`: поиск по хэшу в **системном** контексте (пользователь ещё неизвестен), проверка `revoked_at`/`expires_at`, обновление `last_used_at` не чаще раза в минуту; claim `kh_user_id`
+- [x] Antiforgery-фильтр пропускает схему `ApiToken` (уже реализовано условием «только Cookies» — покрыть тестом)
+- [x] Тесты: создание → запрос `/api/me` с токеном → `200`; отозванный/просроченный/неизвестный → `401`; `POST` с токеном без XSRF → успех; чужой токен нельзя отозвать (`404`); добавить эндпоинт в `IsolationTests`
 
 **Проверка:**
-- [ ] `dotnet test tests/KnowledgeHub.UnitTests --filter "FullyQualifiedName~ApiToken"` — `Passed!  - Failed:     0`
-- [ ] `dotnet test tests/KnowledgeHub.IntegrationTests --filter "FullyQualifiedName~ApiToken|FullyQualifiedName~Isolation"` — `Passed!  - Failed:     0`
+- [x] `dotnet test tests/KnowledgeHub.UnitTests --filter "FullyQualifiedName~ApiToken"` — `Passed!  - Failed:     0`
+- [x] `dotnet test tests/KnowledgeHub.IntegrationTests --filter "FullyQualifiedName~ApiToken|FullyQualifiedName~Isolation"` — `Passed!  - Failed:     0`
 
 ---
 
