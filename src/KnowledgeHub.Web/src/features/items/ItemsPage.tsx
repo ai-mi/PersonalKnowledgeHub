@@ -1,7 +1,7 @@
 import { Link, useSearchParams } from 'react-router'
-import { useCollections } from '../collections/collectionsApi'
 import { ItemCard } from './ItemCard'
-import { itemTypeLabels, pageSize, useItems, useTags, type ItemFilters } from './itemsApi'
+import { ItemFiltersBar } from './ItemFilters'
+import { pageSize, useItems, type ItemFilters } from './itemsApi'
 
 export function ItemsPage() {
   const [params, setParams] = useSearchParams()
@@ -13,8 +13,6 @@ export function ItemsPage() {
     page: Math.max(1, Number(params.get('page')) || 1),
   }
   const { data, isPending, error } = useItems(filters)
-  const { data: tags } = useTags()
-  const { data: collections } = useCollections()
 
   // Смена любого фильтра возвращает на первую страницу.
   const setParam = (key: string, value: string) =>
@@ -34,45 +32,7 @@ export function ItemsPage() {
       <p>
         <Link to="/items/new">Новая запись</Link>
       </p>
-      <p>
-        <label>
-          Тип{' '}
-          <select value={filters.type} onChange={(e) => setParam('type', e.target.value)}>
-            <option value="">Все</option>
-            {Object.entries(itemTypeLabels).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>{' '}
-        <label>
-          Тег{' '}
-          <select value={filters.tag} onChange={(e) => setParam('tag', e.target.value)}>
-            <option value="">Все</option>
-            {tags?.map((t) => (
-              <option key={t.id} value={t.name}>
-                {t.name}
-              </option>
-            ))}
-          </select>
-        </label>{' '}
-        <label>
-          Коллекция{' '}
-          <select value={filters.collection} onChange={(e) => setParam('collection', e.target.value)}>
-            <option value="">Все</option>
-            {collections?.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </label>{' '}
-        <label>
-          <input type="checkbox" checked={filters.unread} onChange={(e) => setParam('unread', e.target.checked ? 'true' : '')} />{' '}
-          Непрочитанное
-        </label>
-      </p>
+      <ItemFiltersBar filters={filters} onChange={setParam} />
 
       {isPending && <p>Загрузка…</p>}
       {error && <p role="alert">{error.message}</p>}

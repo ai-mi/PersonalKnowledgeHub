@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { NavLink, Outlet, useNavigate } from 'react-router'
+import { NavLink, Outlet, useNavigate, useSearchParams } from 'react-router'
 import { apiFetch } from '../api/client'
 import { useMe } from '../features/auth/useMe'
 
@@ -14,6 +14,7 @@ export function Layout() {
   const { data: me } = useMe()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const logout = useMutation({
     mutationFn: () => apiFetch('/api/auth/logout', { method: 'POST' }),
     onSuccess: async () => {
@@ -33,6 +34,23 @@ export function Layout() {
             </NavLink>
           ))}
         </nav>
+        <form
+          role="search"
+          onSubmit={(e) => {
+            e.preventDefault()
+            const q = String(new FormData(e.currentTarget).get('q') ?? '').trim()
+            if (q) void navigate(`/search?q=${encodeURIComponent(q)}`)
+          }}
+        >
+          <input
+            type="search"
+            name="q"
+            aria-label="Быстрый поиск"
+            placeholder="Поиск"
+            key={searchParams.get('q')}
+            defaultValue={searchParams.get('q') ?? ''}
+          />
+        </form>
         <span className="spacer" />
         {me && <span>{me.displayName}</span>}
         <button type="button" onClick={() => logout.mutate()} disabled={logout.isPending}>

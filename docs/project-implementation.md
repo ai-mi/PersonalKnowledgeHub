@@ -436,7 +436,7 @@ infra/                                — Bicep
 
 ---
 
-### Фича 13: SPA — поиск (MVP)
+### Фича 13: SPA — поиск (MVP) ✅
 
 **Цель:** в вебе есть страница поиска со строкой запроса, фильтрами и подсветкой найденных фрагментов; сценарий «сохранил ссылку вручную → нашёл по заметке» работает end-to-end.
 
@@ -446,15 +446,15 @@ infra/                                — Bicep
 - Тесты: `src/KnowledgeHub.Web/src/features/search/Highlight.test.tsx`, `src/KnowledgeHub.Web/src/features/search/SearchPage.test.tsx`
 
 **Шаги:**
-- [ ] Параметры поиска хранятся в URL (`/search?q=...&type=...`) — ссылкой можно поделиться, «назад» работает
-- [ ] Ввод с debounce 300 мс; фильтры переиспользуют компоненты фильтров из `ItemsPage` (вынести в `src/KnowledgeHub.Web/src/features/items/ItemFilters.tsx`, DRY)
-- [ ] `Highlight.tsx`: разбивает строку по `<mark>`/`</mark>` и рендерит `<mark>` React-элементами, остальное — текст (без `innerHTML`)
-- [ ] Пустое состояние, «ничего не найдено», ошибки `ApiError`
-- [ ] Тесты: `Highlight` не исполняет `<img onerror>`; изменение фильтра меняет URL и запрос
+- [x] Параметры поиска хранятся в URL (`/search?q=...&type=...`) — ссылкой можно поделиться, «назад» работает
+- [x] Ввод с debounce 300 мс; фильтры переиспользуют компоненты фильтров из `ItemsPage` (вынести в `src/KnowledgeHub.Web/src/features/items/ItemFilters.tsx`, DRY)
+- [x] `Highlight.tsx`: разбивает строку по `<mark>`/`</mark>` и рендерит `<mark>` React-элементами, остальное — текст (без `innerHTML`)
+- [x] Пустое состояние, «ничего не найдено», ошибки `ApiError`
+- [x] Тесты: `Highlight` не исполняет `<img onerror>`; изменение фильтра меняет URL и запрос
 
 **Проверка:**
-- [ ] `npm --prefix src/KnowledgeHub.Web test` — все тесты проходят
-- [ ] Вручную: создать ссылку с заметкой «очереди сообщений в Azure» → поиск «очередь» находит её с подсветкой
+- [x] `npm --prefix src/KnowledgeHub.Web test` — все тесты проходят
+- [x] Вручную: создать ссылку с заметкой «очереди сообщений в Azure» → поиск «очередь» находит её с подсветкой
 
 ---
 
