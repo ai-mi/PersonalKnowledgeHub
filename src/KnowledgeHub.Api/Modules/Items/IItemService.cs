@@ -24,4 +24,10 @@ public interface IItemService
     /// <c>false</c> — записи нет.
     /// </summary>
     Task<bool> SetProcessingResultAsync(Guid id, ItemStatus status, string? title, string? body, string? error, CancellationToken ct);
+
+    /// <summary>
+    /// Повторная обработка ссылки или документа: статус <c>pending</c> и новая задача <c>ingest</c>.
+    /// Если запись уже в обработке — ничего не меняет. Заметки и фрагменты кода → ошибка валидации. <c>null</c> — записи нет.
+    /// </summary>
+    Task<Item?> ReprocessAsync(Guid id, CancellationToken ct);
 }

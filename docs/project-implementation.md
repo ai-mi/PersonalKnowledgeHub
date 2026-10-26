@@ -484,7 +484,7 @@ infra/                                — Bicep
 
 ---
 
-### Фича 15: Безопасная загрузка страниц и извлечение статей
+### Фича 15: Безопасная загрузка страниц и извлечение статей ✅
 
 **Цель:** после сохранения ссылки воркер безопасно скачивает страницу, извлекает заголовок и текст через SmartReader, обновляет поиск и статус; неудача не теряет запись; есть повторная обработка.
 
@@ -494,19 +494,19 @@ infra/                                — Bicep
 - Тесты: `tests/KnowledgeHub.UnitTests/Ingestion/SsrfGuardTests.cs`, `tests/KnowledgeHub.UnitTests/Ingestion/ArticleExtractorTests.cs`, `tests/KnowledgeHub.UnitTests/Ingestion/Fixtures/*.html`, `tests/KnowledgeHub.IntegrationTests/Ingestion/LinkIngestionTests.cs`
 
 **Шаги:**
-- [ ] `SsrfGuard.IsAllowed(IPAddress)`: запрет loopback, private (10/8, 172.16/12, 192.168/16), link-local (169.254/16, fe80::/10), CGNAT 100.64/10, 0.0.0.0/8, multicast, broadcast, unique local fc00::/7, IPv4-mapped IPv6 (проверять `MapToIPv4()`), `::`
-- [ ] `SafeHttpFetcher`: `SocketsHttpHandler { ConnectCallback = резолв + проверка всех адресов + подключение к проверенному IP, AllowAutoRedirect = false, UseProxy = false, AutomaticDecompression = All, PooledConnectionLifetime = 5 мин }`; только `http/https` и порты 80/443; ручные редиректы ≤ 5 (каждый URL заново валидируется); таймаут 15 с; чтение тела с лимитом 5 МБ (превышение → ошибка); принимаются только `text/html`/`application/xhtml+xml`; кодировка из заголовка/`<meta charset>`
-- [ ] Для тестов `SafeHttpFetcher` принимает опцию `AllowLoopbackForTests` (только из `ApiFactory`), чтобы ходить в WireMock на `localhost` — по умолчанию `false`
-- [ ] `ArticleExtractor`: `new Reader(url, html).GetArticle()` (SmartReader **не** скачивает сам — передаём HTML); `IsReadable` → `title`, `body = TextContent`; иначе — только `title` из страницы; ни заголовка, ни текста → ошибка «Не удалось извлечь содержимое»
-- [ ] `IngestItemJob` (`type = "ingest"`): `processing` → fetch → extract → `IItemService.SetProcessingResultAsync` (заголовок пользователя не перезаписывается, если задан) → `ISearchIndexer.ReindexAsync` → `ready`; уведомление `IIngestionCompletedHandler` (реализует бот в фиче 19; по умолчанию — пустая реализация)
-- [ ] Окончательная неудача задачи → запись `failed` + понятный `error` (без стека); запись остаётся находимой по URL/заметке
-- [ ] `POST /api/items/{id}/reprocess` → `pending` + новая задача; для `note`/`snippet` → `400`
-- [ ] Тесты unit: таблица адресов (`127.0.0.1`, `10.1.2.3`, `169.254.169.254`, `::1`, `::ffff:127.0.0.1`, `fd00::1`, `100.64.0.1`, `8.8.8.8` ✔); `http://2130706433/` и `http://0x7f.0.0.1/` отклоняются после резолва; извлечение из 3 фикстур (статья, страница без статьи, кириллица в `windows-1251`)
-- [ ] Тесты интеграционные (WireMock): статья → `ready` + находится поиском по тексту; редирект на `http://169.254.169.254/` → `failed`; ответ 6 МБ → `failed`; `application/pdf` → `failed`; 503 → повтор → затем успех; `reprocess`
+- [x] `SsrfGuard.IsAllowed(IPAddress)`: запрет loopback, private (10/8, 172.16/12, 192.168/16), link-local (169.254/16, fe80::/10), CGNAT 100.64/10, 0.0.0.0/8, multicast, broadcast, unique local fc00::/7, IPv4-mapped IPv6 (проверять `MapToIPv4()`), `::`
+- [x] `SafeHttpFetcher`: `SocketsHttpHandler { ConnectCallback = резолв + проверка всех адресов + подключение к проверенному IP, AllowAutoRedirect = false, UseProxy = false, AutomaticDecompression = All, PooledConnectionLifetime = 5 мин }`; только `http/https` и порты 80/443; ручные редиректы ≤ 5 (каждый URL заново валидируется); таймаут 15 с; чтение тела с лимитом 5 МБ (превышение → ошибка); принимаются только `text/html`/`application/xhtml+xml`; кодировка из заголовка/`<meta charset>`
+- [x] Для тестов `SafeHttpFetcher` принимает опцию `AllowLoopbackForTests` (только из `ApiFactory`), чтобы ходить в WireMock на `localhost` — по умолчанию `false`
+- [x] `ArticleExtractor`: `new Reader(url, html).GetArticle()` (SmartReader **не** скачивает сам — передаём HTML); `IsReadable` → `title`, `body = TextContent`; иначе — только `title` из страницы; ни заголовка, ни текста → ошибка «Не удалось извлечь содержимое»
+- [x] `IngestItemJob` (`type = "ingest"`): `processing` → fetch → extract → `IItemService.SetProcessingResultAsync` (заголовок пользователя не перезаписывается, если задан) → `ISearchIndexer.ReindexAsync` → `ready`; уведомление `IIngestionCompletedHandler` (реализует бот в фиче 19; по умолчанию — пустая реализация)
+- [x] Окончательная неудача задачи → запись `failed` + понятный `error` (без стека); запись остаётся находимой по URL/заметке
+- [x] `POST /api/items/{id}/reprocess` → `pending` + новая задача; для `note`/`snippet` → `400`
+- [x] Тесты unit: таблица адресов (`127.0.0.1`, `10.1.2.3`, `169.254.169.254`, `::1`, `::ffff:127.0.0.1`, `fd00::1`, `100.64.0.1`, `8.8.8.8` ✔); `http://2130706433/` и `http://0x7f.0.0.1/` отклоняются после резолва; извлечение из 3 фикстур (статья, страница без статьи, кириллица в `windows-1251`)
+- [x] Тесты интеграционные (WireMock): статья → `ready` + находится поиском по тексту; редирект на `http://169.254.169.254/` → `failed`; ответ 6 МБ → `failed`; `application/pdf` → `failed`; 503 → повтор → затем успех; `reprocess`
 
 **Проверка:**
-- [ ] `dotnet test tests/KnowledgeHub.UnitTests --filter "FullyQualifiedName~Ingestion"` — `Passed!  - Failed:     0`
-- [ ] `dotnet test tests/KnowledgeHub.IntegrationTests --filter "FullyQualifiedName~Ingestion"` — `Passed!  - Failed:     0`
+- [x] `dotnet test tests/KnowledgeHub.UnitTests --filter "FullyQualifiedName~Ingestion"` — `Passed!  - Failed:     0`
+- [x] `dotnet test tests/KnowledgeHub.IntegrationTests --filter "FullyQualifiedName~Ingestion"` — `Passed!  - Failed:     0`
 
 ---
 

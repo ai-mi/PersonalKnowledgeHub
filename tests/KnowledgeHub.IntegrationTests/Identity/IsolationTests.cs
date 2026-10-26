@@ -36,6 +36,7 @@ public static class IsolationCases
                 (HttpMethod.Get, $"/api/items/{id}", null),
                 (HttpMethod.Put, $"/api/items/{id}", new { title = "y" }),
                 (HttpMethod.Patch, $"/api/items/{id}", new { read = true }),
+                (HttpMethod.Post, $"/api/items/{id}/reprocess", null),
                 (HttpMethod.Delete, $"/api/items/{id}", null),
             ]),
         new("Tags",

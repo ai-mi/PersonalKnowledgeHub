@@ -1,12 +1,15 @@
 using KnowledgeHub.Api.Common;
 using KnowledgeHub.Api.Infrastructure.Persistence;
+using KnowledgeHub.Api.Modules.Ingestion;
+using KnowledgeHub.Api.Modules.Jobs;
 using KnowledgeHub.Api.Modules.Search;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
 namespace KnowledgeHub.Api.Modules.Items;
 
-public sealed class ItemService(AppDbContext db, TagService tags, ISearchIndexer searchIndexer, TimeProvider timeProvider) : IItemService
+public sealed class ItemService(
+    AppDbContext db, TagService tags, ISearchIndexer searchIndexer, IJobQueue jobs, TimeProvider timeProvider) : IItemService
 {
     /// <summary>Записи вместе с тегами и коллекциями (нужны для <see cref="ItemResponse"/>).</summary>
     private IQueryable<Item> WithRelations() => db.Items.Include(i => i.Tags).Include(i => i.Collections).AsSplitQuery();
@@ -66,8 +69,8 @@ public sealed class ItemService(AppDbContext db, TagService tags, ISearchIndexer
             Body = type is ItemType.Note or ItemType.Snippet ? NullIfBlank(command.Body) : null,
             UserNote = NullIfBlank(command.UserNote),
             CodeLanguage = type == ItemType.Snippet ? Clean(command.CodeLanguage) : null,
-            // Ссылки получат статус pending, когда появится извлечение контента (Ingestion).
-            Status = ItemStatus.Ready,
+            // Ссылку дообработает воркер (Ingestion); заметки и фрагменты готовы сразу.
+            Status = type == ItemType.Link ? ItemStatus.Pending : ItemStatus.Ready,
             CreatedAt = now,
             UpdatedAt = now,
         };
@@ -77,8 +80,16 @@ public sealed class ItemService(AppDbContext db, TagService tags, ISearchIndexer
 
         try
         {
+            // Запись и задача обработки сохраняются атомарно.
+            await using var transaction = await db.Database.BeginTransactionAsync(ct);
             await db.SaveChangesAsync(ct);
+            if (type == ItemType.Link)
+            {
+                await EnqueueIngestAsync(item, ct);
+            }
+
             await searchIndexer.ReindexAsync([item.Id], ct);
+            await transaction.CommitAsync(ct);
         }
         catch (DbUpdateException e) when (url is not null && IsUnique(e, UrlIndex))
         {
@@ -89,6 +100,37 @@ public sealed class ItemService(AppDbContext db, TagService tags, ISearchIndexer
         }
 
         return new CreateItemResult(item, true);
+    }
+
+    private Task EnqueueIngestAsync(Item item, CancellationToken ct) =>
+        jobs.EnqueueAsync(IngestItemJob.JobType, new IngestItemPayload(item.Id), item.UserId, ct: ct);
+
+    public async Task<Item?> ReprocessAsync(Guid id, CancellationToken ct)
+    {
+        var item = await WithRelations().FirstOrDefaultAsync(i => i.Id == id, ct);
+        if (item is null)
+        {
+            return null;
+        }
+
+        if (item.Type is ItemType.Note or ItemType.Snippet)
+        {
+            throw Errors.Validation("type", "Only links and documents can be reprocessed.");
+        }
+
+        if (item.Status is ItemStatus.Pending or ItemStatus.Processing)
+        {
+            return item;
+        }
+
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        item.Status = ItemStatus.Pending;
+        item.Error = null;
+        item.UpdatedAt = timeProvider.GetUtcNow();
+        await db.SaveChangesAsync(ct);
+        await EnqueueIngestAsync(item, ct);
+        await transaction.CommitAsync(ct);
+        return item;
     }
 
     public Task<Item?> GetAsync(Guid id, CancellationToken ct) =>

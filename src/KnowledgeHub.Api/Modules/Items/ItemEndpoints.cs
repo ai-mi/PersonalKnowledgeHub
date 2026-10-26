@@ -17,7 +17,11 @@ public static class ItemEndpoints
         group.MapPut("/{id:guid}", Update);
         group.MapPatch("/{id:guid}", MarkRead);
         group.MapDelete("/{id:guid}", Delete);
+        group.MapPost("/{id:guid}/reprocess", Reprocess);
     }
+
+    private static async Task<Results<Ok<ItemResponse>, NotFound>> Reprocess(Guid id, IItemService items, CancellationToken ct) =>
+        Found(await items.ReprocessAsync(id, ct));
 
     private static async Task<Results<Created<ItemResponse>, Ok<ItemResponse>>> Create(
         CreateItemCommand command, IItemService items, CancellationToken ct)

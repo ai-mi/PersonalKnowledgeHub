@@ -47,6 +47,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("Database:ConnectionString", _postgres.AppConnectionString);
         builder.UseSetting("Database:MigrateOnStartup", "true");
         builder.UseSetting("Jobs:Enabled", "false");
+        // Тесты Ingestion ходят в WireMock на localhost.
+        builder.UseSetting("Ingestion:AllowLoopbackForTests", "true");
 
         builder.ConfigureTestServices(services =>
         {

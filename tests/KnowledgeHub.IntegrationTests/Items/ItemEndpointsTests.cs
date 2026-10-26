@@ -75,7 +75,7 @@ public sealed class ItemEndpointsTests(ApiFactory factory) : IntegrationTest(fac
 
         created.GetProperty("type").GetString().ShouldBe("link");
         created.GetProperty("url").GetString().ShouldBe("https://example.com/Article");
-        created.GetProperty("status").GetString().ShouldBe("ready");
+        created.GetProperty("status").GetString().ShouldBe("pending");
     }
 
     [Fact]
