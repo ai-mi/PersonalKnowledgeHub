@@ -31,8 +31,10 @@ public sealed partial class RecurringScheduler(
         using var timer = new PeriodicTimer(interval, timeProvider);
         try
         {
-            while (await timer.WaitForNextTickAsync(ct))
+            // Таймер принадлежит этому циклу и не освобождается снаружи, поэтому тик всегда true; выход — только отменой.
+            while (true)
             {
+                await timer.WaitForNextTickAsync(ct);
                 await ExecuteOnceAsync(taskType, name, ct);
             }
         }

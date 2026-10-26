@@ -50,4 +50,38 @@ public sealed class ArticleExtractorTests
         error.Retryable.ShouldBeFalse();
         error.Message.ShouldContain("Не удалось извлечь содержимое");
     }
+
+    [Fact]
+    public void ReadablePageWithoutTitle_YieldsOnlyBody()
+    {
+        const string html =
+            """
+            <!doctype html><html><head></head><body><article>
+            <p>Azure Service Bus is a fully managed enterprise message broker with message queues and publish-subscribe topics.
+            Queues decouple producers from consumers, so a slow consumer never blocks the sender, and messages survive restarts.</p>
+            <p>Dead-letter queues collect messages that cannot be delivered, while sessions guarantee ordering for related messages
+            and duplicate detection drops repeated sends within a configurable time window.</p>
+            <p>Choosing between queues and topics depends on whether one consumer or many subscribers need every message,
+            and on how filtering rules should route copies of a message to each subscription.</p>
+            </article></body></html>
+            """;
+
+        var result = ArticleExtractor.Extract(PageUrl, html);
+
+        result.Title.ShouldBeNull();
+        result.Body.ShouldNotBeNull().ShouldContain("Dead-letter queues");
+    }
+
+    [Fact]
+    public void VeryLongTitleAndBody_AreTruncated()
+    {
+        var sentence = "Azure Service Bus is a fully managed enterprise message broker with queues and topics for decoupled systems. ";
+        var html = $"<!doctype html><html><head><title>{new string('T', 800)}</title></head><body><article>" +
+                   string.Concat(Enumerable.Repeat($"<p>{sentence}{sentence}{sentence}</p>", 3000)) + "</article></body></html>";
+
+        var result = ArticleExtractor.Extract(PageUrl, html);
+
+        result.Title.ShouldNotBeNull().Length.ShouldBe(Api.Modules.Items.Item.MaxTitleLength);
+        result.Body.ShouldNotBeNull().Length.ShouldBe(ArticleExtractor.MaxBodyLength);
+    }
 }

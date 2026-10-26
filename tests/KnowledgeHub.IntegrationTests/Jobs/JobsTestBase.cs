@@ -17,6 +17,7 @@ public sealed class JobProbe
 {
     public Func<TestPayload, IServiceProvider, Task> OnHandle { get; set; } = (_, _) => Task.CompletedTask;
     public List<string> Failures { get; } = [];
+    public bool ThrowInFailureHandler { get; set; }
     public int RecurringRuns { get; set; }
 }
 
@@ -35,7 +36,7 @@ public sealed class TestFailureHandler(JobProbe probe) : IJobFailureHandler
     public Task OnFailedAsync(Job job, string error, CancellationToken ct)
     {
         probe.Failures.Add(error);
-        return Task.CompletedTask;
+        return probe.ThrowInFailureHandler ? throw new InvalidOperationException("обработчик отказа упал") : Task.CompletedTask;
     }
 }
 

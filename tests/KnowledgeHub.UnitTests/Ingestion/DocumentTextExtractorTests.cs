@@ -1,3 +1,6 @@
+using DocumentFormat.OpenXml.Wordprocessing;
+using DocumentFormat.OpenXml;
+using DocumentFormat.OpenXml.Packaging;
 using KnowledgeHub.Api.Modules.Ingestion;
 
 namespace KnowledgeHub.UnitTests.Ingestion;
@@ -87,5 +90,43 @@ public sealed class DocumentTextExtractorTests
             Thread.Sleep(delay);
             base.CopyTo(destination, bufferSize);
         }
+    }
+
+    private static MemoryStream DocxWith(Action<WordprocessingDocument> build)
+    {
+        var stream = new MemoryStream();
+        using (var document = WordprocessingDocument.Create(stream, WordprocessingDocumentType.Document, autoSave: true))
+        {
+            build(document);
+        }
+
+        stream.Position = 0;
+        return stream;
+    }
+
+    [Fact]
+    public async Task Docx_WithoutMainPart_HasNoText()
+    {
+        using var docx = DocxWith(_ => { });
+
+        await Should.ThrowAsync<IngestionException>(() => DocumentTextExtractor.ExtractAsync(docx, DocumentKind.Docx, Ct));
+    }
+
+    [Fact]
+    public async Task Docx_WithoutBody_HasNoText()
+    {
+        using var docx = DocxWith(d => d.AddMainDocumentPart().Document = new Document());
+
+        var error = await Should.ThrowAsync<IngestionException>(() => DocumentTextExtractor.ExtractAsync(docx, DocumentKind.Docx, Ct));
+
+        error.Message.ShouldContain("не найден текст");
+    }
+
+    [Fact]
+    public async Task Docx_MainPartWithoutDocument_HasNoText()
+    {
+        using var docx = DocxWith(d => d.AddMainDocumentPart());
+
+        await Should.ThrowAsync<IngestionException>(() => DocumentTextExtractor.ExtractAsync(docx, DocumentKind.Docx, Ct));
     }
 }

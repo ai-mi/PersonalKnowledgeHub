@@ -1,6 +1,10 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
+using KnowledgeHub.Api.Common;
+using KnowledgeHub.Api.Infrastructure.Persistence;
+using KnowledgeHub.Api.Modules.Bot;
 using KnowledgeHub.IntegrationTests.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace KnowledgeHub.IntegrationTests.Identity;
 
@@ -116,6 +120,30 @@ public sealed class IsolationTests(ApiFactory factory) : IntegrationTest(factory
 
         meA.GetProperty("settings").GetProperty("email").GetString().ShouldBe("a@example.com");
         meB.GetProperty("settings").GetProperty("email").GetString().ShouldBe("b@example.com");
+    }
+
+    [Fact]
+    public async Task TelegramLink_IsAlwaysThatOfTheCaller()
+    {
+        // Как и настройки, привязка Telegram адресуется только «собой» (/api/me/telegram): чужую по id не достать.
+        var aId = Guid.CreateVersion7();
+        using var a = await Factory.CreateClientForAsync(aId);
+        using var b = await Factory.CreateClientForAsync(Guid.CreateVersion7());
+        await using (var scope = Factory.Services.CreateAsyncScope())
+        {
+            using var _ = scope.ServiceProvider.GetRequiredService<SystemContext>().Enter();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            db.TelegramLinks.Add(new TelegramLink { UserId = aId, ChatId = 1, LinkedAt = DateTimeOffset.UtcNow });
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        var ct = TestContext.Current.CancellationToken;
+        (await a.GetFromJsonAsync<System.Text.Json.JsonElement>("/api/me/telegram", ct)).GetProperty("linked").GetBoolean().ShouldBeTrue();
+        (await b.GetFromJsonAsync<System.Text.Json.JsonElement>("/api/me/telegram", ct)).GetProperty("linked").GetBoolean().ShouldBeFalse();
+
+        // Отвязка у B не задевает привязку A.
+        (await b.DeleteAsync("/api/me/telegram/link", ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await a.GetFromJsonAsync<System.Text.Json.JsonElement>("/api/me/telegram", ct)).GetProperty("linked").GetBoolean().ShouldBeTrue();
     }
 
     [Fact]

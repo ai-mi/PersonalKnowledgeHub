@@ -10,6 +10,11 @@ param adminPrincipalName string
 @allowed(['User', 'Group', 'ServicePrincipal'])
 param adminPrincipalType string = 'User'
 
+@description('Имя Telegram-бота без @.')
+param botUsername string = ''
+@description('Публичный адрес webhook: https://<хост Web App>/telegram/webhook.')
+param botWebhookUrl string = ''
+
 var suffix = uniqueString(resourceGroup().id)
 var webAppName = '${namePrefix}-${suffix}'
 var keyVaultName = '${namePrefix}-kv-${suffix}'
@@ -49,6 +54,8 @@ module appService 'modules/app-service.bicep' = {
     databaseName: databaseName
     keyVaultName: keyVaultName
     storageAccountName: storageAccountName
+    botUsername: botUsername
+    botWebhookUrl: botWebhookUrl
   }
 }
 

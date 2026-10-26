@@ -20,12 +20,20 @@ public sealed partial class SafeHttpFetcher : IDisposable
 
     static SafeHttpFetcher() => Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-    public SafeHttpFetcher(IOptions<IngestionOptions> options)
+    private readonly Func<string, CancellationToken, Task<IPAddress[]>> _resolve;
+
+    public SafeHttpFetcher(IOptions<IngestionOptions> options) : this(options, Dns.GetHostAddressesAsync)
+    {
+    }
+
+    /// <param name="resolve">Резолвер имён; подменяется в тестах.</param>
+    public SafeHttpFetcher(IOptions<IngestionOptions> options, Func<string, CancellationToken, Task<IPAddress[]>> resolve)
     {
         _options = options.Value;
+        _resolve = resolve;
         _client = new HttpClient(new SocketsHttpHandler
         {
-            ConnectCallback = ConnectAsync,
+            ConnectCallback = (context, ct) => ConnectAsync(context.DnsEndPoint, ct),
             AllowAutoRedirect = false,
             UseProxy = false,
             AutomaticDecompression = DecompressionMethods.All,
@@ -104,11 +112,12 @@ public sealed partial class SafeHttpFetcher : IDisposable
 
     private static void EnsureSuccess(HttpResponseMessage response)
     {
-        var status = (int)response.StatusCode;
-        if (status is >= 200 and < 300)
+        if (response.IsSuccessStatusCode)
         {
             return;
         }
+
+        var status = (int)response.StatusCode;
 
         // 5xx, 429 и 408 — временные: повтор может помочь; остальные 4xx — нет.
         var retryable = status >= 500 || status is 429 or 408;
@@ -146,15 +155,15 @@ public sealed partial class SafeHttpFetcher : IDisposable
         }
 
         var bytes = buffer.ToArray();
-        return ResolveEncoding(response.Content.Headers.ContentType, bytes).GetString(bytes);
+        return ResolveEncoding(response.Content.Headers.ContentType!.CharSet, bytes).GetString(bytes);
     }
 
     private static IngestionException TooLarge() => new("Страница слишком большая.", retryable: false);
 
     /// <summary>Кодировка: заголовок Content-Type, затем meta charset в начале документа, иначе UTF-8.</summary>
-    private static Encoding ResolveEncoding(MediaTypeHeaderValue? contentType, byte[] bytes)
+    private static Encoding ResolveEncoding(string? charSet, byte[] bytes)
     {
-        var name = contentType?.CharSet?.Trim('"', ' ');
+        var name = charSet?.Trim('"', ' ');
         if (string.IsNullOrEmpty(name))
         {
             // Латиница в первых килобайтах одинакова во всех ASCII-совместимых кодировках.
@@ -194,13 +203,12 @@ public sealed partial class SafeHttpFetcher : IDisposable
     }
 
     /// <summary>Резолвит имя, проверяет <b>все</b> адреса и подключается к проверенному IP — без повторного DNS-запроса.</summary>
-    private async ValueTask<Stream> ConnectAsync(SocketsHttpConnectionContext context, CancellationToken ct)
+    public async ValueTask<Stream> ConnectAsync(DnsEndPoint endPoint, CancellationToken ct)
     {
-        var host = context.DnsEndPoint.Host;
-        var addresses = await Dns.GetHostAddressesAsync(host, ct);
-        if (addresses.Length == 0 || addresses.Any(a => !IsAllowed(a)))
+        var addresses = await _resolve(endPoint.Host, ct);
+        if (addresses.Any(a => !IsAllowed(a)))
         {
-            throw new IngestionException("Адрес страницы недоступен для сохранения.", retryable: false);
+            throw Unavailable();
         }
 
         SocketException? last = null;
@@ -209,7 +217,7 @@ public sealed partial class SafeHttpFetcher : IDisposable
             var socket = new Socket(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp) { NoDelay = true };
             try
             {
-                await socket.ConnectAsync(new IPEndPoint(address, context.DnsEndPoint.Port), ct);
+                await socket.ConnectAsync(new IPEndPoint(address, endPoint.Port), ct);
                 return new NetworkStream(socket, ownsSocket: true);
             }
             catch (SocketException e)
@@ -224,8 +232,11 @@ public sealed partial class SafeHttpFetcher : IDisposable
             }
         }
 
-        throw last!;
+        // Пустой список адресов: подключаться некуда.
+        throw last is null ? Unavailable() : last;
     }
+
+    private static IngestionException Unavailable() => new("Адрес страницы недоступен для сохранения.", retryable: false);
 
     private bool IsAllowed(IPAddress address) =>
         SsrfGuard.IsAllowed(address) || _options.AllowLoopbackForTests && IPAddress.IsLoopback(address);

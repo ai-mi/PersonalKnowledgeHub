@@ -73,6 +73,8 @@ az keyvault secret set --vault-name $kv -n GoogleClientSecret    --value '<се�
 az keyvault secret set --vault-name $kv -n MicrosoftClientSecret --value '<секрет>'
 ```
 
+Имя бота и адрес webhook — не секреты, они задаются параметрами развёртывания: после первого развёртывания возьмите `webAppHostName` из outputs и повторите `az deployment group create` с переменными `BOT_USERNAME` (имя бота без `@`) и `BOT_WEBHOOK_URL` (`https://<webAppHostName>/telegram/webhook`). Приложение само зарегистрирует webhook в Telegram при старте.
+
 Пока секрета нет, соответствующая настройка Web App показывает ошибку ссылки на Key Vault — приложение при этом работает, но функция недоступна.
 
 ### 4. ⚠ Регистрация OAuth-приложений

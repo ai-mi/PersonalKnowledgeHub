@@ -36,23 +36,23 @@ public sealed class DocumentIntake(
 
         file.Position = 0;
         await blobs.UploadAsync(BlobContainers.Documents, blobPath, file, FileSignature.ContentTypeFor(storedName), ct);
+        // Блоб остаётся, только если запись создана именно с ним. При ошибке или если параллельная загрузка
+        // того же файла успела раньше, он больше не нужен.
+        var keepBlob = false;
         try
         {
             var title = string.IsNullOrWhiteSpace(metadata.Title) ? Path.GetFileNameWithoutExtension(storedName) : metadata.Title;
             var result = await items.CreateDocumentAsync(
                 new CreateDocumentCommand(id, blobPath, hash, title, metadata.UserNote, metadata.Tags, metadata.CollectionIds), ct);
-            if (!result.Created)
-            {
-                // Параллельная загрузка того же файла успела раньше: наш блоб больше не нужен.
-                await DeleteQuietlyAsync(blobPath);
-            }
-
+            keepBlob = result.Created;
             return result;
         }
-        catch
+        finally
         {
-            await DeleteQuietlyAsync(blobPath);
-            throw;
+            if (!keepBlob)
+            {
+                await DeleteQuietlyAsync(blobPath);
+            }
         }
     }
 

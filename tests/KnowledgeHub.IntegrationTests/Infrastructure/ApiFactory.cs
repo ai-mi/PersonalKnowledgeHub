@@ -1,5 +1,6 @@
 using KnowledgeHub.Api.Common;
 using KnowledgeHub.Api.Infrastructure.Persistence;
+using KnowledgeHub.Api.Modules.Bot;
 using KnowledgeHub.Api.Modules.Identity;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
@@ -18,6 +19,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     // поэтому параллельный старт нескольких хостов на одной БД запускаем по очереди.
     private static readonly Lock HostStartLock = new();
 
+    public const string BotWebhookSecret = "test-webhook-secret";
+
     private readonly PostgresContainer _postgres;
     private readonly AzuriteContainer _azurite;
     private Respawner? _respawner;
@@ -34,6 +37,9 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     }
 
     public PostgresContainer Postgres => _postgres;
+
+    /// <summary>Один фейк на все хосты фабрики (включая производные): тест видит ответы бота, не зная, какой хост их отправил.</summary>
+    public FakeTelegramClient Telegram { get; } = new();
 
     public string AzuriteConnectionString => _azurite.ConnectionString;
 
@@ -54,9 +60,13 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("Storage:ConnectionString", _azurite.ConnectionString);
         // Тесты Ingestion ходят в WireMock на localhost.
         builder.UseSetting("Ingestion:AllowLoopbackForTests", "true");
+        builder.UseSetting("Bot:WebhookSecret", BotWebhookSecret);
+        builder.UseSetting("Bot:Username", "kh_test_bot");
 
         builder.ConfigureTestServices(services =>
         {
+            services.AddSingleton<ITelegramClient>(Telegram);
+
             services.AddAuthentication()
                 .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.SchemeName, _ => { });
 

@@ -559,7 +559,7 @@ infra/                                — Bicep
 
 ---
 
-### Фича 18: Telegram-бот — привязка и сохранение
+### Фича 18: Telegram-бот — привязка и сохранение ✅
 
 **Цель:** пользователь привязывает Telegram по одноразовой ссылке; ссылки, текст и файлы, присланные боту, сохраняются как записи с тегами из хэштегов.
 
@@ -569,20 +569,20 @@ infra/                                — Bicep
 - Тесты: `tests/KnowledgeHub.UnitTests/Bot/MessageParserTests.cs`, `tests/KnowledgeHub.IntegrationTests/Bot/WebhookTests.cs`, `tests/KnowledgeHub.IntegrationTests/Bot/LinkingTests.cs`, `tests/KnowledgeHub.IntegrationTests/Infrastructure/FakeTelegramClient.cs`
 
 **Шаги:**
-- [ ] Таблицы `telegram_links` (`chat_id` unique) и `telegram_link_codes` (`code_hash`, `user_id`, `expires_at`); миграция с `EnableUserRls` для обеих
-- [ ] `ITelegramClient` — тонкая обёртка над `TelegramBotClient` (v22: `SendMessage`, `GetFile`, `DownloadFile`, `AnswerCallbackQuery`, `SetWebhook`) — подменяется `FakeTelegramClient` в тестах
-- [ ] `POST /api/me/telegram/link` → `{ url: "https://t.me/<bot>?start=<code>", expiresAt }` (код 16 байт Base64Url, хранится хэш, 10 мин); `DELETE /api/me/telegram/link`; `GET /api/me/telegram` → статус привязки
-- [ ] `POST /telegram/webhook`: сравнение `X-Telegram-Bot-Api-Secret-Token` через `CryptographicOperations.FixedTimeEquals` (неверный → `401`); тело → `JsonSerializer.Deserialize<Update>(..., JsonBotAPI.Options)`; задача `telegram.update` с `dedupKey = "tg:{update_id}"`; ответ `200` сразу; эндпоинт без cookie-аутентификации и antiforgery
-- [ ] `WebhookRegistration` (hosted service, только если задан `Bot:WebhookUrl`): `SetWebhook(url, secretToken, allowedUpdates: [Message, CallbackQuery])`
-- [ ] `ProcessUpdateJob`: `/start <code>` → проверка кода (системный контекст) → `telegram_links` → ответ «Аккаунт привязан»; непривязанный `chat_id` → инструкция; привязанный → `SystemContext.RunAs(userId)` и `MessageParser`
-- [ ] `MessageParser`: первая ссылка из `entities` (`url`/`text_link`) → `link`, остальной текст/подпись → `user_note`; текст без ссылок → `note`; `document` → скачать через `GetFile`/`DownloadFile` (≤ 20 МБ, иначе ответ с объяснением) → `IDocumentIntake.AcceptAsync` из фичи 16 (DRY); хэштеги → теги (`TagName.Normalize`)
-- [ ] Создание записей — только через `IItemService` (DRY с API); ответ «Сохранено»
-- [ ] Тесты unit: ссылка + подпись + `#azure #dotnet`; `text_link`; только текст; несколько ссылок (первая — запись, остальные — в заметке)
-- [ ] Тесты интеграционные: неверный секрет → `401`; повтор того же `update_id` → одна запись; привязка по коду; просроченный код; сообщение непривязанного чата не создаёт запись; присланный PDF становится документом
+- [x] Таблицы `telegram_links` (`chat_id` unique) и `telegram_link_codes` (`code_hash`, `user_id`, `expires_at`); миграция с `EnableUserRls` для обеих
+- [x] `ITelegramClient` — тонкая обёртка над `TelegramBotClient` (v22: `SendMessage`, `GetFile`, `DownloadFile`, `AnswerCallbackQuery`, `SetWebhook`) — подменяется `FakeTelegramClient` в тестах
+- [x] `POST /api/me/telegram/link` → `{ url: "https://t.me/<bot>?start=<code>", expiresAt }` (код 16 байт Base64Url, хранится хэш, 10 мин); `DELETE /api/me/telegram/link`; `GET /api/me/telegram` → статус привязки
+- [x] `POST /telegram/webhook`: сравнение `X-Telegram-Bot-Api-Secret-Token` через `CryptographicOperations.FixedTimeEquals` (неверный → `401`); тело → `JsonSerializer.Deserialize<Update>(..., JsonBotAPI.Options)`; задача `telegram.update` с `dedupKey = "tg:{update_id}"`; ответ `200` сразу; эндпоинт без cookie-аутентификации и antiforgery
+- [x] `WebhookRegistration` (hosted service, только если задан `Bot:WebhookUrl`): `SetWebhook(url, secretToken, allowedUpdates: [Message, CallbackQuery])`
+- [x] `ProcessUpdateJob`: `/start <code>` → проверка кода (системный контекст) → `telegram_links` → ответ «Аккаунт привязан»; непривязанный `chat_id` → инструкция; привязанный → `SystemContext.RunAs(userId)` и `MessageParser`
+- [x] `MessageParser`: первая ссылка из `entities` (`url`/`text_link`) → `link`, остальной текст/подпись → `user_note`; текст без ссылок → `note`; `document` → скачать через `GetFile`/`DownloadFile` (≤ 20 МБ, иначе ответ с объяснением) → `IDocumentIntake.AcceptAsync` из фичи 16 (DRY); хэштеги → теги (`TagName.Normalize`)
+- [x] Создание записей — только через `IItemService` (DRY с API); ответ «Сохранено»
+- [x] Тесты unit: ссылка + подпись + `#azure #dotnet`; `text_link`; только текст; несколько ссылок (первая — запись, остальные — в заметке)
+- [x] Тесты интеграционные: неверный секрет → `401`; повтор того же `update_id` → одна запись; привязка по коду; просроченный код; сообщение непривязанного чата не создаёт запись; присланный PDF становится документом
 
 **Проверка:**
-- [ ] `dotnet test tests/KnowledgeHub.UnitTests --filter "FullyQualifiedName~Bot"` — `Passed!  - Failed:     0`
-- [ ] `dotnet test tests/KnowledgeHub.IntegrationTests --filter "FullyQualifiedName~Bot"` — `Passed!  - Failed:     0`
+- [x] `dotnet test tests/KnowledgeHub.UnitTests --filter "FullyQualifiedName~Bot"` — `Passed!  - Failed:     0`
+- [x] `dotnet test tests/KnowledgeHub.IntegrationTests --filter "FullyQualifiedName~Bot"` — `Passed!  - Failed:     0`
 
 ---
 

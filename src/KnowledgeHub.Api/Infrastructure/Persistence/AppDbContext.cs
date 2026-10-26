@@ -1,5 +1,6 @@
 using System.Reflection;
 using KnowledgeHub.Api.Common;
+using KnowledgeHub.Api.Modules.Bot;
 using KnowledgeHub.Api.Modules.Identity;
 using KnowledgeHub.Api.Modules.Items;
 using KnowledgeHub.Api.Modules.Jobs;
@@ -19,6 +20,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ICurrentUser c
     public DbSet<Item> Items => Set<Item>();
     public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<Collection> Collections => Set<Collection>();
+    public DbSet<TelegramLink> TelegramLinks => Set<TelegramLink>();
+    public DbSet<TelegramLinkCode> TelegramLinkCodes => Set<TelegramLinkCode>();
     public DbSet<Job> Jobs => Set<Job>();
 
     // Свойства читаются при выполнении запроса: EF подставляет их значения из текущего экземпляра контекста.

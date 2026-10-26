@@ -23,6 +23,63 @@ namespace KnowledgeHub.Api.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("KnowledgeHub.Api.Modules.Bot.TelegramLink", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<long>("ChatId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("chat_id");
+
+                    b.Property<DateTimeOffset>("LinkedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("linked_at");
+
+                    b.HasKey("UserId")
+                        .HasName("pk_telegram_links");
+
+                    b.HasIndex("ChatId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_telegram_links_chat_id");
+
+                    b.ToTable("telegram_links", (string)null);
+                });
+
+            modelBuilder.Entity("KnowledgeHub.Api.Modules.Bot.TelegramLinkCode", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("CodeHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("code_hash");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_telegram_link_codes");
+
+                    b.HasIndex("CodeHash")
+                        .IsUnique()
+                        .HasDatabaseName("ix_telegram_link_codes_code_hash");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_telegram_link_codes_user_id");
+
+                    b.ToTable("telegram_link_codes", (string)null);
+                });
+
             modelBuilder.Entity("KnowledgeHub.Api.Modules.Identity.ApiToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -429,6 +486,26 @@ namespace KnowledgeHub.Api.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_jobs_status_run_after");
 
                     b.ToTable("jobs", (string)null);
+                });
+
+            modelBuilder.Entity("KnowledgeHub.Api.Modules.Bot.TelegramLink", b =>
+                {
+                    b.HasOne("KnowledgeHub.Api.Modules.Identity.User", null)
+                        .WithOne()
+                        .HasForeignKey("KnowledgeHub.Api.Modules.Bot.TelegramLink", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_telegram_links_users_user_id");
+                });
+
+            modelBuilder.Entity("KnowledgeHub.Api.Modules.Bot.TelegramLinkCode", b =>
+                {
+                    b.HasOne("KnowledgeHub.Api.Modules.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_telegram_link_codes_users_user_id");
                 });
 
             modelBuilder.Entity("KnowledgeHub.Api.Modules.Identity.ApiToken", b =>

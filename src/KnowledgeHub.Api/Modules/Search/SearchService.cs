@@ -17,7 +17,7 @@ public sealed class SearchService(AppDbContext db) : ISearchService
 
     public async Task<PagedResult<SearchHit>> SearchAsync(SearchQuery query, CancellationToken ct)
     {
-        var text = query.Text?.Trim();
+        var text = query.Text.Trim();
         if (string.IsNullOrEmpty(text))
         {
             throw Errors.Validation("q", "Query is required.");
@@ -59,7 +59,7 @@ public sealed class SearchService(AppDbContext db) : ISearchService
         var highlights = await HighlightsAsync(text, ids, ct);
 
         var hits = ranked
-            .Select(r => new SearchHit(summaries[r.Id], r.Rank, highlights.GetValueOrDefault(r.Id) ?? []))
+            .Select(r => new SearchHit(summaries[r.Id], r.Rank, highlights[r.Id]))
             .ToList();
         return new PagedResult<SearchHit>(hits, query.Page, query.PageSize, total);
     }
@@ -80,13 +80,13 @@ public sealed class SearchService(AppDbContext db) : ISearchService
     }
 
     /// <summary>Экранирует HTML текста и возвращает маркеры подсветки как <c>&lt;mark&gt;</c>.</summary>
-    internal static IReadOnlyList<string> ToFragments(string? headline) =>
-        (headline ?? "").Split(Delimiter, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    internal static IReadOnlyList<string> ToFragments(string headline) =>
+        headline.Split(Delimiter, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Select(f => Escape(f).Replace(Start.ToString(), "<mark>").Replace(Stop.ToString(), "</mark>"))
             .ToList();
 
     private static string Escape(string s) =>
         s.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;").Replace("\"", "&quot;").Replace("'", "&#39;");
 
-    private sealed record HeadlineRow(Guid Id, string? Headline);
+    private sealed record HeadlineRow(Guid Id, string Headline);
 }

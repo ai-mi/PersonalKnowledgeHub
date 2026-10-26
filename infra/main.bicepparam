@@ -9,3 +9,8 @@ param location = 'eastus'
 param adminPrincipalId = readEnvironmentVariable('ADMIN_PRINCIPAL_ID', '')
 param adminPrincipalName = readEnvironmentVariable('ADMIN_PRINCIPAL_NAME', '')
 param adminPrincipalType = 'User'
+
+// Telegram-бот (создаётся в @BotFather). Хост Web App известен после первого развёртывания (output webAppHostName),
+// поэтому webhook включается повторным развёртыванием.
+param botUsername = readEnvironmentVariable('BOT_USERNAME', '')
+param botWebhookUrl = readEnvironmentVariable('BOT_WEBHOOK_URL', '')

@@ -14,7 +14,8 @@ public static class SsrfGuard
             return address.IsIPv4MappedToIPv6 ? IsAllowed(address.MapToIPv4()) : IsAllowedV6(address);
         }
 
-        return address.AddressFamily == AddressFamily.InterNetwork && IsAllowedV4(address.GetAddressBytes());
+        // IPAddress бывает только IPv4 или IPv6.
+        return IsAllowedV4(address.GetAddressBytes());
     }
 
     private static bool IsAllowedV4(byte[] b) =>

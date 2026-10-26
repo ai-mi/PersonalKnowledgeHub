@@ -7,6 +7,10 @@ param databaseName string
 param keyVaultName string
 // Имя известно заранее (задаётся в main.bicep), поэтому зависимости app-service -> storage (и цикла с ролью) нет.
 param storageAccountName string
+@description('Имя бота без @ — для ссылки привязки t.me/<имя>?start=<код>. Пусто — привязка Telegram недоступна.')
+param botUsername string = ''
+@description('Публичный адрес https://<хост>/telegram/webhook. Пусто — webhook в Telegram не регистрируется.')
+param botWebhookUrl string = ''
 
 // Ссылка на секрет Key Vault без версии — App Service подхватывает последнюю версию.
 func kvReference(vaultName string, secretName string) string =>
@@ -50,8 +54,10 @@ resource webApp 'Microsoft.Web/sites@2024-04-01' = {
         { name: 'Database__UseEntraAuth', value: 'true' }
         { name: 'Database__MigrateOnStartup', value: 'true' }
         { name: 'Storage__AccountUri', value: 'https://${storageAccountName}.blob.${environment().suffixes.storage}' }
-        { name: 'Telegram__BotToken', value: kvReference(keyVaultName, 'TelegramBotToken') }
-        { name: 'Telegram__WebhookSecret', value: kvReference(keyVaultName, 'TelegramWebhookSecret') }
+        { name: 'Bot__Token', value: kvReference(keyVaultName, 'TelegramBotToken') }
+        { name: 'Bot__WebhookSecret', value: kvReference(keyVaultName, 'TelegramWebhookSecret') }
+        { name: 'Bot__Username', value: botUsername }
+        { name: 'Bot__WebhookUrl', value: botWebhookUrl }
         { name: 'Authentication__Google__ClientSecret', value: kvReference(keyVaultName, 'GoogleClientSecret') }
         { name: 'Authentication__Microsoft__ClientSecret', value: kvReference(keyVaultName, 'MicrosoftClientSecret') }
         { name: 'Email__ConnectionString', value: kvReference(keyVaultName, 'AcsConnectionString') }
