@@ -26,4 +26,7 @@ public static class Errors
 
     public static AppException Conflict(string? detail = null) =>
         new(StatusCodes.Status409Conflict, "Conflict", detail);
+
+    public static AppException PayloadTooLarge(string? detail = null) =>
+        new(StatusCodes.Status413PayloadTooLarge, "Payload Too Large", detail);
 }

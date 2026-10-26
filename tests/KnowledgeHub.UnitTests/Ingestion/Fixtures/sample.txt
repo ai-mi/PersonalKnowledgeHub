@@ -1,0 +1,2 @@
+Заметки про Azure Service Bus
+Очереди сообщений и темы: ocelot gateway notes.

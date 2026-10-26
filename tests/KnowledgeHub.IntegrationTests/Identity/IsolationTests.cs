@@ -39,6 +39,10 @@ public static class IsolationCases
                 (HttpMethod.Post, $"/api/items/{id}/reprocess", null),
                 (HttpMethod.Delete, $"/api/items/{id}", null),
             ]),
+        // Файл документа — отдельный маршрут: чужой документ и его скачивание должны быть недоступны так же, как сама запись.
+        new("DocumentFiles",
+            async a => await Ingestion.DocumentUploadTests.UploadIdAsync(a, "isolation"u8.ToArray(), "secret.txt"),
+            id => [(HttpMethod.Get, $"/api/items/{id}/file", null)]),
         new("Tags",
             async a =>
             {

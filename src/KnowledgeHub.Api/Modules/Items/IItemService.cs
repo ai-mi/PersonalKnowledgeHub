@@ -6,6 +6,15 @@ public interface IItemService
     /// <summary>Создаёт запись; если такая ссылка у пользователя уже есть — возвращает существующую (<c>Created = false</c>).</summary>
     Task<CreateItemResult> CreateAsync(CreateItemCommand command, CancellationToken ct);
 
+    /// <summary>
+    /// Создаёт запись-документ для уже загруженного блоба (<see cref="CreateDocumentCommand.BlobPath"/>) и ставит задачу <c>ingest</c>.
+    /// Если документ с таким хэшем есть — возвращает его (<c>Created = false</c>), и блоб команды остаётся на совести вызывающего.
+    /// </summary>
+    Task<CreateItemResult> CreateDocumentAsync(CreateDocumentCommand command, CancellationToken ct);
+
+    /// <summary>Запись пользователя с таким хэшем содержимого или <c>null</c>.</summary>
+    Task<Item?> FindByContentHashAsync(string contentHash, CancellationToken ct);
+
     Task<Item?> GetAsync(Guid id, CancellationToken ct);
 
     Task<PagedResult<ItemSummary>> ListAsync(ListItemsQuery query, CancellationToken ct);

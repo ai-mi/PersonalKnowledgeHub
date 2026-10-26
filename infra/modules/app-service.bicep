@@ -5,6 +5,8 @@ param appInsightsConnectionString string
 param postgresFqdn string
 param databaseName string
 param keyVaultName string
+// Имя известно заранее (задаётся в main.bicep), поэтому зависимости app-service -> storage (и цикла с ролью) нет.
+param storageAccountName string
 
 // Ссылка на секрет Key Vault без версии — App Service подхватывает последнюю версию.
 func kvReference(vaultName string, secretName string) string =>
@@ -47,6 +49,7 @@ resource webApp 'Microsoft.Web/sites@2024-04-01' = {
         { name: 'Database__ConnectionString', value: 'Host=${postgresFqdn};Database=${databaseName};Username=${name};SSL Mode=Require' }
         { name: 'Database__UseEntraAuth', value: 'true' }
         { name: 'Database__MigrateOnStartup', value: 'true' }
+        { name: 'Storage__AccountUri', value: 'https://${storageAccountName}.blob.${environment().suffixes.storage}' }
         { name: 'Telegram__BotToken', value: kvReference(keyVaultName, 'TelegramBotToken') }
         { name: 'Telegram__WebhookSecret', value: kvReference(keyVaultName, 'TelegramWebhookSecret') }
         { name: 'Authentication__Google__ClientSecret', value: kvReference(keyVaultName, 'GoogleClientSecret') }

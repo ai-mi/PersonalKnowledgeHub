@@ -16,6 +16,16 @@ public sealed record CreateItemCommand(
     IReadOnlyList<string>? Tags = null,
     IReadOnlyList<Guid>? CollectionIds = null);
 
+/// <summary>Создание документа после загрузки файла в хранилище; <paramref name="Id"/> уже входит в <paramref name="BlobPath"/>.</summary>
+public sealed record CreateDocumentCommand(
+    Guid Id,
+    string BlobPath,
+    string ContentHash,
+    string? Title,
+    string? UserNote = null,
+    IReadOnlyList<string>? Tags = null,
+    IReadOnlyList<Guid>? CollectionIds = null);
+
 /// <summary>
 /// Замена редактируемых полей; он же тело <c>PUT /api/items/{id}</c>. Адрес ссылки не меняется.
 /// Теги и коллекции: <c>null</c> — оставить как есть, пустой список — снять все.

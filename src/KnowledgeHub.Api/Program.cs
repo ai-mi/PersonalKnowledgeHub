@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
 using KnowledgeHub.Api.Infrastructure.Persistence;
+using KnowledgeHub.Api.Infrastructure.Storage;
 using KnowledgeHub.Api.Infrastructure.Web;
 using KnowledgeHub.Api.Modules.Identity;
 using KnowledgeHub.Api.Modules.Ingestion;
@@ -15,6 +16,7 @@ builder.Services.AddHealthChecks();
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetailsHandling();
 builder.Services.AddPersistence(builder.Configuration);
+builder.Services.AddBlobStorage(builder.Configuration);
 builder.Services.AddSingleton(TimeProvider.System);
 // Перечисления в API — строки в camelCase ("weekly", "monday").
 builder.Services.ConfigureHttpJsonOptions(o =>

@@ -13,12 +13,17 @@
     <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
     <PackageReference Include="Shouldly" />
     <PackageReference Include="Testcontainers.PostgreSql" />
+    <PackageReference Include="Testcontainers.Azurite" />
     <PackageReference Include="Respawn" />
     <PackageReference Include="WireMock.Net" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\KnowledgeHub.Api\KnowledgeHub.Api.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\KnowledgeHub.UnitTests\Ingestion\Fixtures\sample.*" Link="Ingestion\Fixtures\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

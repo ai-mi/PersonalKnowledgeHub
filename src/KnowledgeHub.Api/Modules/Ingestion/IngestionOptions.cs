@@ -10,4 +10,7 @@ public sealed class IngestionOptions
     public long MaxResponseBytes { get; set; } = 5 * 1024 * 1024;
     public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(15);
     public int MaxRedirects { get; set; } = 5;
+
+    /// <summary>Лимит загружаемого документа (совпадает с лимитом скачивания файлов Telegram Bot API).</summary>
+    public long MaxDocumentBytes { get; set; } = 20 * 1024 * 1024;
 }

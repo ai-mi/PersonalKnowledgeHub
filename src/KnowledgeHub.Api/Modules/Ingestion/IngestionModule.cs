@@ -10,6 +10,7 @@ public static class IngestionModule
         services.Configure<IngestionOptions>(configuration.GetSection(IngestionOptions.SectionName));
         // Один экземпляр: внутри пул соединений SocketsHttpHandler.
         services.AddSingleton<SafeHttpFetcher>();
+        services.AddScoped<IDocumentIntake, DocumentIntake>();
         services.TryAddScoped<IIngestionCompletedHandler, NoOpIngestionCompletedHandler>();
         services.AddJobHandler<IngestItemJob, IngestItemPayload>();
         services.AddJobFailureHandler<IngestFailureHandler>();

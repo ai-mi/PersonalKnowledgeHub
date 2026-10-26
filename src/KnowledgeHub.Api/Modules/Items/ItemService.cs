@@ -1,5 +1,6 @@
 using KnowledgeHub.Api.Common;
 using KnowledgeHub.Api.Infrastructure.Persistence;
+using KnowledgeHub.Api.Infrastructure.Storage;
 using KnowledgeHub.Api.Modules.Ingestion;
 using KnowledgeHub.Api.Modules.Jobs;
 using KnowledgeHub.Api.Modules.Search;
@@ -9,7 +10,8 @@ using Npgsql;
 namespace KnowledgeHub.Api.Modules.Items;
 
 public sealed class ItemService(
-    AppDbContext db, TagService tags, ISearchIndexer searchIndexer, IJobQueue jobs, TimeProvider timeProvider) : IItemService
+    AppDbContext db, TagService tags, ISearchIndexer searchIndexer, IJobQueue jobs, IBlobStore blobs, TimeProvider timeProvider,
+    ILogger<ItemService> logger) : IItemService
 {
     /// <summary>Записи вместе с тегами и коллекциями (нужны для <see cref="ItemResponse"/>).</summary>
     private IQueryable<Item> WithRelations() => db.Items.Include(i => i.Tags).Include(i => i.Collections).AsSplitQuery();
@@ -42,6 +44,7 @@ public sealed class ItemService(
 
     private const string TagNameIndex = "ix_tags_user_id_lower_name";
     private const string UrlIndex = "ix_items_user_id_url";
+    private const string ContentHashIndex = "ix_items_user_id_content_hash";
 
     private static bool IsUnique(DbUpdateException e, string constraint) =>
         e.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } pg && pg.ConstraintName == constraint;
@@ -74,22 +77,11 @@ public sealed class ItemService(
             CreatedAt = now,
             UpdatedAt = now,
         };
-        item.Tags.AddRange(await tags.ResolveAsync(command.Tags ?? [], ct));
-        item.Collections.AddRange(await ResolveCollectionsAsync(command.CollectionIds ?? [], ct));
-        db.Items.Add(item);
+        await AttachRelationsAsync(item, command.Tags, command.CollectionIds, ct);
 
         try
         {
-            // Запись и задача обработки сохраняются атомарно.
-            await using var transaction = await db.Database.BeginTransactionAsync(ct);
-            await db.SaveChangesAsync(ct);
-            if (type == ItemType.Link)
-            {
-                await EnqueueIngestAsync(item, ct);
-            }
-
-            await searchIndexer.ReindexAsync([item.Id], ct);
-            await transaction.CommitAsync(ct);
+            await SaveNewAsync(item, ct);
         }
         catch (DbUpdateException e) when (url is not null && IsUnique(e, UrlIndex))
         {
@@ -100,6 +92,78 @@ public sealed class ItemService(
         }
 
         return new CreateItemResult(item, true);
+    }
+
+    public Task<CreateItemResult> CreateDocumentAsync(CreateDocumentCommand command, CancellationToken ct) =>
+        RetryOnTagRaceAsync(() => CreateDocumentOnceAsync(command, ct));
+
+    public Task<Item?> FindByContentHashAsync(string contentHash, CancellationToken ct) =>
+        WithRelations().AsNoTracking().FirstOrDefaultAsync(i => i.ContentHash == contentHash, ct);
+
+    private async Task<CreateItemResult> CreateDocumentOnceAsync(CreateDocumentCommand command, CancellationToken ct)
+    {
+        var errors = ItemValidation.ValidateContent(ItemType.Document, command.Title, null, command.UserNote, null);
+        ItemValidation.ValidateTags(errors, command.Tags);
+        if (errors.Count > 0)
+        {
+            throw Errors.Validation(errors);
+        }
+
+        if (await WithRelations().FirstOrDefaultAsync(i => i.ContentHash == command.ContentHash, ct) is { } existing)
+        {
+            return new CreateItemResult(existing, false);
+        }
+
+        var now = timeProvider.GetUtcNow();
+        var item = new Item
+        {
+            Id = command.Id,
+            Type = ItemType.Document,
+            Title = Clean(command.Title),
+            UserNote = NullIfBlank(command.UserNote),
+            BlobPath = command.BlobPath,
+            ContentHash = command.ContentHash,
+            Status = ItemStatus.Pending,
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
+        await AttachRelationsAsync(item, command.Tags, command.CollectionIds, ct);
+
+        try
+        {
+            await SaveNewAsync(item, ct);
+        }
+        catch (DbUpdateException e) when (IsUnique(e, ContentHashIndex))
+        {
+            // Параллельная загрузка того же файла победила; её блоб — другой, свой вызывающий удалит сам.
+            db.ChangeTracker.Clear();
+            var winner = await WithRelations().FirstAsync(i => i.ContentHash == command.ContentHash, ct);
+            return new CreateItemResult(winner, false);
+        }
+
+        return new CreateItemResult(item, true);
+    }
+
+    private async Task AttachRelationsAsync(
+        Item item, IReadOnlyList<string>? tagNames, IReadOnlyList<Guid>? collectionIds, CancellationToken ct)
+    {
+        item.Tags.AddRange(await tags.ResolveAsync(tagNames ?? [], ct));
+        item.Collections.AddRange(await ResolveCollectionsAsync(collectionIds ?? [], ct));
+        db.Items.Add(item);
+    }
+
+    /// <summary>Запись и задача обработки (если запись ждёт воркера) сохраняются атомарно.</summary>
+    private async Task SaveNewAsync(Item item, CancellationToken ct)
+    {
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        await db.SaveChangesAsync(ct);
+        if (item.Status == ItemStatus.Pending)
+        {
+            await EnqueueIngestAsync(item, ct);
+        }
+
+        await searchIndexer.ReindexAsync([item.Id], ct);
+        await transaction.CommitAsync(ct);
     }
 
     private Task EnqueueIngestAsync(Item item, CancellationToken ct) =>
@@ -203,8 +267,30 @@ public sealed class ItemService(
         return item;
     }
 
-    public async Task<bool> DeleteAsync(Guid id, CancellationToken ct) =>
-        await db.Items.Where(i => i.Id == id).ExecuteDeleteAsync(ct) > 0;
+    public async Task<bool> DeleteAsync(Guid id, CancellationToken ct)
+    {
+        // Анонимный тип отличает «записи нет» от «у записи нет файла».
+        var found = await db.Items.Where(i => i.Id == id).Select(i => new { i.BlobPath }).FirstOrDefaultAsync(ct);
+        if (found is null || await db.Items.Where(i => i.Id == id).ExecuteDeleteAsync(ct) == 0)
+        {
+            return false;
+        }
+
+        if (found.BlobPath is not null)
+        {
+            try
+            {
+                await blobs.DeleteAsync(BlobContainers.Documents, found.BlobPath, ct);
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                // Запись уже удалена: сбой хранилища не должен превращать успешное удаление в ошибку.
+                logger.LogWarning(e, "Failed to delete blob {BlobPath} of deleted item {ItemId}", found.BlobPath, id);
+            }
+        }
+
+        return true;
+    }
 
     public async Task<Item?> MarkReadAsync(Guid id, bool read, CancellationToken ct)
     {

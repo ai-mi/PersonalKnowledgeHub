@@ -510,7 +510,7 @@ infra/                                — Bicep
 
 ---
 
-### Фича 16: Загрузка и обработка документов
+### Фича 16: Загрузка и обработка документов ✅
 
 **Цель:** пользователь загружает PDF, DOCX, TXT или MD до 20 МБ; файл хранится в приватном Blob, текст извлекается в фоне и находится поиском; файл можно скачать только владельцу.
 
@@ -522,19 +522,19 @@ infra/                                — Bicep
 - Тесты: `tests/KnowledgeHub.UnitTests/Ingestion/FileSignatureTests.cs`, `tests/KnowledgeHub.UnitTests/Ingestion/DocumentTextExtractorTests.cs`, `tests/KnowledgeHub.UnitTests/Ingestion/Fixtures/sample.pdf|sample.docx|sample.txt`, `tests/KnowledgeHub.IntegrationTests/Ingestion/DocumentUploadTests.cs`
 
 **Шаги:**
-- [ ] `IBlobStore`: `UploadAsync(container, path, stream, contentType)`, `OpenReadAsync`, `DeleteAsync`, `OpenWriteAsync` (для экспорта); `AzureBlobStore` — `BlobServiceClient` через `DefaultAzureCredential` (Azure) или строку подключения (локально, Azurite); контейнеры создаются при старте, если их нет
-- [ ] `FileSignature.Detect(header, fileName)`: PDF — `%PDF-`; DOCX — `PK\x03\x04` + успешное открытие `WordprocessingDocument`; TXT/MD — расширение `.txt/.md`, валидный UTF-8, без `\0`; остальное → `400`
-- [ ] `IDocumentIntake.AcceptAsync(stream, fileName, metadata)` — вся логика приёма ниже (сигнатура, хэш, Blob, запись, задача); эндпоинт и бот (фича 18) только вызывают его
-- [ ] `POST /api/items/upload` (multipart: `file`, `title?`, `userNote?`, `tags?`, `collectionIds?`): `.WithMetadata(new RequestSizeLimitAttribute(21 МБ))` + `FormOptions.MultipartBodyLengthLimit`, `.DisableAntiforgery()` (п.7 «Подводных камней»; наш фильтр продолжает проверять cookie-запросы); потоковый SHA-256 → `content_hash` (дубликат → существующая запись); путь блоба `{userId}/{itemId}/{безопасное имя}`; запись `document` + задача `ingest` в одной транзакции (при ошибке БД — удалить блоб)
-- [ ] `DocumentTextExtractor`: PDF — `PdfDocument.Open` + текст страниц (≤ 2000 страниц), DOCX — текст абзацев `Body.Descendants<Paragraph>()`, TXT/MD — как есть; таймаут 60 с через `Task.Run(...).WaitAsync` (п.10 «Подводных камней»); заголовок по умолчанию — имя файла без расширения
-- [ ] `GET /api/items/{id}/file` — поток из Blob, `Content-Disposition: attachment`, `X-Content-Type-Options: nosniff`, исходный `Content-Type` только из белого списка, иначе `application/octet-stream`
-- [ ] Удаление записи-документа удаляет блоб
-- [ ] Тесты unit: сигнатуры (EXE, переименованный в `.pdf` → отклонён); извлечение из трёх фикстур
-- [ ] Тесты интеграционные: загрузка PDF → после `ProcessNextAsync` `ready` и поиск по тексту из PDF; загрузка с API-токеном без XSRF → успех, с cookie без XSRF → `400`; 21 МБ → `413`; повторная загрузка того же файла → та же запись; скачивание с `attachment`; пользователь B не может скачать (`404`, добавить в `IsolationTests`)
+- [x] `IBlobStore`: `UploadAsync(container, path, stream, contentType)`, `OpenReadAsync`, `DeleteAsync`, `OpenWriteAsync` (для экспорта); `AzureBlobStore` — `BlobServiceClient` через `DefaultAzureCredential` (Azure) или строку подключения (локально, Azurite); контейнеры создаются при старте, если их нет
+- [x] `FileSignature.Detect(header, fileName)`: PDF — `%PDF-`; DOCX — `PK\x03\x04` + успешное открытие `WordprocessingDocument`; TXT/MD — расширение `.txt/.md`, валидный UTF-8, без `\0`; остальное → `400`
+- [x] `IDocumentIntake.AcceptAsync(stream, fileName, metadata)` — вся логика приёма ниже (сигнатура, хэш, Blob, запись, задача); эндпоинт и бот (фича 18) только вызывают его
+- [x] `POST /api/items/upload` (multipart: `file`, `title?`, `userNote?`, `tags?`, `collectionIds?`): `.WithMetadata(new RequestSizeLimitAttribute(21 МБ))` + `FormOptions.MultipartBodyLengthLimit`, `.DisableAntiforgery()` (п.7 «Подводных камней»; наш фильтр продолжает проверять cookie-запросы); потоковый SHA-256 → `content_hash` (дубликат → существующая запись); путь блоба `{userId}/{itemId}/{безопасное имя}`; запись `document` + задача `ingest` в одной транзакции (при ошибке БД — удалить блоб)
+- [x] `DocumentTextExtractor`: PDF — `PdfDocument.Open` + текст страниц (≤ 2000 страниц), DOCX — текст абзацев `Body.Descendants<Paragraph>()`, TXT/MD — как есть; таймаут 60 с через `Task.Run(...).WaitAsync` (п.10 «Подводных камней»); заголовок по умолчанию — имя файла без расширения
+- [x] `GET /api/items/{id}/file` — поток из Blob, `Content-Disposition: attachment`, `X-Content-Type-Options: nosniff`, исходный `Content-Type` только из белого списка, иначе `application/octet-stream`
+- [x] Удаление записи-документа удаляет блоб
+- [x] Тесты unit: сигнатуры (EXE, переименованный в `.pdf` → отклонён); извлечение из трёх фикстур
+- [x] Тесты интеграционные: загрузка PDF → после `ProcessNextAsync` `ready` и поиск по тексту из PDF; загрузка с API-токеном без XSRF → успех, с cookie без XSRF → `400`; 21 МБ → `413`; повторная загрузка того же файла → та же запись; скачивание с `attachment`; пользователь B не может скачать (`404`, добавить в `IsolationTests`)
 
 **Проверка:**
-- [ ] `dotnet test tests/KnowledgeHub.UnitTests --filter "FullyQualifiedName~Ingestion"` — `Passed!  - Failed:     0`
-- [ ] `dotnet test tests/KnowledgeHub.IntegrationTests --filter "FullyQualifiedName~Ingestion|FullyQualifiedName~Isolation"` — `Passed!  - Failed:     0`
+- [x] `dotnet test tests/KnowledgeHub.UnitTests --filter "FullyQualifiedName~Ingestion"` — `Passed!  - Failed:     0`
+- [x] `dotnet test tests/KnowledgeHub.IntegrationTests --filter "FullyQualifiedName~Ingestion|FullyQualifiedName~Isolation"` — `Passed!  - Failed:     0`
 
 ---
 

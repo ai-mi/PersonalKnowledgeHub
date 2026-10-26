@@ -40,18 +40,6 @@ public sealed class LinkIngestionTests(ApiFactory factory) : JobsTestBase(factor
     private static async Task<Guid> SaveLinkAsync(HttpClient user, string url, string? title = null, string? userNote = null) =>
         (await ItemEndpointsTests.CreateAsync(user, new { type = "link", url, title, userNote })).GetProperty("id").GetGuid();
 
-    /// <summary>Задачи ставились по реальным часам хоста запроса, а воркер живёт на FakeTimeProvider — подтягиваем его вперёд.</summary>
-    private async Task<bool> ProcessAsync()
-    {
-        var now = DateTimeOffset.UtcNow.AddSeconds(1);
-        if (Time.GetUtcNow() < now)
-        {
-            Time.SetUtcNow(now);
-        }
-
-        return await Worker.ProcessNextAsync(Ct);
-    }
-
     private async Task RetryAfterAsync(TimeSpan delay)
     {
         Time.Advance(delay);

@@ -19,11 +19,13 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     private static readonly Lock HostStartLock = new();
 
     private readonly PostgresContainer _postgres;
+    private readonly AzuriteContainer _azurite;
     private Respawner? _respawner;
 
-    public ApiFactory(PostgresContainer postgres)
+    public ApiFactory(PostgresContainer postgres, AzuriteContainer azurite)
     {
         _postgres = postgres;
+        _azurite = azurite;
 
         // Cookie приложения помечены Secure — по http они не отправляются, поэтому клиенты ходят по https.
         // Редиректы не следуем автоматически: тесты проверяют сами ответы 302.
@@ -32,6 +34,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     }
 
     public PostgresContainer Postgres => _postgres;
+
+    public string AzuriteConnectionString => _azurite.ConnectionString;
 
     protected override IHost CreateHost(IHostBuilder builder)
     {
@@ -47,6 +51,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("Database:ConnectionString", _postgres.AppConnectionString);
         builder.UseSetting("Database:MigrateOnStartup", "true");
         builder.UseSetting("Jobs:Enabled", "false");
+        builder.UseSetting("Storage:ConnectionString", _azurite.ConnectionString);
         // Тесты Ingestion ходят в WireMock на localhost.
         builder.UseSetting("Ingestion:AllowLoopbackForTests", "true");
 

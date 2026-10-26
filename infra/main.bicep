@@ -14,6 +14,7 @@ var suffix = uniqueString(resourceGroup().id)
 var webAppName = '${namePrefix}-${suffix}'
 var keyVaultName = '${namePrefix}-kv-${suffix}'
 var databaseName = 'knowledgehub'
+var storageAccountName = 'st${suffix}'
 var tenantId = subscription().tenantId
 
 module monitoring 'modules/monitoring.bicep' = {
@@ -47,6 +48,7 @@ module appService 'modules/app-service.bicep' = {
     postgresFqdn: postgres.outputs.fqdn
     databaseName: databaseName
     keyVaultName: keyVaultName
+    storageAccountName: storageAccountName
   }
 }
 
@@ -63,7 +65,7 @@ module storage 'modules/storage.bicep' = {
   name: 'storage'
   params: {
     location: location
-    name: 'st${suffix}'
+    name: storageAccountName
     webAppPrincipalId: appService.outputs.principalId
   }
 }

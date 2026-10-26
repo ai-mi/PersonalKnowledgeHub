@@ -96,6 +96,18 @@ public abstract class JobsTestBase : IntegrationTest, IDisposable
     protected Task<bool> EnqueueAsync(Guid? userId = null, DateTimeOffset? runAfter = null, string? dedupKey = null, string value = "v") =>
         WithDbAsync((_, queue) => queue.EnqueueAsync(TestJobHandler.JobType, new TestPayload(value), userId, runAfter, dedupKey, Ct));
 
+    /// <summary>Задачи ставились по реальным часам хоста запроса, а воркер живёт на FakeTimeProvider — подтягиваем его вперёд.</summary>
+    protected async Task<bool> ProcessAsync()
+    {
+        var now = DateTimeOffset.UtcNow.AddSeconds(1);
+        if (Time.GetUtcNow() < now)
+        {
+            Time.SetUtcNow(now);
+        }
+
+        return await Worker.ProcessNextAsync(Ct);
+    }
+
     protected Task<List<Job>> AllJobsAsync() =>
         WithDbAsync((db, _) => db.Jobs.AsNoTracking().OrderBy(j => j.CreatedAt).ToListAsync(Ct));
 
