@@ -337,7 +337,7 @@ infra/                                — Bicep
 
 ---
 
-### Фича 9: Записи — CRUD
+### Фича 9: Записи — CRUD ✅
 
 **Цель:** через API можно создавать, читать, редактировать, удалять записи типов `note`, `snippet`, `link` (без автоизвлечения), отмечать прочитанными; дубликаты ссылок не создаются.
 
@@ -347,17 +347,17 @@ infra/                                — Bicep
 - Тесты: `tests/KnowledgeHub.UnitTests/Items/UrlNormalizerTests.cs`, `tests/KnowledgeHub.IntegrationTests/Items/ItemEndpointsTests.cs`, изменить `tests/KnowledgeHub.IntegrationTests/Identity/IsolationTests.cs`
 
 **Шаги:**
-- [ ] Сущность `items` по дизайну (`search_vector` добавляется в фиче 12), включая `read_at`; индексы: unique `(user_id, url)` где `url IS NOT NULL`, unique `(user_id, content_hash)` где `content_hash IS NOT NULL`, `(user_id, created_at DESC)`; миграция `Items` с `EnableUserRls`
-- [ ] `UrlNormalizer`: только `http/https`, нижний регистр хоста, удаление фрагмента `#...` и `utm_*`-параметров, без завершающего `/` у пути — используется для проверки дубликатов
-- [ ] `IItemService` (публичный интерфейс модуля, используется ботом и ingestion): `CreateAsync(CreateItemCommand)`, `GetAsync`, `UpdateAsync`, `DeleteAsync`, `MarkReadAsync(id, bool)`, `SetProcessingResultAsync(...)` (для фичи 15)
-- [ ] Создание: `note` и `snippet` → `status=ready`; `link` → `status=ready` (до фичи 15), проверка дубликата: при существующей записи вернуть её с `200` (а не `201`)
-- [ ] Эндпоинты: `POST /api/items`, `GET /api/items?type=&unread=&page=&pageSize=` (по умолчанию 20, максимум 100), `GET /api/items/{id}`, `PUT /api/items/{id}`, `PATCH /api/items/{id}` (`{ read: true|false }`), `DELETE /api/items/{id}`
-- [ ] Валидация: `title` ≤ 500, `user_note` ≤ 20 000, `body` для note/snippet ≤ 200 000, `code_language` ≤ 50, `url` обязателен для `link` → `400 ValidationProblem`
-- [ ] Тесты: каждый тип создаётся и читается; повторный `POST` той же ссылки (с `utm_source` и `#фрагментом`) → та же запись; `PATCH read` ставит/сбрасывает `read_at`; удаление; пагинация; ошибки валидации; все эндпоинты добавлены в `IsolationTests`
+- [x] Сущность `items` по дизайну (`search_vector` добавляется в фиче 12), включая `read_at`; индексы: unique `(user_id, url)` где `url IS NOT NULL`, unique `(user_id, content_hash)` где `content_hash IS NOT NULL`, `(user_id, created_at DESC)`; миграция `Items` с `EnableUserRls`
+- [x] `UrlNormalizer`: только `http/https`, нижний регистр хоста, удаление фрагмента `#...` и `utm_*`-параметров, без завершающего `/` у пути — используется для проверки дубликатов
+- [x] `IItemService` (публичный интерфейс модуля, используется ботом и ingestion): `CreateAsync(CreateItemCommand)`, `GetAsync`, `UpdateAsync`, `DeleteAsync`, `MarkReadAsync(id, bool)`, `SetProcessingResultAsync(...)` (для фичи 15)
+- [x] Создание: `note` и `snippet` → `status=ready`; `link` → `status=ready` (до фичи 15), проверка дубликата: при существующей записи вернуть её с `200` (а не `201`)
+- [x] Эндпоинты: `POST /api/items`, `GET /api/items?type=&unread=&page=&pageSize=` (по умолчанию 20, максимум 100), `GET /api/items/{id}`, `PUT /api/items/{id}`, `PATCH /api/items/{id}` (`{ read: true|false }`), `DELETE /api/items/{id}`
+- [x] Валидация: `title` ≤ 500, `user_note` ≤ 20 000, `body` для note/snippet ≤ 200 000, `code_language` ≤ 50, `url` обязателен для `link` → `400 ValidationProblem`
+- [x] Тесты: каждый тип создаётся и читается; повторный `POST` той же ссылки (с `utm_source` и `#фрагментом`) → та же запись; `PATCH read` ставит/сбрасывает `read_at`; удаление; пагинация; ошибки валидации; все эндпоинты добавлены в `IsolationTests`
 
 **Проверка:**
-- [ ] `dotnet test tests/KnowledgeHub.UnitTests --filter "FullyQualifiedName~Items"` — `Passed!  - Failed:     0`
-- [ ] `dotnet test tests/KnowledgeHub.IntegrationTests --filter "FullyQualifiedName~Items|FullyQualifiedName~Isolation"` — `Passed!  - Failed:     0`
+- [x] `dotnet test tests/KnowledgeHub.UnitTests --filter "FullyQualifiedName~Items"` — `Passed!  - Failed:     0`
+- [x] `dotnet test tests/KnowledgeHub.IntegrationTests --filter "FullyQualifiedName~Items|FullyQualifiedName~Isolation"` — `Passed!  - Failed:     0`
 
 ---
 

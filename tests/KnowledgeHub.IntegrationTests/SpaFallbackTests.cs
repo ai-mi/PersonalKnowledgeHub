@@ -66,8 +66,8 @@ public sealed class SpaFallbackTests : IntegrationTest, IDisposable
     [Theory]
     [InlineData("/api")]
     [InlineData("/api/")]
-    [InlineData("/api/items/123")]
-    [InlineData("/API/items")]
+    [InlineData("/api/unknown/123")]
+    [InlineData("/API/unknown")]
     public async Task ApiPrefixedRoutes_NeverFallBackToIndexHtml(string path)
     {
         var response = await _spa.GetAsync(path, TestContext.Current.CancellationToken);

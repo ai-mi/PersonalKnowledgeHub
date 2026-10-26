@@ -1,6 +1,7 @@
 using System.Reflection;
 using KnowledgeHub.Api.Common;
 using KnowledgeHub.Api.Modules.Identity;
+using KnowledgeHub.Api.Modules.Items;
 using Microsoft.EntityFrameworkCore;
 
 namespace KnowledgeHub.Api.Infrastructure.Persistence;
@@ -14,6 +15,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ICurrentUser c
     public DbSet<UserLogin> UserLogins => Set<UserLogin>();
     public DbSet<UserSettings> UserSettings => Set<UserSettings>();
     public DbSet<ApiToken> ApiTokens => Set<ApiToken>();
+    public DbSet<Item> Items => Set<Item>();
 
     // Свойства читаются при выполнении запроса: EF подставляет их значения из текущего экземпляра контекста.
     private Guid? CurrentUserId => currentUser.UserId;

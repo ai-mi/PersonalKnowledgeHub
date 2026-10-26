@@ -4,6 +4,7 @@ using Azure.Monitor.OpenTelemetry.AspNetCore;
 using KnowledgeHub.Api.Infrastructure.Persistence;
 using KnowledgeHub.Api.Infrastructure.Web;
 using KnowledgeHub.Api.Modules.Identity;
+using KnowledgeHub.Api.Modules.Items;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +17,7 @@ builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.ConfigureHttpJsonOptions(o =>
     o.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)));
 builder.Services.AddIdentityModule(builder.Configuration);
+builder.Services.AddItemsModule(builder.Configuration);
 
 if (!string.IsNullOrWhiteSpace(builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]))
 {
@@ -38,6 +40,7 @@ app.MapOpenApi();
 
 var api = app.MapGroup("/api").AddEndpointFilter<AntiforgeryFilter>();
 api.MapIdentityEndpoints();
+api.MapItemsEndpoints();
 
 // SPA: неизвестные пути отдают index.html, но не /api/* — там нужен 404 ProblemDetails.
 app.MapFallbackToFile("{**path:regex(^(?!api(/|$)).*)}", "index.html");

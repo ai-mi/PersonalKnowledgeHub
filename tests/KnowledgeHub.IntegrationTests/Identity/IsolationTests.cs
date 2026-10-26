@@ -21,20 +21,23 @@ public sealed record IsolationCase(
 public static class IsolationCases
 {
     /// <summary>
-    /// КАК РАСШИРЯТЬ: в каждой фиче, добавляющей пользовательский ресурс, допишите сюда IsolationCase, например (фича 9):
-    /// <code>
-    /// new("Items", async a => (await (await a.PostAsJsonAsync("/api/items", new { type = "note", body = "x" }))
-    ///         .Content.ReadFromJsonAsync&lt;JsonElement&gt;()).GetProperty("id").GetString()!,
-    ///     id => [(HttpMethod.Get, $"/api/items/{id}", null), (HttpMethod.Put, $"/api/items/{id}", new { body = "y" }),
-    ///            (HttpMethod.Patch, $"/api/items/{id}", new { read = true }), (HttpMethod.Delete, $"/api/items/{id}", null)])
-    /// </code>
-    /// Заглушку Placeholder можно удалить, когда появится первый настоящий ресурс.
+    /// КАК РАСШИРЯТЬ: в каждой фиче, добавляющей пользовательский ресурс, допишите сюда IsolationCase по образцу ниже.
+    /// Запросы с изменением ресурса (DELETE) ставьте последними: владелец выполняет их раньше пользователя B.
     /// </summary>
     public static readonly IReadOnlyList<IsolationCase> All =
     [
         new("ApiTokens",
             async a => (await ApiTokenTests.CreateTokenAsync(a)).Id,
             id => [(HttpMethod.Delete, $"/api/me/tokens/{id}", null)]),
+        new("Items",
+            async a => await Items.ItemEndpointsTests.CreateNoteIdAsync(a),
+            id =>
+            [
+                (HttpMethod.Get, $"/api/items/{id}", null),
+                (HttpMethod.Put, $"/api/items/{id}", new { title = "y" }),
+                (HttpMethod.Patch, $"/api/items/{id}", new { read = true }),
+                (HttpMethod.Delete, $"/api/items/{id}", null),
+            ]),
     ];
 
     public static IsolationCase Get(string name) => All.Single(c => c.Name == name);

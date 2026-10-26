@@ -165,6 +165,99 @@ namespace KnowledgeHub.Api.Infrastructure.Persistence.Migrations
                     b.ToTable("user_settings", (string)null);
                 });
 
+            modelBuilder.Entity("KnowledgeHub.Api.Modules.Items.Item", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("BlobPath")
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)")
+                        .HasColumnName("blob_path");
+
+                    b.Property<string>("Body")
+                        .HasColumnType("text")
+                        .HasColumnName("body");
+
+                    b.Property<string>("CodeLanguage")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("code_language");
+
+                    b.Property<string>("ContentHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("content_hash");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Error")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("error");
+
+                    b.Property<DateTimeOffset?>("ReadAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("read_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("title");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("type");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("Url")
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)")
+                        .HasColumnName("url");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("UserNote")
+                        .HasMaxLength(20000)
+                        .HasColumnType("character varying(20000)")
+                        .HasColumnName("user_note");
+
+                    b.HasKey("Id")
+                        .HasName("pk_items");
+
+                    b.HasIndex("UserId", "ContentHash")
+                        .IsUnique()
+                        .HasDatabaseName("ix_items_user_id_content_hash")
+                        .HasFilter("content_hash IS NOT NULL");
+
+                    b.HasIndex("UserId", "CreatedAt")
+                        .IsDescending(false, true)
+                        .HasDatabaseName("ix_items_user_id_created_at");
+
+                    b.HasIndex("UserId", "Url")
+                        .IsUnique()
+                        .HasDatabaseName("ix_items_user_id_url")
+                        .HasFilter("url IS NOT NULL");
+
+                    b.ToTable("items", (string)null);
+                });
+
             modelBuilder.Entity("KnowledgeHub.Api.Modules.Identity.ApiToken", b =>
                 {
                     b.HasOne("KnowledgeHub.Api.Modules.Identity.User", null)
@@ -193,6 +286,16 @@ namespace KnowledgeHub.Api.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_user_settings_users_user_id");
+                });
+
+            modelBuilder.Entity("KnowledgeHub.Api.Modules.Items.Item", b =>
+                {
+                    b.HasOne("KnowledgeHub.Api.Modules.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_items_users_user_id");
                 });
 #pragma warning restore 612, 618
         }
