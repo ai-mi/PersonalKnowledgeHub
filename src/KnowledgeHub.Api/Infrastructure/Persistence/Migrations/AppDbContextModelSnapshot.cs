@@ -361,6 +361,76 @@ namespace KnowledgeHub.Api.Infrastructure.Persistence.Migrations
                     b.ToTable("tags", (string)null);
                 });
 
+            modelBuilder.Entity("KnowledgeHub.Api.Modules.Jobs.Job", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("integer")
+                        .HasColumnName("attempts");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("DedupKey")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("dedup_key");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)")
+                        .HasColumnName("last_error");
+
+                    b.Property<DateTimeOffset?>("LockedUntil")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("locked_until");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("payload");
+
+                    b.Property<DateTimeOffset>("RunAfter")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("run_after");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("type");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_jobs");
+
+                    b.HasIndex("DedupKey")
+                        .IsUnique()
+                        .HasDatabaseName("ix_jobs_dedup_key");
+
+                    b.HasIndex("Status", "RunAfter")
+                        .HasDatabaseName("ix_jobs_status_run_after");
+
+                    b.ToTable("jobs", (string)null);
+                });
+
             modelBuilder.Entity("KnowledgeHub.Api.Modules.Identity.ApiToken", b =>
                 {
                     b.HasOne("KnowledgeHub.Api.Modules.Identity.User", null)

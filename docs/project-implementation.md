@@ -458,7 +458,7 @@ infra/                                — Bicep
 
 ---
 
-### Фича 14: Очередь фоновых задач
+### Фича 14: Очередь фоновых задач ✅
 
 **Цель:** модули ставят задачи в очередь в PostgreSQL; воркер выполняет их с повторами, восстановлением после падения, дедупликацией и в контексте нужного пользователя; есть планировщик периодических действий.
 
@@ -468,19 +468,19 @@ infra/                                — Bicep
 - Тесты: `tests/KnowledgeHub.UnitTests/Jobs/RetryPolicyTests.cs`, `tests/KnowledgeHub.IntegrationTests/Jobs/JobQueueTests.cs`, `tests/KnowledgeHub.IntegrationTests/Jobs/JobWorkerTests.cs`
 
 **Шаги:**
-- [ ] Таблица `jobs` по дизайну + `user_id` (nullable — для системных задач) + `dedup_key` (unique, nullable) + `created_at`; индекс `(status, run_after)`; RLS **не** включается (системная таблица, доступ только из модуля Jobs)
-- [ ] `IJobQueue.EnqueueAsync<TPayload>(type, payload, userId?, runAfter?, dedupKey?)` — `INSERT ... ON CONFLICT (dedup_key) DO NOTHING`; работает в текущей транзакции `AppDbContext` (задача и запись сохраняются атомарно)
-- [ ] Захват: `UPDATE jobs SET status='processing', locked_until=@now+5min, attempts=attempts+1 WHERE id = (SELECT id FROM jobs WHERE (status='pending' AND run_after<=@now) OR (status='processing' AND locked_until<@now) ORDER BY run_after FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING *`; `@now` из `TimeProvider`
-- [ ] `IJobHandler<TPayload>` с константой `Type`; регистрация `services.AddJobHandler<THandler, TPayload>()`; payload — `jsonb` через `System.Text.Json`
-- [ ] `JobWorker` (`BackgroundService`): опрос каждые 2 с (`JobOptions.PollInterval`), новый DI-scope на задачу, `SystemContext.RunAs(job.UserId)` или системный контекст; успех → `completed`; исключение → `pending` с `run_after = now + [1, 5, 30] мин` по `attempts`; после 4-й попытки → `failed` + `last_error` + лог `JobFailed` (на него завязан алерт в фиче 24); вызов `IJobFailureHandler.OnFailedAsync(job, error)` по типу задачи (для статуса записи — фича 15)
-- [ ] `IRecurringTask { Name; Interval; ExecuteAsync }` + `RecurringScheduler` (`PeriodicTimer`, системный контекст, исключение одной задачи не останавливает остальные)
-- [ ] Очистка: recurring-задача удаляет `completed` старше 7 дней
-- [ ] В `ApiFactory` воркер отключён (`Jobs:Enabled=false`); тесты вызывают `JobWorker.ProcessNextAsync()` вручную
-- [ ] Тесты: два параллельных захвата не получают одну задачу; задача с `run_after` в будущем не берётся; истёкший `locked_until` подхватывается; паузы 1/5/30 мин (`FakeTimeProvider`); `failed` после 4 попыток; повторный `dedup_key` не создаёт вторую задачу; обработчик видит данные только своего пользователя (RLS)
+- [x] Таблица `jobs` по дизайну + `user_id` (nullable — для системных задач) + `dedup_key` (unique, nullable) + `created_at`; индекс `(status, run_after)`; RLS **не** включается (системная таблица, доступ только из модуля Jobs)
+- [x] `IJobQueue.EnqueueAsync<TPayload>(type, payload, userId?, runAfter?, dedupKey?)` — `INSERT ... ON CONFLICT (dedup_key) DO NOTHING`; работает в текущей транзакции `AppDbContext` (задача и запись сохраняются атомарно)
+- [x] Захват: `UPDATE jobs SET status='processing', locked_until=@now+5min, attempts=attempts+1 WHERE id = (SELECT id FROM jobs WHERE (status='pending' AND run_after<=@now) OR (status='processing' AND locked_until<@now) ORDER BY run_after FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING *`; `@now` из `TimeProvider`
+- [x] `IJobHandler<TPayload>` с константой `Type`; регистрация `services.AddJobHandler<THandler, TPayload>()`; payload — `jsonb` через `System.Text.Json`
+- [x] `JobWorker` (`BackgroundService`): опрос каждые 2 с (`JobOptions.PollInterval`), новый DI-scope на задачу, `SystemContext.RunAs(job.UserId)` или системный контекст; успех → `completed`; исключение → `pending` с `run_after = now + [1, 5, 30] мин` по `attempts`; после 4-й попытки → `failed` + `last_error` + лог `JobFailed` (на него завязан алерт в фиче 24); вызов `IJobFailureHandler.OnFailedAsync(job, error)` по типу задачи (для статуса записи — фича 15)
+- [x] `IRecurringTask { Name; Interval; ExecuteAsync }` + `RecurringScheduler` (`PeriodicTimer`, системный контекст, исключение одной задачи не останавливает остальные)
+- [x] Очистка: recurring-задача удаляет `completed` старше 7 дней
+- [x] В `ApiFactory` воркер отключён (`Jobs:Enabled=false`); тесты вызывают `JobWorker.ProcessNextAsync()` вручную
+- [x] Тесты: два параллельных захвата не получают одну задачу; задача с `run_after` в будущем не берётся; истёкший `locked_until` подхватывается; паузы 1/5/30 мин (`FakeTimeProvider`); `failed` после 4 попыток; повторный `dedup_key` не создаёт вторую задачу; обработчик видит данные только своего пользователя (RLS)
 
 **Проверка:**
-- [ ] `dotnet test tests/KnowledgeHub.UnitTests --filter "FullyQualifiedName~Jobs"` — `Passed!  - Failed:     0`
-- [ ] `dotnet test tests/KnowledgeHub.IntegrationTests --filter "FullyQualifiedName~Jobs"` — `Passed!  - Failed:     0`
+- [x] `dotnet test tests/KnowledgeHub.UnitTests --filter "FullyQualifiedName~Jobs"` — `Passed!  - Failed:     0`
+- [x] `dotnet test tests/KnowledgeHub.IntegrationTests --filter "FullyQualifiedName~Jobs"` — `Passed!  - Failed:     0`
 
 ---
 

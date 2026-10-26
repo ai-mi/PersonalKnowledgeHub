@@ -46,6 +46,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         builder.UseEnvironment("Testing");
         builder.UseSetting("Database:ConnectionString", _postgres.AppConnectionString);
         builder.UseSetting("Database:MigrateOnStartup", "true");
+        builder.UseSetting("Jobs:Enabled", "false");
 
         builder.ConfigureTestServices(services =>
         {

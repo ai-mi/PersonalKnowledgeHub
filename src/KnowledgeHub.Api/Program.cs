@@ -5,6 +5,7 @@ using KnowledgeHub.Api.Infrastructure.Persistence;
 using KnowledgeHub.Api.Infrastructure.Web;
 using KnowledgeHub.Api.Modules.Identity;
 using KnowledgeHub.Api.Modules.Items;
+using KnowledgeHub.Api.Modules.Jobs;
 using KnowledgeHub.Api.Modules.Search;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,6 +21,8 @@ builder.Services.ConfigureHttpJsonOptions(o =>
 builder.Services.AddIdentityModule(builder.Configuration);
 builder.Services.AddItemsModule(builder.Configuration);
 builder.Services.AddSearchModule(builder.Configuration);
+// После AddPersistence: DatabaseRoleGuard (проверка роли и миграции) стартует раньше воркеров.
+builder.Services.AddJobsModule(builder.Configuration);
 
 if (!string.IsNullOrWhiteSpace(builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]))
 {

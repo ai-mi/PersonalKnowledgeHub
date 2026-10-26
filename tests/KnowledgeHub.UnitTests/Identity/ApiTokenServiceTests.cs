@@ -1,6 +1,7 @@
 using KnowledgeHub.Api.Common;
 using KnowledgeHub.Api.Infrastructure.Persistence;
 using KnowledgeHub.Api.Modules.Identity;
+using KnowledgeHub.UnitTests.Infrastructure;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Time.Testing;
@@ -22,7 +23,7 @@ public sealed class ApiTokenServiceTests
         var system = new SystemContext();
         var time = new FakeTimeProvider(Now);
         // Пользователь запроса задаётся через RunAs: HttpContext в unit-тесте нет.
-        var db = new AppDbContext(_options, new CurrentUser(new HttpContextAccessor(), system));
+        var db = new InMemoryAppDbContext(_options, new CurrentUser(new HttpContextAccessor(), system));
         system.RunAs(userId);
         return (new ApiTokenService(db, time, system), db, time, userId);
     }

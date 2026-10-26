@@ -1,6 +1,7 @@
 using KnowledgeHub.Api.Common;
 using KnowledgeHub.Api.Infrastructure.Persistence;
 using KnowledgeHub.Api.Modules.Identity;
+using KnowledgeHub.UnitTests.Infrastructure;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Time.Testing;
@@ -19,7 +20,7 @@ public sealed class UserProvisioningServiceTests : IDisposable
     private (UserProvisioningService Service, AppDbContext Db) Create()
     {
         var system = new SystemContext();
-        var db = new AppDbContext(_options, new CurrentUser(new HttpContextAccessor(), system));
+        var db = new InMemoryAppDbContext(_options, new CurrentUser(new HttpContextAccessor(), system));
         return (new UserProvisioningService(db, new FakeTimeProvider(Now), system), db);
     }
 
@@ -129,7 +130,7 @@ public sealed class UserProvisioningServiceTests : IDisposable
 
     public void Dispose()
     {
-        using var db = new AppDbContext(_options, new CurrentUser(new HttpContextAccessor(), new SystemContext()));
+        using var db = new InMemoryAppDbContext(_options, new CurrentUser(new HttpContextAccessor(), new SystemContext()));
         db.Database.EnsureDeleted();
     }
 }
