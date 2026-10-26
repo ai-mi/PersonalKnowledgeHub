@@ -1,14 +1,18 @@
+using KnowledgeHub.Api.Common;
 using KnowledgeHub.Api.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace KnowledgeHub.Api.Modules.Identity;
 
-public class UserProvisioningService(AppDbContext db, TimeProvider timeProvider)
+public class UserProvisioningService(AppDbContext db, TimeProvider timeProvider, SystemContext systemContext)
 {
     /// <summary>Возвращает пользователя по внешнему аккаунту, создавая его (вместе с настройками) при первом входе.</summary>
     public async Task<User> FindOrCreateAsync(
         string provider, string subject, string? email, string? name, CancellationToken ct = default)
     {
+        // Пользователь ещё не известен, а user_settings защищена RLS — работаем в системном контексте.
+        using var _ = systemContext.Enter();
+
         var existing = await FindAsync(provider, subject, ct);
         if (existing is not null)
         {

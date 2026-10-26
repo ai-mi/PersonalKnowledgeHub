@@ -1,3 +1,4 @@
+using KnowledgeHub.Api.Common;
 using KnowledgeHub.Api.Infrastructure.Persistence;
 using KnowledgeHub.Api.Modules.Identity;
 using Microsoft.AspNetCore.Authentication;
@@ -69,6 +70,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         await using (var scope = Services.CreateAsyncScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            // user_settings защищена RLS, а «пользователя» запроса при подготовке данных ещё нет.
+            using var _ = scope.ServiceProvider.GetRequiredService<SystemContext>().Enter();
             db.Users.Add(new User
             {
                 Id = userId,

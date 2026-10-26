@@ -1,3 +1,5 @@
+using KnowledgeHub.Api.Common;
+
 namespace KnowledgeHub.Api.Modules.Identity;
 
 public enum DigestFrequency
@@ -7,7 +9,7 @@ public enum DigestFrequency
     Weekly,
 }
 
-public class UserSettings
+public class UserSettings : IUserOwned
 {
     public static readonly IReadOnlySet<string> AllowedDigestChannels =
         new HashSet<string>(["telegram", "email"], StringComparer.Ordinal);

@@ -268,7 +268,7 @@ infra/                                — Bicep
 
 ---
 
-### Фича 6: Изоляция данных — фильтр EF и Row-Level Security
+### Фича 6: Изоляция данных — фильтр EF и Row-Level Security ✅
 
 **Цель:** данные пользователя недоступны другим ни через EF, ни через сырой SQL; фоновые задачи могут работать в системном контексте; есть переиспользуемый тест изоляции.
 
@@ -278,15 +278,15 @@ infra/                                — Bicep
 - Тесты: `tests/KnowledgeHub.IntegrationTests/Identity/RlsTests.cs`, `tests/KnowledgeHub.IntegrationTests/Identity/IsolationTests.cs`
 
 **Шаги:**
-- [ ] `IUserOwned { Guid UserId }`; в `AppDbContext.OnModelCreating` — глобальный фильтр `e.UserId == currentUser.UserId` для всех `IUserOwned` (через цикл по типам, без копипасты); при сохранении новых `IUserOwned` `UserId` проставляется автоматически
-- [ ] `UserContextConnectionInterceptor.ConnectionOpened(Async)`: `SELECT set_config('app.user_id', @uid, false), set_config('app.is_system', @sys, false)` — оба значения на **каждое** открытие (п.1 «Подводных камней»)
-- [ ] `SystemContext.Enter()` (`IDisposable`, scoped): переводит `ICurrentUser` в системный режим (EF-фильтр отключается через флаг в выражении фильтра) или в режим конкретного пользователя `RunAs(userId)` — используется воркерами
-- [ ] `RlsMigrationExtensions.EnableUserRls(this MigrationBuilder, string table)`: `ENABLE` + `FORCE ROW LEVEL SECURITY` + политика `USING/WITH CHECK (user_id = nullif(current_setting('app.user_id', true), '')::uuid OR current_setting('app.is_system', true) = 'on')`; применить к `user_settings` (миграция `Rls`), далее — в каждой миграции с новой пользовательской таблицей
-- [ ] `RlsTests`: под пользователем A сырой SQL `SELECT count(*) FROM user_settings` видит только свою строку; без контекста — 0 строк; `INSERT` с чужим `user_id` → ошибка политики; в системном контексте видны все
-- [ ] `IsolationTests`: data-driven тест (`[Theory]` + `MemberData`) — список «как создать ресурс у A» + «запрос B» → ожидается `404`; пока одна запись (`/api/me/settings` не применима — добавить заглушку-пример и комментарий, как расширять)
+- [x] `IUserOwned { Guid UserId }`; в `AppDbContext.OnModelCreating` — глобальный фильтр `e.UserId == currentUser.UserId` для всех `IUserOwned` (через цикл по типам, без копипасты); при сохранении новых `IUserOwned` `UserId` проставляется автоматически
+- [x] `UserContextConnectionInterceptor.ConnectionOpened(Async)`: `SELECT set_config('app.user_id', @uid, false), set_config('app.is_system', @sys, false)` — оба значения на **каждое** открытие (п.1 «Подводных камней»)
+- [x] `SystemContext.Enter()` (`IDisposable`, scoped): переводит `ICurrentUser` в системный режим (EF-фильтр отключается через флаг в выражении фильтра) или в режим конкретного пользователя `RunAs(userId)` — используется воркерами
+- [x] `RlsMigrationExtensions.EnableUserRls(this MigrationBuilder, string table)`: `ENABLE` + `FORCE ROW LEVEL SECURITY` + политика `USING/WITH CHECK (user_id = nullif(current_setting('app.user_id', true), '')::uuid OR current_setting('app.is_system', true) = 'on')`; применить к `user_settings` (миграция `Rls`), далее — в каждой миграции с новой пользовательской таблицей
+- [x] `RlsTests`: под пользователем A сырой SQL `SELECT count(*) FROM user_settings` видит только свою строку; без контекста — 0 строк; `INSERT` с чужим `user_id` → ошибка политики; в системном контексте видны все
+- [x] `IsolationTests`: data-driven тест (`[Theory]` + `MemberData`) — список «как создать ресурс у A» + «запрос B» → ожидается `404`; пока одна запись (`/api/me/settings` не применима — добавить заглушку-пример и комментарий, как расширять)
 
 **Проверка:**
-- [ ] `dotnet test tests/KnowledgeHub.IntegrationTests --filter "FullyQualifiedName~Rls|FullyQualifiedName~Isolation"` — `Passed!  - Failed:     0`
+- [x] `dotnet test tests/KnowledgeHub.IntegrationTests --filter "FullyQualifiedName~Rls|FullyQualifiedName~Isolation"` — `Passed!  - Failed:     0`
 
 ---
 

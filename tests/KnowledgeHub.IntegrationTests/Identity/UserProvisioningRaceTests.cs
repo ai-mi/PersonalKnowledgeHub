@@ -1,3 +1,4 @@
+using KnowledgeHub.Api.Common;
 using KnowledgeHub.Api.Infrastructure.Persistence;
 using KnowledgeHub.Api.Modules.Identity;
 using KnowledgeHub.IntegrationTests.Infrastructure;
@@ -11,9 +12,8 @@ public sealed class UserProvisioningRaceTests(ApiFactory factory) : IntegrationT
 {
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    private DbContextOptionsBuilder<AppDbContext> Options() => new DbContextOptionsBuilder<AppDbContext>()
-        .UseNpgsql(Factory.Postgres.AppConnectionString)
-        .UseSnakeCaseNamingConvention();
+    private AppDbContext NewDb(params IInterceptor[] interceptors) =>
+        TestDb.Create(Factory.Postgres.AppConnectionString, TestCurrentUser.System(), extraInterceptors: interceptors);
 
     [Fact]
     public async Task CompetingInsertBeforeSave_ReturnsTheWinnersUser_WithoutDuplicates()
@@ -21,20 +21,20 @@ public sealed class UserProvisioningRaceTests(ApiFactory factory) : IntegrationT
         var winnerId = Guid.CreateVersion7();
         var interceptor = new BeforeFirstSaveInterceptor(async () =>
         {
-            await using var other = new AppDbContext(Options().Options);
+            await using var other = NewDb();
             other.Users.Add(new User { Id = winnerId, Email = "winner@example.com", DisplayName = "Winner", CreatedAt = DateTimeOffset.UtcNow });
             other.UserSettings.Add(UserSettings.CreateDefault(winnerId, "winner@example.com"));
             other.UserLogins.Add(new UserLogin { Provider = "google", Subject = "sub-race", UserId = winnerId });
             await other.SaveChangesAsync(Ct);
         });
-        await using var db = new AppDbContext(Options().AddInterceptors(interceptor).Options);
-        var service = new UserProvisioningService(db, TimeProvider.System);
+        await using var db = NewDb(interceptor);
+        var service = new UserProvisioningService(db, TimeProvider.System, new SystemContext());
 
         var user = await service.FindOrCreateAsync("google", "sub-race", "loser@example.com", "Loser", Ct);
 
         interceptor.Fired.ShouldBeTrue("конкурирующая вставка должна была сработать до сохранения");
         user.Id.ShouldBe(winnerId);
-        await using var check = new AppDbContext(Options().Options);
+        await using var check = NewDb();
         (await check.Users.CountAsync(Ct)).ShouldBe(1);
         (await check.UserLogins.CountAsync(Ct)).ShouldBe(1);
         (await check.UserSettings.CountAsync(Ct)).ShouldBe(1);
@@ -44,8 +44,8 @@ public sealed class UserProvisioningRaceTests(ApiFactory factory) : IntegrationT
     public async Task SaveFailureNotCausedByRace_IsNotSwallowed()
     {
         var interceptor = new BeforeFirstSaveInterceptor(() => throw new DbUpdateException("boom"));
-        await using var db = new AppDbContext(Options().AddInterceptors(interceptor).Options);
-        var service = new UserProvisioningService(db, TimeProvider.System);
+        await using var db = NewDb(interceptor);
+        var service = new UserProvisioningService(db, TimeProvider.System, new SystemContext());
 
         await Should.ThrowAsync<InvalidOperationException>(
             () => service.FindOrCreateAsync("google", "sub-x", null, null, Ct));

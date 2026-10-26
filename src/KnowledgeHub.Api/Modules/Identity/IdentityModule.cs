@@ -8,6 +8,7 @@ public static class IdentityModule
     public static IServiceCollection AddIdentityModule(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddHttpContextAccessor();
+        services.AddScoped<SystemContext>();
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddScoped<UserProvisioningService>();
 

@@ -1,5 +1,7 @@
+using KnowledgeHub.Api.Common;
 using KnowledgeHub.Api.Infrastructure.Persistence;
 using KnowledgeHub.Api.Modules.Identity;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Time.Testing;
 
@@ -16,8 +18,9 @@ public sealed class UserProvisioningServiceTests : IDisposable
 
     private (UserProvisioningService Service, AppDbContext Db) Create()
     {
-        var db = new AppDbContext(_options);
-        return (new UserProvisioningService(db, new FakeTimeProvider(Now)), db);
+        var system = new SystemContext();
+        var db = new AppDbContext(_options, new CurrentUser(new HttpContextAccessor(), system));
+        return (new UserProvisioningService(db, new FakeTimeProvider(Now), system), db);
     }
 
     [Fact]
@@ -33,7 +36,7 @@ public sealed class UserProvisioningServiceTests : IDisposable
         user.CreatedAt.ShouldBe(Now);
         (await db.UserLogins.SingleAsync(Ct)).UserId.ShouldBe(user.Id);
 
-        var settings = await db.UserSettings.SingleAsync(Ct);
+        var settings = await db.UserSettings.IgnoreQueryFilters().SingleAsync(Ct);
         settings.UserId.ShouldBe(user.Id);
         settings.Timezone.ShouldBe("UTC");
         settings.DigestFrequency.ShouldBe(DigestFrequency.Off);
@@ -53,7 +56,7 @@ public sealed class UserProvisioningServiceTests : IDisposable
         second.Id.ShouldBe(first.Id);
         (await db.Users.CountAsync(Ct)).ShouldBe(1);
         (await db.UserLogins.CountAsync(Ct)).ShouldBe(1);
-        (await db.UserSettings.CountAsync(Ct)).ShouldBe(1);
+        (await db.UserSettings.IgnoreQueryFilters().CountAsync(Ct)).ShouldBe(1);
     }
 
     [Fact]
@@ -110,7 +113,7 @@ public sealed class UserProvisioningServiceTests : IDisposable
         var user = await service.FindOrCreateAsync("google", "sub-1", new string('a', User.MaxEmailLength) + "@example.com", "Alice", Ct);
 
         user.Email.ShouldBeNull();
-        (await db.UserSettings.SingleAsync(Ct)).Email.ShouldBeNull();
+        (await db.UserSettings.IgnoreQueryFilters().SingleAsync(Ct)).Email.ShouldBeNull();
     }
 
     [Fact]
@@ -126,7 +129,7 @@ public sealed class UserProvisioningServiceTests : IDisposable
 
     public void Dispose()
     {
-        using var db = new AppDbContext(_options);
+        using var db = new AppDbContext(_options, new CurrentUser(new HttpContextAccessor(), new SystemContext()));
         db.Database.EnsureDeleted();
     }
 }
