@@ -1,7 +1,7 @@
 using 'main.bicep'
 
 param namePrefix = 'kh'
-param location = 'eastus'
+param location = 'swedencentral'
 
 // Задаются владельцем подписки перед развёртыванием (см. infra/README.md):
 //   $env:ADMIN_PRINCIPAL_ID = (az ad signed-in-user show --query id -o tsv)
@@ -14,3 +14,5 @@ param adminPrincipalType = 'User'
 // поэтому webhook включается повторным развёртыванием.
 param botUsername = readEnvironmentVariable('BOT_USERNAME', '')
 param botWebhookUrl = readEnvironmentVariable('BOT_WEBHOOK_URL', '')
+// Алерты Azure Monitor и уведомления о бюджете ($60/мес, пороги 80% и 100%).
+param alertEmail = readEnvironmentVariable('ALERT_EMAIL', '')

@@ -15,6 +15,9 @@ param botUsername string = ''
 @description('Публичный адрес webhook: https://<хост Web App>/telegram/webhook.')
 param botWebhookUrl string = ''
 
+@description('E-mail для алертов и уведомлений о бюджете.')
+param alertEmail string
+
 var suffix = uniqueString(resourceGroup().id)
 var webAppName = '${namePrefix}-${suffix}'
 var keyVaultName = '${namePrefix}-kv-${suffix}'
@@ -92,6 +95,25 @@ module keyVault 'modules/key-vault.bicep' = {
     tenantId: tenantId
     webAppPrincipalId: appService.outputs.principalId
     acsConnectionString: communication.outputs.connectionString
+  }
+}
+
+module alerts 'modules/alerts.bicep' = {
+  name: 'alerts'
+  params: {
+    location: location
+    name: '${namePrefix}-${suffix}'
+    appInsightsName: monitoring.outputs.appInsightsName
+    webAppHostName: appService.outputs.defaultHostName
+    alertEmail: alertEmail
+  }
+}
+
+module budget 'modules/budget.bicep' = {
+  name: 'budget'
+  params: {
+    name: '${namePrefix}-monthly'
+    contactEmail: alertEmail
   }
 }
 

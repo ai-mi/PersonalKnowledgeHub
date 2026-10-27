@@ -19,6 +19,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
+    // e2e-сценарии запускает Playwright (npm run test:e2e), не Vitest.
+    exclude: ['e2e/**', 'node_modules/**'],
     coverage: { include: ['src/**'], exclude: ['src/**/*.test.*', 'src/main.tsx'] },
   },
 })

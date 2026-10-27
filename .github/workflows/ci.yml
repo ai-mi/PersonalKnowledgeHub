@@ -44,3 +44,39 @@ jobs:
         run: |
           az bicep build --file infra/main.bicep --outfile "$RUNNER_TEMP/main.json"
           az bicep build-params --file infra/main.bicepparam --outfile "$RUNNER_TEMP/main.parameters.json"
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: src/KnowledgeHub.Web/package-lock.json
+
+      - name: PostgreSQL и Azurite
+        run: |
+          docker compose up -d
+          # Проверка по TCP: временный сервер init-скрипта слушает только unix-сокет.
+          until docker compose exec -T postgres pg_isready -h 127.0.0.1 -U postgres; do sleep 1; done
+
+      - name: Web — install, Playwright
+        run: |
+          npm --prefix src/KnowledgeHub.Web ci
+          npx --prefix src/KnowledgeHub.Web playwright install --with-deps chromium
+
+      # playwright.config.ts сам запускает API (Development, dev-вход) и Vite dev-сервер.
+      - name: Web — e2e
+        run: npm --prefix src/KnowledgeHub.Web run test:e2e
+
+      - uses: actions/upload-artifact@v5
+        if: failure()
+        with:
+          name: playwright-report
+          path: src/KnowledgeHub.Web/playwright-report/
+          retention-days: 7

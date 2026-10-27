@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using KnowledgeHub.Api.Infrastructure.Web;
 using KnowledgeHub.Api.Modules.Jobs;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -21,7 +22,7 @@ public static class WebhookEndpoint
     /// Вне группы <c>/api</c>: без cookie-аутентификации и antiforgery — подлинность запроса подтверждает секретный заголовок.
     /// </summary>
     public static void MapWebhookEndpoint(this IEndpointRouteBuilder routes) =>
-        routes.MapPost(Path, Receive).AllowAnonymous().WithMetadata(new RequestSizeLimitAttribute(MaxBodyBytes));
+        routes.MapPost(Path, Receive).AllowAnonymous().RequireRateLimiting(RateLimitPolicies.Webhook).WithMetadata(new RequestSizeLimitAttribute(MaxBodyBytes));
 
     private static async Task<Results<Ok, UnauthorizedHttpResult, BadRequest>> Receive(
         HttpRequest request, IOptions<BotOptions> options, IJobQueue jobs, CancellationToken ct)

@@ -22,11 +22,12 @@ Bicep описывает все ресурсы из дизайна (`docs/projec
 
 ```powershell
 $rg = 'rg-knowledgehub'
-az group create -n $rg -l eastus
+az group create -n $rg -l swedencentral
 
 # Entra-администратор PostgreSQL — вы сами (или группа), НЕ managed identity Web App.
 $env:ADMIN_PRINCIPAL_ID   = (az ad signed-in-user show --query id -o tsv)
 $env:ADMIN_PRINCIPAL_NAME = (az ad signed-in-user show --query userPrincipalName -o tsv)
+$env:ALERT_EMAIL          = '<e-mail для алертов и уведомлений о бюджете $60/мес>'
 
 # Проверка плана без применения
 az deployment group what-if -g $rg --template-file infra/main.bicep --parameters infra/main.bicepparam

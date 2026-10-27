@@ -707,7 +707,7 @@ infra/                                — Bicep
 
 ---
 
-### Фича 24: Надёжность и релиз
+### Фича 24: Надёжность и релиз ✅
 
 **Цель:** включены лимиты запросов и алерты, smoke-тесты Playwright проходят в CI, проверены безопасность, бэкапы и расходы — систему можно открывать другим пользователям.
 
@@ -721,21 +721,21 @@ infra/                                — Bicep
 - Тесты: `tests/KnowledgeHub.IntegrationTests/Infrastructure/RateLimitingTests.cs`, `src/KnowledgeHub.Web/e2e/smoke.spec.ts`
 
 **Шаги:**
-- [ ] Rate limiting (`AddRateLimiter`): партиция по `kh_user_id`, иначе по IP (после forwarded headers); политики: `default` 120/мин, `auth` 10/мин на IP (`/api/auth/*`), `webhook` 60/мин, `upload` 10/мин; ответ `429` + `Retry-After`; `UseRateLimiter()` — **после** `UseForwardedHeaders`/`UseAuthentication()`, иначе claim `kh_user_id` и реальный IP ещё недоступны; в `ApiFactory` лимиты можно переопределить конфигурацией
-- [ ] `alerts.bicep`: исключения > 10 за 15 мин; `/health` недоступен (availability test); рост `failed`-задач — custom metric/лог-запрос по сообщению `JobFailed` (воркер логирует его в фиче 14 — проверить)
-- [ ] `budget.bicep`: бюджет resource group $60/мес, уведомления на 80% и 100% (e-mail из параметра)
-- [ ] Playwright: `webServer` запускает API (`ASPNETCORE_ENVIRONMENT=Development`, `Auth__EnableDevLogin=true`) против `docker compose`; сценарий: dev-login → создать ссылку `https://example.com` с заметкой «проверка поиска» → дождаться «Готово» → найти поиском «проверка» → отметить прочитанной
-- [ ] CI job `e2e`: `docker compose up -d`, `npx playwright install --with-deps chromium`, `npm run test:e2e`; артефакт `playwright-report` при падении
-- [ ] `docs/security-checklist.md`: пройти таблицу безопасности из дизайна, по каждой строке — где реализовано и каким тестом покрыто; заголовки ответа: `Content-Security-Policy` (`default-src 'self'`), `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options: DENY` — добавить middleware, если не хватает
-- [ ] `docs/operations.md`: восстановление PostgreSQL на точку во времени (команда `az postgres flexible-server restore`), восстановление блоба из soft delete, ротация секретов, ручная повторная регистрация webhook
-- [ ] ⚠ Вручную в Azure: восстановить БД из бэкапа во временный сервер и проверить данные; убедиться, что рестарт App Service не разлогинивает (п.13 «Подводных камней»); сверить фактические расходы с оценкой ~$30/мес
-- [ ] Тесты: 11-й запрос входа за минуту → `429`; запросы двух пользователей не делят лимит
+- [x] Rate limiting (`AddRateLimiter`): партиция по `kh_user_id`, иначе по IP (после forwarded headers); политики: `default` 120/мин, `auth` 10/мин на IP (`/api/auth/*`), `webhook` 60/мин, `upload` 10/мин; ответ `429` + `Retry-After`; `UseRateLimiter()` — **после** `UseForwardedHeaders`/`UseAuthentication()`, иначе claim `kh_user_id` и реальный IP ещё недоступны; в `ApiFactory` лимиты можно переопределить конфигурацией
+- [x] `alerts.bicep`: исключения > 10 за 15 мин; `/health` недоступен (availability test); рост `failed`-задач — custom metric/лог-запрос по сообщению `JobFailed` (воркер логирует его в фиче 14 — проверить) (`what-if` в `kh-rg`/Sweden Central прошёл)
+- [x] `budget.bicep`: бюджет resource group $60/мес, уведомления на 80% и 100% (e-mail из параметра)
+- [x] Playwright: `webServer` запускает API (`ASPNETCORE_ENVIRONMENT=Development`, `Auth__EnableDevLogin=true`) против `docker compose`; сценарий: dev-login → создать ссылку `https://example.com` с заметкой «проверка поиска» → дождаться «Готово» → найти поиском «проверка» → отметить прочитанной
+- [ ] CI job `e2e`: `docker compose up -d`, `npx playwright install --with-deps chromium`, `npm run test:e2e`; артефакт `playwright-report` при падении — **job написан, первый запуск в GitHub Actions ещё не выполнен** (локально `npm run test:e2e` проходит)
+- [x] `docs/security-checklist.md`: пройти таблицу безопасности из дизайна, по каждой строке — где реализовано и каким тестом покрыто; заголовки ответа: `Content-Security-Policy` (`default-src 'self'`), `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options: DENY` — добавить middleware, если не хватает
+- [x] `docs/operations.md`: восстановление PostgreSQL на точку во времени (команда `az postgres flexible-server restore`), восстановление блоба из soft delete, ротация секретов, ручная повторная регистрация webhook
+- [ ] ⚠ Вручную в Azure: восстановить БД из бэкапа во временный сервер и проверить данные; убедиться, что рестарт App Service не разлогинивает (п.13 «Подводных камней»); сверить фактические расходы с оценкой ~$30/мес — **ждёт развёртывания** (чек-лист в `docs/operations.md`)
+- [x] Тесты: 11-й запрос входа за минуту → `429`; запросы двух пользователей не делят лимит
 
 **Проверка:**
-- [ ] `dotnet test KnowledgeHub.slnx` — `Passed!  - Failed:     0`
-- [ ] `npm --prefix src/KnowledgeHub.Web run test:e2e` — `1 passed`
-- [ ] `az bicep build --file infra/main.bicep` — без ошибок
-- [ ] `curl -I https://<app>.azurewebsites.net/` — есть заголовки `Content-Security-Policy` и `X-Content-Type-Options: nosniff`
+- [x] `dotnet test KnowledgeHub.slnx` — `Passed!  - Failed:     0`
+- [x] `npm --prefix src/KnowledgeHub.Web run test:e2e` — `1 passed`
+- [x] `az bicep build --file infra/main.bicep` — без ошибок
+- [ ] `curl -I https://<app>.azurewebsites.net/` — есть заголовки `Content-Security-Policy` и `X-Content-Type-Options: nosniff` — **ждёт развёртывания**
 
 ---
 

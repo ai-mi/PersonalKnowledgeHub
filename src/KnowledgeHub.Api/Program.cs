@@ -18,6 +18,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHealthChecks();
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetailsHandling();
+builder.Services.AddRateLimitingPolicies(builder.Configuration);
 builder.Services.AddPersistence(builder.Configuration);
 builder.Services.AddBlobStorage(builder.Configuration);
 builder.Services.AddSingleton(TimeProvider.System);
@@ -42,18 +43,21 @@ if (!string.IsNullOrWhiteSpace(builder.Configuration["APPLICATIONINSIGHTS_CONNEC
 var app = builder.Build();
 
 app.UseProblemDetailsHandling();
+app.UseSecurityHeaders(includeContentSecurityPolicy: !app.Environment.IsDevelopment());
 app.UseDefaultFiles();
 app.UseStaticFiles();
 // UseRouting после статики: иначе fallback-endpoint перехватывает запросы к StaticFileMiddleware раньше времени.
 app.UseRouting();
 app.UseAuthentication();
+// После UseAuthentication: партиция лимита берёт claim kh_user_id. IP уже реальный — ForwardedHeaders включается переменной окружения и стоит в начале конвейера.
+app.UseRateLimiter();
 app.UseAuthorization();
 app.UseXsrfCookie();
 
 app.MapHealthChecks("/health");
 app.MapOpenApi();
 
-var api = app.MapGroup("/api").AddEndpointFilter<AntiforgeryFilter>();
+var api = app.MapGroup("/api").AddEndpointFilter<AntiforgeryFilter>().RequireRateLimiting(RateLimitPolicies.Default);
 api.MapIdentityEndpoints();
 api.MapItemsEndpoints();
 api.MapSearchEndpoints();

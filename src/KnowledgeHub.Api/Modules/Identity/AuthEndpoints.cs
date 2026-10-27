@@ -1,6 +1,7 @@
 using System.Net.Mail;
 using System.Security.Claims;
 using KnowledgeHub.Api.Common;
+using KnowledgeHub.Api.Infrastructure.Web;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -12,7 +13,7 @@ public static class AuthEndpoints
 
     public static void MapAuthEndpoints(this IEndpointRouteBuilder routes)
     {
-        var group = routes.MapGroup("/auth");
+        var group = routes.MapGroup("/auth").RequireRateLimiting(RateLimitPolicies.Auth);
         group.MapGet("/login/{provider}", Login);
         group.MapGet("/callback", Callback);
         group.MapPost("/logout", (Func<HttpContext, Task<NoContent>>)Logout);

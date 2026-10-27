@@ -65,6 +65,11 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("Ingestion:AllowLoopbackForTests", "true");
         builder.UseSetting("Bot:WebhookSecret", BotWebhookSecret);
         builder.UseSetting("Bot:Username", "kh_test_bot");
+        // Лимиты не должны мешать обычным тестам; RateLimitingTests возвращает рабочие значения через WithWebHostBuilder.
+        foreach (var limit in new[] { "Default", "Auth", "Webhook", "Upload" })
+        {
+            builder.UseSetting($"RateLimiting:{limit}PerMinute", "100000");
+        }
 
         builder.ConfigureTestServices(services =>
         {

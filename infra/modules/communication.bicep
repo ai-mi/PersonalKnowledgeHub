@@ -1,7 +1,7 @@
 param name string
 
 @description('Регион хранения данных ACS (не Azure-регион ресурса).')
-param dataLocation string = 'United States'
+param dataLocation string = 'Europe'
 
 resource emailService 'Microsoft.Communication/emailServices@2023-04-01' = {
   name: '${name}-email'

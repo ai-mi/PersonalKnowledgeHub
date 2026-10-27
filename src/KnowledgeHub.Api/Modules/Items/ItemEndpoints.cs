@@ -1,4 +1,5 @@
 using KnowledgeHub.Api.Common;
+using KnowledgeHub.Api.Infrastructure.Web;
 using KnowledgeHub.Api.Infrastructure.Storage;
 using KnowledgeHub.Api.Modules.Ingestion;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -29,6 +30,7 @@ public static class ItemEndpoints
         // Встроенная antiforgery-проверка форм отклонила бы загрузку с API-токеном; cookie-запросы проверяет наш фильтр группы /api.
         group.MapPost("/upload", Upload)
             .DisableAntiforgery()
+            .RequireRateLimiting(RateLimitPolicies.Upload)
             .WithMetadata(
                 new RequestSizeLimitAttribute(MaxUploadRequestBytes),
                 new RequestFormLimitsAttribute { MultipartBodyLengthLimit = MaxUploadRequestBytes });
