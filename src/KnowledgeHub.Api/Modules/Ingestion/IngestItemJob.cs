@@ -5,7 +5,7 @@ using KnowledgeHub.Api.Modules.Jobs;
 namespace KnowledgeHub.Api.Modules.Ingestion;
 
 /// <summary>Payload задачи <c>ingest</c>. Публичный контракт: задачу ставит модуль Items.</summary>
-public sealed record IngestItemPayload(Guid ItemId);
+public sealed record IngestItemPayload(Guid ItemId, long? NotifyChatId = null);
 
 /// <summary>
 /// Извлекает содержимое записи и обновляет её (и, через неё, поисковый индекс): ссылку скачивает и разбирает как статью,
@@ -34,7 +34,7 @@ public sealed class IngestItemJob(
         }
         catch (IngestionException e) when (!e.Retryable)
         {
-            await FailAsync(item, e.Message, ct);
+            await FailAsync(item, e.Message, payload.NotifyChatId, ct);
             return;
         }
         catch (Exception e) when (e is not (OperationCanceledException or IngestionException))
@@ -46,7 +46,7 @@ public sealed class IngestItemJob(
         // Заголовок, заданный пользователем, не перезаписываем.
         var title = string.IsNullOrWhiteSpace(item.Title) ? extracted.Title : null;
         await items.SetProcessingResultAsync(item.Id, ItemStatus.Ready, title, extracted.Body, null, ct);
-        await completed.OnCompletedAsync(item.Id, ItemStatus.Ready, null, ct);
+        await completed.OnCompletedAsync(item.Id, ItemStatus.Ready, null, payload.NotifyChatId, ct);
     }
 
     private async Task<ExtractedArticle> ExtractLinkAsync(Item item, CancellationToken ct)
@@ -74,9 +74,9 @@ public sealed class IngestItemJob(
         _ => DocumentKind.Text,
     };
 
-    private async Task FailAsync(Item item, string error, CancellationToken ct)
+    private async Task FailAsync(Item item, string error, long? notifyChatId, CancellationToken ct)
     {
         await items.SetProcessingResultAsync(item.Id, ItemStatus.Failed, null, item.Body, error, ct);
-        await completed.OnCompletedAsync(item.Id, ItemStatus.Failed, error, ct);
+        await completed.OnCompletedAsync(item.Id, ItemStatus.Failed, error, notifyChatId, ct);
     }
 }

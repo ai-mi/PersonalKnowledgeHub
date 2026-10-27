@@ -43,7 +43,7 @@ public sealed class DocumentIntake(
         {
             var title = string.IsNullOrWhiteSpace(metadata.Title) ? Path.GetFileNameWithoutExtension(storedName) : metadata.Title;
             var result = await items.CreateDocumentAsync(
-                new CreateDocumentCommand(id, blobPath, hash, title, metadata.UserNote, metadata.Tags, metadata.CollectionIds), ct);
+                new CreateDocumentCommand(id, blobPath, hash, title, metadata.UserNote, metadata.Tags, metadata.CollectionIds, metadata.NotifyChatId), ct);
             keepBlob = result.Created;
             return result;
         }

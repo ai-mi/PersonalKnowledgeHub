@@ -7,7 +7,8 @@ public sealed record DocumentMetadata(
     string? Title = null,
     string? UserNote = null,
     IReadOnlyList<string>? Tags = null,
-    IReadOnlyList<Guid>? CollectionIds = null);
+    IReadOnlyList<Guid>? CollectionIds = null,
+    long? NotifyChatId = null);
 
 /// <summary>Приём файла (API и Telegram-бот): проверка, хэш, блоб, запись и задача обработки.</summary>
 public interface IDocumentIntake

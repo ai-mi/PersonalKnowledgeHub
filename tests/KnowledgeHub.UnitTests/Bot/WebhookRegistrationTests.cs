@@ -17,7 +17,7 @@ public sealed class WebhookRegistrationTests
             return Failure is null ? Task.CompletedTask : Task.FromException(Failure);
         }
 
-        public Task SendMessageAsync(long chatId, string text, CancellationToken ct) => throw new NotSupportedException();
+        public Task SendMessageAsync(long chatId, string text, CancellationToken ct, IReadOnlyList<InlineButton>? buttons = null) => throw new NotSupportedException();
 
         public Task<TelegramFile> GetFileAsync(string fileId, CancellationToken ct) => throw new NotSupportedException();
 

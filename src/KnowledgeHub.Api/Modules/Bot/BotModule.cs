@@ -1,4 +1,6 @@
+using KnowledgeHub.Api.Modules.Ingestion;
 using KnowledgeHub.Api.Modules.Jobs;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace KnowledgeHub.Api.Modules.Bot;
 
@@ -9,6 +11,10 @@ public static class BotModule
         services.Configure<BotOptions>(configuration.GetSection(BotOptions.SectionName));
         services.AddSingleton<ITelegramClient, TelegramClient>();
         services.AddScoped<TelegramLinkService>();
+        services.AddScoped<IBotNotifier, BotNotifier>();
+        services.AddScoped<BotCommands>();
+        // Заменяет заглушку модуля Ingestion: окончание обработки записи, присланной боту, сообщается в чат.
+        services.Replace(ServiceDescriptor.Scoped<IIngestionCompletedHandler, IngestionCompletedNotifier>());
         services.AddJobHandler<ProcessUpdateJob, TelegramUpdatePayload>();
         services.AddHostedService<WebhookRegistration>();
         return services;

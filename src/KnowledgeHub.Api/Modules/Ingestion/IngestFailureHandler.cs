@@ -18,6 +18,6 @@ public sealed class IngestFailureHandler(IItemService items, IIngestionCompleted
         }
 
         await items.SetProcessingResultAsync(item.Id, ItemStatus.Failed, null, item.Body, error, ct);
-        await completed.OnCompletedAsync(item.Id, ItemStatus.Failed, error, ct);
+        await completed.OnCompletedAsync(item.Id, ItemStatus.Failed, error, payload.NotifyChatId, ct);
     }
 }

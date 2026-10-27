@@ -10,8 +10,12 @@ public sealed class MessageParserTests
     private static MessageEntity Entity(MessageEntityType type, string text, string span, string? url = null) =>
         new() { Type = type, Offset = text.IndexOf(span, StringComparison.Ordinal), Length = span.Length, Url = url };
 
+    private const long ChatId = 4242;
+
+    private static readonly Chat PrivateChat = new() { Id = ChatId, Type = ChatType.Private };
+
     private static Message Text(string text, params MessageEntity[] entities) =>
-        new() { Text = text, Entities = entities };
+        new() { Chat = PrivateChat, Text = text, Entities = entities };
 
     [Fact]
     public void LinkWithCaptionAndHashtags_BecomesLinkWithNoteAndTags()
@@ -28,6 +32,7 @@ public sealed class MessageParserTests
         item.Url.ShouldBe("https://example.com/post");
         item.UserNote.ShouldBe("Хорошая статья про шину");
         item.Tags.ShouldBe(["azure", "dotnet"]);
+        item.NotifyChatId.ShouldBe(ChatId);
     }
 
     [Fact]
@@ -89,6 +94,7 @@ public sealed class MessageParserTests
         const string caption = "Спецификация #spec";
         var message = new Message
         {
+            Chat = PrivateChat,
             Document = new Document { FileId = "file-1", FileName = "spec.pdf", FileSize = 1234 },
             Caption = caption,
             CaptionEntities = [Entity(MessageEntityType.Hashtag, caption, "#spec")],
@@ -102,6 +108,7 @@ public sealed class MessageParserTests
         parsed.Document.FileSize.ShouldBe(1234);
         parsed.Document.Metadata.UserNote.ShouldBe("Спецификация");
         parsed.Document.Metadata.Tags.ShouldBe(["spec"]);
+        parsed.Document.Metadata.NotifyChatId.ShouldBe(ChatId);
     }
 
     [Fact]
@@ -110,6 +117,7 @@ public sealed class MessageParserTests
         const string caption = "см. https://example.com";
         var message = new Message
         {
+            Chat = PrivateChat,
             Document = new Document { FileId = "f", FileName = "a.txt" },
             Caption = caption,
             CaptionEntities = [Entity(MessageEntityType.Url, caption, "https://example.com")],
@@ -230,7 +238,7 @@ public sealed class MessageParserTests
     [Fact]
     public void DocumentWithoutName_GetsDefaultName()
     {
-        var message = new Message { Document = new Document { FileId = "f" } };
+        var message = new Message { Chat = PrivateChat, Document = new Document { FileId = "f" } };
 
         var document = MessageParser.Parse(message)!.Document!;
 
@@ -242,14 +250,14 @@ public sealed class MessageParserTests
     public void CaptionOnly_UsesCaptionEntities()
     {
         const string caption = "https://c.example.com";
-        var message = new Message { Caption = caption, CaptionEntities = [Entity(MessageEntityType.Url, caption, caption)] };
+        var message = new Message { Chat = PrivateChat, Caption = caption, CaptionEntities = [Entity(MessageEntityType.Url, caption, caption)] };
 
         MessageParser.Parse(message)!.Item!.Url.ShouldBe(caption);
     }
 
     [Fact]
     public void NoEntitiesAtAll_IsAPlainNote() =>
-        MessageParser.Parse(new Message { Text = "просто" })!.Item!.Body.ShouldBe("просто");
+        MessageParser.Parse(new Message { Chat = PrivateChat, Text = "просто" })!.Item!.Body.ShouldBe("просто");
 
     [Fact]
     public void MessageWithoutText_HasNothingToSave() =>

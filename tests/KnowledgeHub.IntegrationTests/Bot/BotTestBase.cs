@@ -50,6 +50,35 @@ public abstract class BotTestBase : JobsTestBase
         return JsonSerializer.Serialize(new { update_id = updateId ?? _nextUpdateId++, message });
     }
 
+    /// <summary>Нажатие inline-кнопки в сообщении бота.</summary>
+    protected string CallbackUpdate(string data, long chatId = ChatId, string callbackId = "cb-1") =>
+        JsonSerializer.Serialize(new
+        {
+            update_id = _nextUpdateId++,
+            callback_query = new
+            {
+                id = callbackId,
+                from = new { id = chatId, is_bot = false, first_name = "Test" },
+                message = new { message_id = 1, date = DateTimeOffset.UtcNow.ToUnixTimeSeconds(), chat = new { id = chatId, type = "private" } },
+                chat_instance = "ci",
+                data,
+            },
+        });
+
+    protected string CommandUpdate(string name, string argument = "", long chatId = ChatId)
+    {
+        var text = argument.Length == 0 ? $"/{name}" : $"/{name} {argument}";
+        return TextUpdate(text, chatId, [Entity("bot_command", text, $"/{name}")]);
+    }
+
+    /// <summary>Клиент API, аутентифицированный как уже существующий пользователь (см. <see cref="LinkedUserAsync"/>).</summary>
+    protected HttpClient ClientFor(Guid userId)
+    {
+        var client = Factory.CreateClient();
+        client.DefaultRequestHeaders.Add(TestAuthHandler.HeaderName, userId.ToString());
+        return client;
+    }
+
     protected static object Entity(string type, string text, string span, string? url = null) =>
         new { type, offset = text.IndexOf(span, StringComparison.Ordinal), length = span.Length, url };
 
@@ -68,24 +97,27 @@ public abstract class BotTestBase : JobsTestBase
     }
 
     /// <summary>Присылает update от Telegram и выполняет все задачи очереди.</summary>
-    protected async Task SendAsync(string json)
+    protected async Task SendAsync(string json, bool runIngest = false)
     {
         (await PostWebhookAsync(json)).EnsureSuccessStatusCode();
-        await ProcessAllAsync();
+        await ProcessAllAsync(runIngest);
     }
 
     /// <summary>
-    /// Выполняет задачи бота. Задачи <c>ingest</c> откладываются далеко вперёд: им нужна сеть, а тесты бота проверяют только
-    /// то, что запись создана и обработка поставлена в очередь.
+    /// Выполняет задачи бота. Если не <paramref name="runIngest"/>, задачи <c>ingest</c> откладываются далеко вперёд: им нужна сеть,
+    /// а тесты бота проверяют только то, что запись создана и обработка поставлена в очередь.
     /// </summary>
-    protected async Task ProcessAllAsync()
+    protected async Task ProcessAllAsync(bool runIngest = false)
     {
         do
         {
-            var postponedUntil = DateTimeOffset.UtcNow.AddDays(30);
-            await WithDbAsync((db, _) => db.Jobs
-                .Where(j => j.Type == "ingest" && j.Status == JobStatus.Pending)
-                .ExecuteUpdateAsync(s => s.SetProperty(j => j.RunAfter, postponedUntil), Ct));
+            if (!runIngest)
+            {
+                var postponedUntil = DateTimeOffset.UtcNow.AddDays(30);
+                await WithDbAsync((db, _) => db.Jobs
+                    .Where(j => j.Type == "ingest" && j.Status == JobStatus.Pending)
+                    .ExecuteUpdateAsync(s => s.SetProperty(j => j.RunAfter, postponedUntil), Ct));
+            }
         }
         while (await ProcessAsync());
     }

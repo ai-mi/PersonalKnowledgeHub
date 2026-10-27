@@ -61,12 +61,12 @@ public static partial class MessageParser
         if (message.Document is { } document)
         {
             return new ParsedMessage(null, new ParsedDocument(
-                document.FileId, document.FileName ?? "file", document.FileSize, new DocumentMetadata(UserNote: note, Tags: tagList)));
+                document.FileId, document.FileName ?? "file", document.FileSize, new DocumentMetadata(UserNote: note, Tags: tagList, NotifyChatId: message.Chat.Id)));
         }
 
         if (url is not null)
         {
-            return new ParsedMessage(new CreateItemCommand(ItemType.Link, Url: url, UserNote: note, Tags: tagList), null);
+            return new ParsedMessage(new CreateItemCommand(ItemType.Link, Url: url, UserNote: note, Tags: tagList, NotifyChatId: message.Chat.Id), null);
         }
 
         return note is null ? null : new ParsedMessage(new CreateItemCommand(ItemType.Note, Body: note, Tags: tagList), null);

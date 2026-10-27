@@ -586,7 +586,7 @@ infra/                                — Bicep
 
 ---
 
-### Фича 19: Telegram-бот — команды и уведомления
+### Фича 19: Telegram-бот — команды и уведомления ✅
 
 **Цель:** бот сообщает «Готово: \<заголовок\>» после обработки, выполняет `/search` и `/recent`, обрабатывает кнопку «Прочитано» и отключает привязку, если бот заблокирован.
 
@@ -596,16 +596,16 @@ infra/                                — Bicep
 - Тесты: `tests/KnowledgeHub.UnitTests/Bot/BotMessageFormatterTests.cs`, `tests/KnowledgeHub.IntegrationTests/Bot/CommandsTests.cs`, `tests/KnowledgeHub.IntegrationTests/Bot/NotificationsTests.cs`
 
 **Шаги:**
-- [ ] `IBotNotifier.SendAsync(userId, text, buttons?)` — общий метод отправки (используется уведомлениями, напоминаниями и дайджестом — DRY); ошибка `403 Forbidden` от Telegram → удаление `telegram_links` пользователя и лог
-- [ ] `IngestionCompletedNotifier : IIngestionCompletedHandler` — если в payload есть `notifyChatId`: «Готово: \<заголовок\>» или «Не удалось обработать: \<ошибка\>»
-- [ ] `/search <запрос>` — через `ISearchService` (DRY), топ-5: заголовок, ссылка на запись в вебе (`{Bot:WebBaseUrl}/items/{id}`); `/recent` — 5 последних записей
-- [ ] `BotMessageFormatter`: HTML-разметка Telegram с экранированием `<`, `>`, `&` во всём пользовательском тексте
-- [ ] Inline-кнопка «Прочитано» (`callback_data = "read:{itemId}"`) → `IItemService.MarkReadAsync` в контексте пользователя чата → `AnswerCallbackQuery`; чужой `itemId` → «Запись не найдена»
-- [ ] Тесты: после `ingest` бот отправил «Готово»; `/search` возвращает ≤ 5 результатов только своего пользователя; `callback read` ставит `read_at`; `403` при отправке удаляет привязку; экранирование `<script>` в заголовке
+- [x] `IBotNotifier.SendAsync(userId, text, buttons?)` — общий метод отправки (используется уведомлениями, напоминаниями и дайджестом — DRY); ошибка `403 Forbidden` от Telegram → удаление `telegram_links` пользователя и лог
+- [x] `IngestionCompletedNotifier : IIngestionCompletedHandler` — если в payload есть `notifyChatId`: «Готово: \<заголовок\>» или «Не удалось обработать: \<ошибка\>»
+- [x] `/search <запрос>` — через `ISearchService` (DRY), топ-5: заголовок, ссылка на запись в вебе (`{Bot:WebBaseUrl}/items/{id}`); `/recent` — 5 последних записей
+- [x] `BotMessageFormatter`: HTML-разметка Telegram с экранированием `<`, `>`, `&` во всём пользовательском тексте
+- [x] Inline-кнопка «Прочитано» (`callback_data = "read:{itemId}"`) → `IItemService.MarkReadAsync` в контексте пользователя чата → `AnswerCallbackQuery`; чужой `itemId` → «Запись не найдена»
+- [x] Тесты: после `ingest` бот отправил «Готово»; `/search` возвращает ≤ 5 результатов только своего пользователя; `callback read` ставит `read_at`; `403` при отправке удаляет привязку; экранирование `<script>` в заголовке
 
 **Проверка:**
-- [ ] `dotnet test tests/KnowledgeHub.UnitTests --filter "FullyQualifiedName~Bot"` — `Passed!  - Failed:     0`
-- [ ] `dotnet test tests/KnowledgeHub.IntegrationTests --filter "FullyQualifiedName~Bot"` — `Passed!  - Failed:     0`
+- [x] `dotnet test tests/KnowledgeHub.UnitTests --filter "FullyQualifiedName~Bot"` — `Passed!  - Failed:     0`
+- [x] `dotnet test tests/KnowledgeHub.IntegrationTests --filter "FullyQualifiedName~Bot"` — `Passed!  - Failed:     0`
 
 ---
 

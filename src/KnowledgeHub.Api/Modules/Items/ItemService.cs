@@ -81,7 +81,7 @@ public sealed class ItemService(
 
         try
         {
-            await SaveNewAsync(item, ct);
+            await SaveNewAsync(item, command.NotifyChatId, ct);
         }
         catch (DbUpdateException e) when (url is not null && IsUnique(e, UrlIndex))
         {
@@ -131,7 +131,7 @@ public sealed class ItemService(
 
         try
         {
-            await SaveNewAsync(item, ct);
+            await SaveNewAsync(item, command.NotifyChatId, ct);
         }
         catch (DbUpdateException e) when (IsUnique(e, ContentHashIndex))
         {
@@ -153,21 +153,21 @@ public sealed class ItemService(
     }
 
     /// <summary>Запись и задача обработки (если запись ждёт воркера) сохраняются атомарно.</summary>
-    private async Task SaveNewAsync(Item item, CancellationToken ct)
+    private async Task SaveNewAsync(Item item, long? notifyChatId, CancellationToken ct)
     {
         await using var transaction = await db.Database.BeginTransactionAsync(ct);
         await db.SaveChangesAsync(ct);
         if (item.Status == ItemStatus.Pending)
         {
-            await EnqueueIngestAsync(item, ct);
+            await EnqueueIngestAsync(item, notifyChatId, ct);
         }
 
         await searchIndexer.ReindexAsync([item.Id], ct);
         await transaction.CommitAsync(ct);
     }
 
-    private Task EnqueueIngestAsync(Item item, CancellationToken ct) =>
-        jobs.EnqueueAsync(IngestItemJob.JobType, new IngestItemPayload(item.Id), item.UserId, ct: ct);
+    private Task EnqueueIngestAsync(Item item, long? notifyChatId, CancellationToken ct) =>
+        jobs.EnqueueAsync(IngestItemJob.JobType, new IngestItemPayload(item.Id, notifyChatId), item.UserId, ct: ct);
 
     public async Task<Item?> ReprocessAsync(Guid id, CancellationToken ct)
     {
@@ -192,7 +192,7 @@ public sealed class ItemService(
         item.Error = null;
         item.UpdatedAt = timeProvider.GetUtcNow();
         await db.SaveChangesAsync(ct);
-        await EnqueueIngestAsync(item, ct);
+        await EnqueueIngestAsync(item, null, ct);
         await transaction.CommitAsync(ct);
         return item;
     }

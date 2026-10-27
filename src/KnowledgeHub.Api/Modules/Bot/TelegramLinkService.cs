@@ -67,6 +67,14 @@ public sealed class TelegramLinkService(AppDbContext db, ICurrentUser currentUse
     public async Task UnlinkAsync(CancellationToken ct) =>
         await db.TelegramLinks.ExecuteDeleteAsync(ct);
 
+    /// <summary>Привязка указанного пользователя (для уведомлений вне его запроса — вызывать в системном контексте).</summary>
+    public Task<TelegramLink?> FindByUserAsync(Guid userId, CancellationToken ct) =>
+        db.TelegramLinks.AsNoTracking().FirstOrDefaultAsync(l => l.UserId == userId, ct);
+
+    /// <summary>Удаляет привязку указанного пользователя (вызывать в системном контексте).</summary>
+    public async Task RemoveForUserAsync(Guid userId, CancellationToken ct) =>
+        await db.TelegramLinks.Where(l => l.UserId == userId).ExecuteDeleteAsync(ct);
+
     /// <summary>Привязка чата (для бота: пользователь заранее неизвестен — вызывать в системном контексте).</summary>
     public Task<TelegramLink?> FindByChatAsync(long chatId, CancellationToken ct) =>
         db.TelegramLinks.AsNoTracking().FirstOrDefaultAsync(l => l.ChatId == chatId, ct);

@@ -1,6 +1,9 @@
 using Microsoft.Extensions.Options;
 using Telegram.Bot;
+using Telegram.Bot.Exceptions;
+using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace KnowledgeHub.Api.Modules.Bot;
 
@@ -13,8 +16,22 @@ public sealed class TelegramClient(IOptions<BotOptions> options, HttpClient? htt
             ? throw new InvalidOperationException("Не задан токен Telegram-бота (Bot:Token).")
             : new TelegramBotClient(options.Value.Token, httpClient));
 
-    public async Task SendMessageAsync(long chatId, string text, CancellationToken ct) =>
-        await _client.Value.SendMessage(chatId, text, cancellationToken: ct);
+    public async Task SendMessageAsync(long chatId, string text, CancellationToken ct, IReadOnlyList<InlineButton>? buttons = null)
+    {
+        InlineKeyboardMarkup? keyboard = buttons is { Count: > 0 }
+            ? new InlineKeyboardMarkup(buttons.Select(b => InlineKeyboardButton.WithCallbackData(b.Text, b.CallbackData)))
+            : null;
+        try
+        {
+            await _client.Value.SendMessage(
+                chatId, text, ParseMode.Html, replyMarkup: keyboard,
+                linkPreviewOptions: new LinkPreviewOptions { IsDisabled = true }, cancellationToken: ct);
+        }
+        catch (ApiRequestException e) when (e.ErrorCode == 403)
+        {
+            throw new TelegramBlockedException(chatId, e);
+        }
+    }
 
     public async Task<TelegramFile> GetFileAsync(string fileId, CancellationToken ct)
     {

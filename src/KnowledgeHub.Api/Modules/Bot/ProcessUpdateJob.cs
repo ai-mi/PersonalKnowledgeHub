@@ -14,8 +14,8 @@ public sealed record TelegramUpdatePayload(string Json);
 
 /// <summary>Обрабатывает входящее сообщение бота: привязка по коду или сохранение записи от имени владельца чата.</summary>
 public sealed partial class ProcessUpdateJob(
-    TelegramLinkService links, ITelegramClient telegram, IItemService items, IDocumentIntake intake, SystemContext systemContext,
-    IOptions<IngestionOptions> ingestionOptions, ILogger<ProcessUpdateJob> logger) : IJobHandler<TelegramUpdatePayload>
+    TelegramLinkService links, ITelegramClient telegram, IItemService items, IDocumentIntake intake, BotCommands commands,
+    SystemContext systemContext, IOptions<IngestionOptions> ingestionOptions, ILogger<ProcessUpdateJob> logger) : IJobHandler<TelegramUpdatePayload>
 {
     public const string JobType = "telegram.update";
     public static string Type => JobType;
@@ -26,7 +26,12 @@ public sealed partial class ProcessUpdateJob(
     public async Task HandleAsync(TelegramUpdatePayload payload, CancellationToken ct)
     {
         var update = JsonSerializer.Deserialize<Update>(payload.Json, JsonBotAPI.Options);
-        // Нажатия inline-кнопок появятся вместе с напоминаниями (фича 19).
+        if (update?.CallbackQuery is { } callback)
+        {
+            await HandleCallbackAsync(callback, ct);
+            return;
+        }
+
         if (update?.Message is not { } message)
         {
             return;
@@ -51,11 +56,37 @@ public sealed partial class ProcessUpdateJob(
         using var _ = systemContext.RunAs(link.UserId);
         if (command is not null)
         {
-            await ReplyAsync(chatId, "Неизвестная команда. Просто пришлите ссылку, текст или файл — я сохраню.", ct);
+            await ReplyAsync(chatId, await commands.ExecuteAsync(command, ct), ct);
             return;
         }
 
         await SaveAsync(chatId, message, ct);
+    }
+
+    /// <summary>Нажатие inline-кнопки: ответ на <c>callback_query</c> обязателен, иначе у кнопки в клиенте крутится индикатор.</summary>
+    private async Task HandleCallbackAsync(CallbackQuery callback, CancellationToken ct)
+    {
+        // В личном чате идентификатор чата совпадает с идентификатором пользователя Telegram.
+        var chatId = callback.Message?.Chat.Id ?? callback.From.Id;
+        string answer;
+        if (await links.FindByChatAsync(chatId, ct) is { } link)
+        {
+            using var _ = systemContext.RunAs(link.UserId);
+            answer = await commands.MarkReadAsync(callback.Data, ct);
+        }
+        else
+        {
+            answer = "Чат не привязан к аккаунту";
+        }
+
+        try
+        {
+            await telegram.AnswerCallbackQueryAsync(callback.Id, answer, ct);
+        }
+        catch (Exception e) when (e is not OperationCanceledException)
+        {
+            LogReplyFailed(chatId, e);
+        }
     }
 
     private async Task LinkChatAsync(long chatId, string code, CancellationToken ct)
@@ -89,7 +120,7 @@ public sealed partial class ProcessUpdateJob(
         catch (AppException e)
         {
             // Ошибки валидации и размера — не сбой: повтор задачи ничего не изменит.
-            await ReplyAsync(chatId, $"Не удалось сохранить: {Describe(e)}", ct);
+            await ReplyAsync(chatId, $"Не удалось сохранить: {BotMessageFormatter.Escape(Describe(e))}", ct);
         }
     }
 
@@ -121,7 +152,7 @@ public sealed partial class ProcessUpdateJob(
     private static string Describe(AppException e) =>
         e.Errors?.Values.SelectMany(v => v).FirstOrDefault() ?? e.Message;
 
-    // Ответ — удобство: его сбой не должен повторять задачу (запись уже сохранена, повтор создал бы дубль заметки).
+    // Ответ (HTML-разметка Telegram) — удобство: его сбой не должен повторять задачу (запись уже сохранена, повтор создал бы дубль заметки).
     private async Task ReplyAsync(long chatId, string text, CancellationToken ct)
     {
         try

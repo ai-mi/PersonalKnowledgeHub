@@ -10,6 +10,9 @@ public sealed class BotOptions
     /// <summary>Имя бота без <c>@</c>: нужно для ссылки привязки <c>https://t.me/&lt;имя&gt;?start=&lt;код&gt;</c>.</summary>
     public string Username { get; set; } = "";
 
+    /// <summary>Публичный адрес веб-интерфейса без завершающего <c>/</c>: из него строятся ссылки на записи в сообщениях бота. Пустой — ссылок нет.</summary>
+    public string WebBaseUrl { get; set; } = "";
+
     /// <summary>Публичный адрес <c>/telegram/webhook</c>; если задан, при старте приложение регистрирует его в Telegram.</summary>
     public string WebhookUrl { get; set; } = "";
 

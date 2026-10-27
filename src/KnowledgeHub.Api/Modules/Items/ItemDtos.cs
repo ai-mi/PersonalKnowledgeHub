@@ -5,6 +5,7 @@ namespace KnowledgeHub.Api.Modules.Items;
 /// <summary>
 /// Создание записи; он же тело <c>POST /api/items</c>. Документы создаются только загрузкой файла.
 /// <paramref name="Tags"/> и <paramref name="CollectionIds"/>: имена тегов (создаются при необходимости) и коллекции пользователя.
+/// <paramref name="NotifyChatId"/>: чат, который известят об окончании обработки (ставит Telegram-бот; в теле API не используется).
 /// </summary>
 public sealed record CreateItemCommand(
     ItemType? Type,
@@ -14,7 +15,8 @@ public sealed record CreateItemCommand(
     string? UserNote = null,
     string? CodeLanguage = null,
     IReadOnlyList<string>? Tags = null,
-    IReadOnlyList<Guid>? CollectionIds = null);
+    IReadOnlyList<Guid>? CollectionIds = null,
+    long? NotifyChatId = null);
 
 /// <summary>Создание документа после загрузки файла в хранилище; <paramref name="Id"/> уже входит в <paramref name="BlobPath"/>.</summary>
 public sealed record CreateDocumentCommand(
@@ -24,7 +26,8 @@ public sealed record CreateDocumentCommand(
     string? Title,
     string? UserNote = null,
     IReadOnlyList<string>? Tags = null,
-    IReadOnlyList<Guid>? CollectionIds = null);
+    IReadOnlyList<Guid>? CollectionIds = null,
+    long? NotifyChatId = null);
 
 /// <summary>
 /// Замена редактируемых полей; он же тело <c>PUT /api/items/{id}</c>. Адрес ссылки не меняется.

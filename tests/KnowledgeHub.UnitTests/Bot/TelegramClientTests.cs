@@ -57,6 +57,39 @@ public sealed class TelegramClientTests
     }
 
     [Fact]
+    public async Task SendMessage_UsesHtmlAndAttachesButtonsWithoutLinkPreview()
+    {
+        var (client, handler) = Create(Ok("""{"message_id":1,"date":1,"chat":{"id":7,"type":"private"}}"""));
+
+        await client.SendMessageAsync(7, "<b>x</b>", Ct, [new InlineButton("Прочитано", "read:1")]);
+
+        var body = handler.Requests.ShouldHaveSingleItem().Body;
+        body.ShouldContain("\"parse_mode\":\"HTML\"");
+        body.ShouldContain("\"callback_data\":\"read:1\"");
+        body.ShouldContain("\"is_disabled\":true");
+    }
+
+    [Fact]
+    public async Task SendMessage_WhenBotIsBlocked_ThrowsTelegramBlockedException()
+    {
+        var (client, _) = Create(
+            """{"ok":false,"error_code":403,"description":"Forbidden: bot was blocked by the user"}""", status: HttpStatusCode.Forbidden);
+
+        await Should.ThrowAsync<TelegramBlockedException>(() => client.SendMessageAsync(7, "x", Ct));
+    }
+
+    [Fact]
+    public async Task SendMessage_OtherApiErrors_AreNotTreatedAsBlocked()
+    {
+        var (client, _) = Create(
+            """{"ok":false,"error_code":400,"description":"Bad Request: chat not found"}""", status: HttpStatusCode.BadRequest);
+
+        var error = await Should.ThrowAsync<Exception>(() => client.SendMessageAsync(7, "x", Ct));
+
+        error.ShouldNotBeOfType<TelegramBlockedException>();
+    }
+
+    [Fact]
     public async Task GetFile_ReturnsPathAndSize()
     {
         var (client, handler) = Create(Ok("""{"file_id":"f","file_unique_id":"u","file_size":5,"file_path":"docs/a.pdf"}"""));
