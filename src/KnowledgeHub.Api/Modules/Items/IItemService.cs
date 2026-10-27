@@ -19,6 +19,12 @@ public interface IItemService
 
     Task<PagedResult<ItemSummary>> ListAsync(ListItemsQuery query, CancellationToken ct);
 
+    /// <summary>Непрочитанные записи, созданные не позже <paramref name="createdBefore"/>; самые старые первыми (для дайджеста).</summary>
+    Task<IReadOnlyList<ItemSummary>> ListUnreadCreatedBeforeAsync(DateTimeOffset createdBefore, int limit, CancellationToken ct);
+
+    /// <summary>Записи, созданные в промежутке <paramref name="from"/>…<paramref name="to"/> включительно; старые первыми (для дайджеста).</summary>
+    Task<IReadOnlyList<ItemSummary>> ListCreatedBetweenAsync(DateTimeOffset from, DateTimeOffset to, int limit, CancellationToken ct);
+
     /// <summary><c>null</c> — записи нет.</summary>
     Task<Item?> UpdateAsync(Guid id, UpdateItemCommand command, CancellationToken ct);
 

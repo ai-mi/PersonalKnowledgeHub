@@ -634,7 +634,7 @@ infra/                                — Bicep
 
 ---
 
-### Фича 21: Дайджест
+### Фича 21: Дайджест ✅
 
 **Цель:** по настройкам пользователя (ежедневно или раз в неделю в выбранный день) в 9:00 по его часовому поясу приходит подборка: непрочитанное, «сохранено год назад», ближайшие напоминания.
 
@@ -644,16 +644,16 @@ infra/                                — Bicep
 - Тесты: `tests/KnowledgeHub.UnitTests/Reminders/DigestScheduleTests.cs`, `tests/KnowledgeHub.UnitTests/Reminders/DigestFormatterTests.cs`, `tests/KnowledgeHub.IntegrationTests/Reminders/DigestTests.cs`
 
 **Шаги:**
-- [ ] `DigestSchedule.IsDue(settings, utcNow)` — чистая функция: локальное время (`TimeZoneInfo.ConvertTimeFromUtc`) ≥ 09:00, частота `daily` или `weekly` + совпадение `digest_day`; возвращает локальную дату для ключа
-- [ ] `DigestTask : IRecurringTask` (каждый час, системный контекст): для пользователей с `digest_frequency != off`, у которых `IsDue` → задача `digest.send` с `dedupKey = "digest:{userId}:{localDate}"` (пропущенный час после рестарта не теряет дайджест и не дублирует его)
-- [ ] `DigestBuilder` (в контексте пользователя, через `IItemService`): до 10 непрочитанных старше 3 дней (самые старые первыми); записи, сохранённые ровно год назад ±3 дня; напоминания на ближайшие 7 дней; всё пусто → дайджест не отправляется
-- [ ] `DigestFormatter`: HTML-письмо + текстовая версия, сообщение Telegram (экранирование — через `BotMessageFormatter`, DRY); отправка через `INotificationDispatcher` по `digest_channels`
-- [ ] Тесты unit: `Europe/Moscow` 08:59 → нет, 09:00 → да; weekly в другой день → нет; переход на летнее время (`America/New_York`) корректен; экранирование
-- [ ] Тесты интеграционные: дайджест содержит непрочитанное и «год назад», не содержит прочитанное и чужие записи; второй запуск в тот же день не отправляет повторно; пустой дайджест не отправляется
+- [x] `DigestSchedule.IsDue(settings, utcNow)` — чистая функция: локальное время (`TimeZoneInfo.ConvertTimeFromUtc`) ≥ 09:00, частота `daily` или `weekly` + совпадение `digest_day`; возвращает локальную дату для ключа
+- [x] `DigestTask : IRecurringTask` (каждый час, системный контекст): для пользователей с `digest_frequency != off`, у которых `IsDue` → задача `digest.send` с `dedupKey = "digest:{userId}:{localDate}"` (пропущенный час после рестарта не теряет дайджест и не дублирует его)
+- [x] `DigestBuilder` (в контексте пользователя, через `IItemService`): до 10 непрочитанных старше 3 дней (самые старые первыми); записи, сохранённые ровно год назад ±3 дня; напоминания на ближайшие 7 дней; всё пусто → дайджест не отправляется
+- [x] `DigestFormatter`: HTML-письмо + текстовая версия, сообщение Telegram (экранирование — через `BotMessageFormatter`, DRY); отправка через `INotificationDispatcher` по `digest_channels`
+- [x] Тесты unit: `Europe/Moscow` 08:59 → нет, 09:00 → да; weekly в другой день → нет; переход на летнее время (`America/New_York`) корректен; экранирование
+- [x] Тесты интеграционные: дайджест содержит непрочитанное и «год назад», не содержит прочитанное и чужие записи; второй запуск в тот же день не отправляет повторно; пустой дайджест не отправляется
 
 **Проверка:**
-- [ ] `dotnet test tests/KnowledgeHub.UnitTests --filter "FullyQualifiedName~Reminders"` — `Passed!  - Failed:     0`
-- [ ] `dotnet test tests/KnowledgeHub.IntegrationTests --filter "FullyQualifiedName~Reminders"` — `Passed!  - Failed:     0`
+- [x] `dotnet test tests/KnowledgeHub.UnitTests --filter "FullyQualifiedName~Reminders"` — `Passed!  - Failed:     0`
+- [x] `dotnet test tests/KnowledgeHub.IntegrationTests --filter "FullyQualifiedName~Reminders"` — `Passed!  - Failed:     0`
 
 ---
 

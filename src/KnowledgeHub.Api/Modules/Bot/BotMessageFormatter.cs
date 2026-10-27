@@ -37,7 +37,7 @@ public static class BotMessageFormatter
         return text.ToString();
     }
 
-    public static InlineButton ReadButton(Guid itemId) => new("Прочитано", ReadPrefix + itemId);
+    public static InlineButton ReadButton(Guid itemId, string text = "Прочитано") => new(text, ReadPrefix + itemId);
 
     /// <summary><c>callback_data</c> кнопки «Прочитано» → идентификатор записи.</summary>
     public static bool TryParseReadCallback(string? data, out Guid itemId)

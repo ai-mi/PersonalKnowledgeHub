@@ -13,6 +13,9 @@ public static class RemindersModule
         services.AddScoped<ReminderService>();
         services.AddJobHandler<SendReminderJob, SendReminderPayload>();
         services.AddRecurringTask<DueRemindersTask>();
+        services.AddScoped<DigestBuilder>();
+        services.AddJobHandler<SendDigestJob, SendDigestPayload>();
+        services.AddRecurringTask<DigestTask>();
         return services;
     }
 

@@ -224,6 +224,23 @@ public sealed class ItemService(
         return new PagedResult<ItemSummary>(page.Select(s => s.WithSortedTags()).ToList(), query.Page, query.PageSize, total);
     }
 
+    public Task<IReadOnlyList<ItemSummary>> ListUnreadCreatedBeforeAsync(DateTimeOffset createdBefore, int limit, CancellationToken ct) =>
+        ListOldestFirstAsync(db.Items.Where(i => i.ReadAt == null && i.CreatedAt <= createdBefore), limit, ct);
+
+    public Task<IReadOnlyList<ItemSummary>> ListCreatedBetweenAsync(DateTimeOffset from, DateTimeOffset to, int limit, CancellationToken ct) =>
+        ListOldestFirstAsync(db.Items.Where(i => i.CreatedAt >= from && i.CreatedAt <= to), limit, ct);
+
+    private static async Task<IReadOnlyList<ItemSummary>> ListOldestFirstAsync(IQueryable<Item> items, int limit, CancellationToken ct)
+    {
+        var page = await items.AsNoTracking()
+            .OrderBy(i => i.CreatedAt)
+            .ThenBy(i => i.Id)
+            .Take(limit)
+            .Select(ItemSummary.Projection)
+            .ToListAsync(ct);
+        return page.ConvertAll(s => s.WithSortedTags());
+    }
+
     private async Task<Item?> UpdateOnceAsync(Guid id, UpdateItemCommand command, CancellationToken ct)
     {
         var item = await WithRelations().FirstOrDefaultAsync(i => i.Id == id, ct);
