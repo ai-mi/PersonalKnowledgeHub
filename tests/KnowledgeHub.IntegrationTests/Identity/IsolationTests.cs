@@ -77,6 +77,17 @@ public static class IsolationCases
                 (HttpMethod.Post, $"/api/collections/{id}", null),
                 (HttpMethod.Delete, $"/api/collections/{id}", null),
             ]),
+        new("Reminders",
+            async a => await Reminders.ReminderEndpointsTests.CreateIdAsync(a, await Items.ItemEndpointsTests.CreateNoteIdAsync(a)),
+            id => [(HttpMethod.Delete, $"/api/reminders/{id}", null)]),
+        // Идентификатор — запись A: B не может ни поставить на неё напоминание, ни прочитать её напоминания.
+        new("ItemReminders",
+            async a => await Items.ItemEndpointsTests.CreateNoteIdAsync(a),
+            id =>
+            [
+                (HttpMethod.Get, $"/api/items/{id}/reminders", null),
+                (HttpMethod.Post, "/api/reminders", new { itemId = id, remindAt = DateTimeOffset.UtcNow.AddHours(1), channel = "telegram" }),
+            ]),
     ];
 
     public static IsolationCase Get(string name) => All.Single(c => c.Name == name);

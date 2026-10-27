@@ -11,6 +11,7 @@
     <PackageReference Include="Azure.Identity" />
     <PackageReference Include="SmartReader" />
     <PackageReference Include="Azure.Storage.Blobs" />
+    <PackageReference Include="Azure.Communication.Email" />
     <PackageReference Include="PdfPig" />
     <PackageReference Include="DocumentFormat.OpenXml" />
     <PackageReference Include="Telegram.Bot" />

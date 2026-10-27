@@ -13,6 +13,7 @@ public static class IdentityModule
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddScoped<UserProvisioningService>();
         services.AddScoped<ApiTokenService>();
+        services.AddScoped<IUserContactService, UserContactService>();
 
         services.AddAuthentication(AuthSchemes.Smart)
             .AddPolicyScheme(AuthSchemes.Smart, displayName: null, o =>

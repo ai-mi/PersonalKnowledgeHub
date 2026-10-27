@@ -488,6 +488,54 @@ namespace KnowledgeHub.Api.Infrastructure.Persistence.Migrations
                     b.ToTable("jobs", (string)null);
                 });
 
+            modelBuilder.Entity("KnowledgeHub.Api.Modules.Reminders.Reminder", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Channel")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("channel");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("item_id");
+
+                    b.Property<DateTimeOffset>("RemindAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("remind_at");
+
+                    b.Property<DateTimeOffset?>("SentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("sent_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_reminders");
+
+                    b.HasIndex("ItemId")
+                        .HasDatabaseName("ix_reminders_item_id");
+
+                    b.HasIndex("RemindAt")
+                        .HasDatabaseName("ix_reminders_remind_at")
+                        .HasFilter("sent_at IS NULL");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_reminders_user_id");
+
+                    b.ToTable("reminders", (string)null);
+                });
+
             modelBuilder.Entity("KnowledgeHub.Api.Modules.Bot.TelegramLink", b =>
                 {
                     b.HasOne("KnowledgeHub.Api.Modules.Identity.User", null)
@@ -600,6 +648,23 @@ namespace KnowledgeHub.Api.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_tags_users_user_id");
+                });
+
+            modelBuilder.Entity("KnowledgeHub.Api.Modules.Reminders.Reminder", b =>
+                {
+                    b.HasOne("KnowledgeHub.Api.Modules.Items.Item", null)
+                        .WithMany()
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_reminders_items_item_id");
+
+                    b.HasOne("KnowledgeHub.Api.Modules.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_reminders_users_user_id");
                 });
 #pragma warning restore 612, 618
         }

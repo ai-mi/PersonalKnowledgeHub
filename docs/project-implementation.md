@@ -609,7 +609,7 @@ infra/                                — Bicep
 
 ---
 
-### Фича 20: Напоминания по дате
+### Фича 20: Напоминания по дате ✅
 
 **Цель:** пользователь ставит напоминание на запись; в назначенное время оно приходит в Telegram и/или на e-mail ровно один раз.
 
@@ -621,16 +621,16 @@ infra/                                — Bicep
 - Тесты: `tests/KnowledgeHub.IntegrationTests/Reminders/ReminderEndpointsTests.cs`, `tests/KnowledgeHub.IntegrationTests/Reminders/ReminderDeliveryTests.cs`, изменить `.../Identity/IsolationTests.cs`
 
 **Шаги:**
-- [ ] Таблица `reminders` (`channel`: `telegram|email|both`), индекс `(remind_at) WHERE sent_at IS NULL`; миграция с `EnableUserRls`
-- [ ] `POST /api/reminders { itemId, remindAt, channel }` (дата в будущем, запись своя), `GET /api/reminders?upcoming=true`, `GET /api/items/{id}/reminders`, `DELETE /api/reminders/{id}`
-- [ ] `IEmailSender.SendAsync(to, subject, html, text)`; `AcsEmailSender` — `EmailClient` (строка подключения из Key Vault reference), `WaitUntil.Started`, отправитель из `Email:From` (адрес Azure Managed Domain)
-- [ ] `INotificationDispatcher.SendAsync(userId, channels, message)` — выбирает `IBotNotifier` и/или `IEmailSender` (e-mail из `user_settings.email`, иначе из профиля); канал без настройки пропускается с логом — **общий** для напоминаний и дайджеста (DRY)
-- [ ] `DueRemindersTask : IRecurringTask` (каждую минуту, системный контекст): напоминания `remind_at <= now AND sent_at IS NULL` → задача `reminder.send` с `dedupKey = "reminder:{id}"`
-- [ ] `SendReminderJob`: в контексте пользователя → текст «Напоминание: \<заголовок\>» + ссылка + кнопка «Прочитано» (Telegram) → `sent_at = now`
-- [ ] Тесты: создание/удаление/валидация (дата в прошлом → `400`); с `FakeTimeProvider` — до срока не отправлено, после — отправлено один раз в нужные каналы; повторный запуск задачи не дублирует; e-mail без адреса — Telegram всё равно отправлен; эндпоинты в `IsolationTests`
+- [x] Таблица `reminders` (`channel`: `telegram|email|both`), индекс `(remind_at) WHERE sent_at IS NULL`; миграция с `EnableUserRls`
+- [x] `POST /api/reminders { itemId, remindAt, channel }` (дата в будущем, запись своя), `GET /api/reminders?upcoming=true`, `GET /api/items/{id}/reminders`, `DELETE /api/reminders/{id}`
+- [x] `IEmailSender.SendAsync(to, subject, html, text)`; `AcsEmailSender` — `EmailClient` (строка подключения из Key Vault reference), `WaitUntil.Started`, отправитель из `Email:From` (адрес Azure Managed Domain)
+- [x] `INotificationDispatcher.SendAsync(userId, channels, message)` — выбирает `IBotNotifier` и/или `IEmailSender` (e-mail из `user_settings.email`, иначе из профиля); канал без настройки пропускается с логом — **общий** для напоминаний и дайджеста (DRY)
+- [x] `DueRemindersTask : IRecurringTask` (каждую минуту, системный контекст): напоминания `remind_at <= now AND sent_at IS NULL` → задача `reminder.send` с `dedupKey = "reminder:{id}"`
+- [x] `SendReminderJob`: в контексте пользователя → текст «Напоминание: \<заголовок\>» + ссылка + кнопка «Прочитано» (Telegram) → `sent_at = now`
+- [x] Тесты: создание/удаление/валидация (дата в прошлом → `400`); с `FakeTimeProvider` — до срока не отправлено, после — отправлено один раз в нужные каналы; повторный запуск задачи не дублирует; e-mail без адреса — Telegram всё равно отправлен; эндпоинты в `IsolationTests`
 
 **Проверка:**
-- [ ] `dotnet test tests/KnowledgeHub.IntegrationTests --filter "FullyQualifiedName~Reminders|FullyQualifiedName~Isolation"` — `Passed!  - Failed:     0`
+- [x] `dotnet test tests/KnowledgeHub.IntegrationTests --filter "FullyQualifiedName~Reminders|FullyQualifiedName~Isolation"` — `Passed!  - Failed:     0`
 
 ---
 

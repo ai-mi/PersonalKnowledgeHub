@@ -1,4 +1,5 @@
 using KnowledgeHub.Api.Common;
+using KnowledgeHub.Api.Infrastructure.Email;
 using KnowledgeHub.Api.Infrastructure.Persistence;
 using KnowledgeHub.Api.Modules.Bot;
 using KnowledgeHub.Api.Modules.Identity;
@@ -41,6 +42,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     /// <summary>Один фейк на все хосты фабрики (включая производные): тест видит ответы бота, не зная, какой хост их отправил.</summary>
     public FakeTelegramClient Telegram { get; } = new();
 
+    public FakeEmailSender Email { get; } = new();
+
     public string AzuriteConnectionString => _azurite.ConnectionString;
 
     protected override IHost CreateHost(IHostBuilder builder)
@@ -66,6 +69,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         builder.ConfigureTestServices(services =>
         {
             services.AddSingleton<ITelegramClient>(Telegram);
+            services.AddSingleton<IEmailSender>(Email);
 
             services.AddAuthentication()
                 .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.SchemeName, _ => { });
