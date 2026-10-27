@@ -1,6 +1,6 @@
 import { Link } from 'react-router'
 import { ItemStatusBadge } from './ItemStatusBadge'
-import { itemTypeLabels, useItemMutations, type ItemSummary } from './itemsApi'
+import { displayTitle, itemTypeLabels, useItemMutations, type ItemSummary } from './itemsApi'
 
 export function ItemCard({ item }: { item: ItemSummary }) {
   const { setRead } = useItemMutations()
@@ -9,7 +9,7 @@ export function ItemCard({ item }: { item: ItemSummary }) {
   return (
     <article>
       <small>{itemTypeLabels[item.type]}</small>{' '}
-      <Link to={`/items/${item.id}`}>{item.title ?? item.url ?? 'Без названия'}</Link>{' '}
+      <Link to={`/items/${item.id}`}>{displayTitle(item)}</Link>{' '}
       {item.tags.map((tag) => (
         <Link key={tag} to={`/?tag=${encodeURIComponent(tag)}`}>
           #{tag}{' '}

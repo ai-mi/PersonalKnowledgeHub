@@ -1,4 +1,5 @@
 import { Link, useSearchParams } from 'react-router'
+import { UpcomingReminders } from '../reminders/UpcomingReminders'
 import { ItemCard } from './ItemCard'
 import { ItemFiltersBar } from './ItemFilters'
 import { pageSize, useItems, type ItemFilters } from './itemsApi'
@@ -32,6 +33,7 @@ export function ItemsPage() {
       <p>
         <Link to="/items/new">Новая запись</Link> · <Link to="/items/upload">Загрузить документ</Link>
       </p>
+      <UpcomingReminders />
       <ItemFiltersBar filters={filters} onChange={setParam} />
 
       {isPending && <p>Загрузка…</p>}

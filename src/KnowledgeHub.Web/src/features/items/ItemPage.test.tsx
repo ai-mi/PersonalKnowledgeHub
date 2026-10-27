@@ -28,6 +28,8 @@ const base: Item = {
 const server = setupServer(
   http.get('*/api/tags', () => HttpResponse.json([])),
   http.get('*/api/collections', () => HttpResponse.json([])),
+  http.get('*/api/me', () => HttpResponse.json({ id: '1', displayName: 'A', email: null, settings: { timezone: 'UTC' } })),
+  http.get('*/api/items/i1/reminders', () => HttpResponse.json([])),
 )
 
 beforeAll(() => server.listen({ onUnhandledFrame: 'error' }))

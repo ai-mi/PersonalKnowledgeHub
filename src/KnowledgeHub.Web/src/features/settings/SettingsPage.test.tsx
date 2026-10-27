@@ -15,7 +15,10 @@ const me: Me = {
 }
 let current: Me = me
 
-const server = setupServer(http.get('*/api/me/tokens', () => HttpResponse.json([])))
+const server = setupServer(
+  http.get('*/api/me/tokens', () => HttpResponse.json([])),
+  http.get('*/api/me/telegram', () => HttpResponse.json({ linked: false, linkedAt: null })),
+)
 
 beforeAll(() => server.listen({ onUnhandledFrame: 'error' }))
 afterEach(() => {
@@ -40,6 +43,8 @@ it('shows the profile and the tokens section', async () => {
   expect(screen.getByText('E-mail: a@b.c')).toBeInTheDocument()
   expect(screen.getByLabelText('Часовой пояс')).toHaveValue('Europe/Berlin')
   expect(await screen.findByRole('heading', { name: 'API-токены' })).toBeInTheDocument()
+  expect(screen.getByRole('heading', { name: 'Дайджест' })).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: 'Telegram' })).toBeInTheDocument()
 })
 
 it('shows a dash when the user has no e-mail, and keeps a non-standard timezone selectable', async () => {

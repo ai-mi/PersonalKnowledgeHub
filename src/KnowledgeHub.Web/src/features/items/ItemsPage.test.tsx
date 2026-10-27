@@ -27,6 +27,7 @@ const server = setupServer(
     requested.push(new URL(request.url))
     return HttpResponse.json({ items, page: 1, pageSize: 20, total })
   }),
+  http.get('*/api/reminders', () => HttpResponse.json([])),
   http.get('*/api/tags', () => HttpResponse.json([{ id: 't1', name: 'azure', itemCount: 1 }])),
   http.get('*/api/collections', () => HttpResponse.json([{ id: 'c1', name: 'Работа', description: null, itemCount: 1 }])),
 )

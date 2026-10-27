@@ -35,6 +35,8 @@ export interface Item extends ItemSummary {
   collections: CollectionRef[]
 }
 
+export const displayTitle = (item: Pick<ItemSummary, 'title' | 'url'>) => item.title ?? item.url ?? 'Без названия'
+
 export interface Paged<T> {
   items: T[]
   page: number

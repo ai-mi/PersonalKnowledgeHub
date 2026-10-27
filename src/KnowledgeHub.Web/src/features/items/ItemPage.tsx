@@ -2,12 +2,11 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { CodeBlock } from '../../shared/CodeBlock'
 import { Markdown } from '../../shared/Markdown'
+import { ReminderPicker } from '../reminders/ReminderPicker'
 import { ItemForm } from './ItemForm'
 import { ItemStatusBadge } from './ItemStatusBadge'
 import { UploadForm } from './UploadForm'
-import { itemTypeLabels, useItem, useItemMutations, type Item, type ItemInput } from './itemsApi'
-
-const displayTitle = (item: Item) => item.title ?? item.url ?? 'Без названия'
+import { displayTitle, itemTypeLabels, useItem, useItemMutations, type Item, type ItemInput } from './itemsApi'
 
 export function NewItemPage() {
   const navigate = useNavigate()
@@ -121,6 +120,7 @@ export function ItemPage() {
         </button>
       </p>
       {editing ? <ItemForm item={item} submitLabel="Сохранить" onSubmit={save} /> : <ItemView item={item} />}
+      <ReminderPicker itemId={id} />
     </>
   )
 }
