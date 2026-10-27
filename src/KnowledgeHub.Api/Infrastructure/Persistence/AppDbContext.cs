@@ -4,6 +4,7 @@ using KnowledgeHub.Api.Modules.Bot;
 using KnowledgeHub.Api.Modules.Identity;
 using KnowledgeHub.Api.Modules.Items;
 using KnowledgeHub.Api.Modules.Jobs;
+using KnowledgeHub.Api.Modules.Export;
 using KnowledgeHub.Api.Modules.Reminders;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,6 +26,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ICurrentUser c
     public DbSet<TelegramLinkCode> TelegramLinkCodes => Set<TelegramLinkCode>();
     public DbSet<Job> Jobs => Set<Job>();
     public DbSet<Reminder> Reminders => Set<Reminder>();
+    public DbSet<ExportRecord> Exports => Set<ExportRecord>();
 
     // Свойства читаются при выполнении запроса: EF подставляет их значения из текущего экземпляра контекста.
     private Guid? CurrentUserId => currentUser.UserId;

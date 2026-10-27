@@ -1,3 +1,4 @@
+import { ExportSection } from '../export/ExportSection'
 import { useMe } from '../auth/useMe'
 import { ApiTokensSection } from './ApiTokensSection'
 import { DigestSection } from './DigestSection'
@@ -13,6 +14,7 @@ export function SettingsPage() {
       {me && <ProfileSection me={me} />}
       {me && <DigestSection me={me} />}
       <TelegramSection />
+      <ExportSection />
       <ApiTokensSection />
     </>
   )

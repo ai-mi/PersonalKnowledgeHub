@@ -18,4 +18,10 @@ public sealed class UserContactService(AppDbContext db, SystemContext systemCont
 
         return string.IsNullOrWhiteSpace(email) ? null : email;
     }
+
+    public async Task<UserSettings?> FindSettingsAsync(Guid userId, CancellationToken ct)
+    {
+        using var _ = systemContext.Enter();
+        return await db.UserSettings.AsNoTracking().FirstOrDefaultAsync(s => s.UserId == userId, ct);
+    }
 }

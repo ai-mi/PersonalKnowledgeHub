@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using KnowledgeHub.Api.Common;
 using KnowledgeHub.Api.Infrastructure.Persistence;
 using KnowledgeHub.Api.Infrastructure.Storage;
@@ -13,6 +14,8 @@ public sealed class ItemService(
     AppDbContext db, TagService tags, ISearchIndexer searchIndexer, IJobQueue jobs, IBlobStore blobs, TimeProvider timeProvider,
     ILogger<ItemService> logger) : IItemService
 {
+    private const int StreamBatchSize = 100;
+
     /// <summary>Записи вместе с тегами и коллекциями (нужны для <see cref="ItemResponse"/>).</summary>
     private IQueryable<Item> WithRelations() => db.Items.Include(i => i.Tags).Include(i => i.Collections).AsSplitQuery();
 
@@ -199,6 +202,23 @@ public sealed class ItemService(
 
     public Task<Item?> GetAsync(Guid id, CancellationToken ct) =>
         WithRelations().AsNoTracking().FirstOrDefaultAsync(i => i.Id == id, ct);
+
+    public async IAsyncEnumerable<Item> StreamAllAsync([EnumeratorCancellation] CancellationToken ct)
+    {
+        for (var skip = 0; ; skip += StreamBatchSize)
+        {
+            var batch = await WithRelations().AsNoTracking().OrderBy(i => i.Id).Skip(skip).Take(StreamBatchSize).ToListAsync(ct);
+            foreach (var item in batch)
+            {
+                yield return item;
+            }
+
+            if (batch.Count < StreamBatchSize)
+            {
+                yield break;
+            }
+        }
+    }
 
     public async Task<PagedResult<ItemSummary>> ListAsync(ListItemsQuery query, CancellationToken ct)
     {

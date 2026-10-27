@@ -88,6 +88,10 @@ public static class IsolationCases
                 (HttpMethod.Get, $"/api/items/{id}/reminders", null),
                 (HttpMethod.Post, "/api/reminders", new { itemId = id, remindAt = DateTimeOffset.UtcNow.AddHours(1), channel = "telegram" }),
             ]),
+        // Архив экспорта A недоступен B: скачивание по чужому id — 404. У владельца архив ещё собирается, поэтому он получает 409, а не 404.
+        new("Exports",
+            async a => await Export.ExportTests.StartAsync(a),
+            id => [(HttpMethod.Get, $"/api/exports/{id}/download", null)]),
     ];
 
     public static IsolationCase Get(string name) => All.Single(c => c.Name == name);

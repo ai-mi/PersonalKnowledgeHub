@@ -80,6 +80,50 @@ namespace KnowledgeHub.Api.Infrastructure.Persistence.Migrations
                     b.ToTable("telegram_link_codes", (string)null);
                 });
 
+            modelBuilder.Entity("KnowledgeHub.Api.Modules.Export.ExportRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("BlobPath")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("blob_path");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset?>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_exports");
+
+                    b.HasIndex("ExpiresAt")
+                        .HasDatabaseName("ix_exports_expires_at")
+                        .HasFilter("expires_at IS NOT NULL");
+
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_exports_user_id_active")
+                        .HasFilter("status IN ('pending', 'processing')");
+
+                    b.ToTable("exports", (string)null);
+                });
+
             modelBuilder.Entity("KnowledgeHub.Api.Modules.Identity.ApiToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -554,6 +598,16 @@ namespace KnowledgeHub.Api.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_telegram_link_codes_users_user_id");
+                });
+
+            modelBuilder.Entity("KnowledgeHub.Api.Modules.Export.ExportRecord", b =>
+                {
+                    b.HasOne("KnowledgeHub.Api.Modules.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_exports_users_user_id");
                 });
 
             modelBuilder.Entity("KnowledgeHub.Api.Modules.Identity.ApiToken", b =>

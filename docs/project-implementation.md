@@ -679,7 +679,7 @@ infra/                                — Bicep
 
 ---
 
-### Фича 23: Экспорт данных
+### Фича 23: Экспорт данных ✅
 
 **Цель:** пользователь запускает экспорт и скачивает ZIP с Markdown-файлами (YAML-метаданные), исходными документами и `export.json`; архивы удаляются через 7 дней.
 
@@ -690,20 +690,20 @@ infra/                                — Bicep
 - Тесты: `tests/KnowledgeHub.UnitTests/Export/MarkdownWriterTests.cs`, `tests/KnowledgeHub.IntegrationTests/Export/ExportTests.cs`, `src/KnowledgeHub.Web/src/features/export/ExportSection.test.tsx`, изменить `.../Identity/IsolationTests.cs`
 
 **Шаги:**
-- [ ] Таблица `exports`; миграция с `EnableUserRls`
-- [ ] `POST /api/exports` → `202 { id }` + задача `export.build` (не больше одного активного экспорта на пользователя → `409`); `GET /api/exports` (список со статусами); `GET /api/exports/{id}/download` — поток из Blob, `attachment; filename="knowledgehub-export-YYYY-MM-DD.zip"`
-- [ ] `MarkdownWriter`: имя `items/{slug}-{первые 8 символов id}.md` (slug — транслит/латиница, ≤ 60 символов); front matter через YamlDotNet (`id, type, title, url, tags, collections, created, updated, read, code_language, file`); тело: заметка пользователя, затем текст; фрагменты кода — в блоке ```` ```lang ````
-- [ ] `BuildExportJob` (в контексте пользователя): потоковая запись ZIP прямо в Blob (`IBlobStore.OpenWriteAsync` + `ZipArchive`), записи читаются порциями по 100 (`AsAsyncEnumerable`), документы — `files/{itemId}/{имя}`, в конце `export.json` (записи, теги, коллекции, напоминания, настройки); `ready` + `expires_at = now + 7 дней`
-- [ ] `ExpiredExportsCleanupTask` (раз в сутки, системный контекст): удаляет блоб и запись
-- [ ] `ExportSection` в настройках: кнопка «Экспортировать», список с опросом статуса, «Скачать»
-- [ ] Тесты unit: YAML корректно экранирует `:` и кавычки в заголовке; slug для кириллицы; блок кода
-- [ ] Тесты интеграционные: архив содержит все записи пользователя, файлы документов и валидный `export.json`; не содержит чужих записей; второй экспорт параллельно → `409`; просроченный удаляется; скачивание чужого → `404` (`IsolationTests`)
-- [ ] Тест фронта: кнопка неактивна, пока экспорт в процессе
+- [x] Таблица `exports`; миграция с `EnableUserRls`
+- [x] `POST /api/exports` → `202 { id }` + задача `export.build` (не больше одного активного экспорта на пользователя → `409`); `GET /api/exports` (список со статусами); `GET /api/exports/{id}/download` — поток из Blob, `attachment; filename="knowledgehub-export-YYYY-MM-DD.zip"`
+- [x] `MarkdownWriter`: имя `items/{slug}-{первые 8 символов id}.md` (slug — транслит/латиница, ≤ 60 символов); front matter через YamlDotNet (`id, type, title, url, tags, collections, created, updated, read, code_language, file`); тело: заметка пользователя, затем текст; фрагменты кода — в блоке ```` ```lang ````
+- [x] `BuildExportJob` (в контексте пользователя): потоковая запись ZIP прямо в Blob (`IBlobStore.OpenWriteAsync` + `ZipArchive`), записи читаются порциями по 100 (`AsAsyncEnumerable`), документы — `files/{itemId}/{имя}`, в конце `export.json` (записи, теги, коллекции, напоминания, настройки); `ready` + `expires_at = now + 7 дней`
+- [x] `ExpiredExportsCleanupTask` (раз в сутки, системный контекст): удаляет блоб и запись
+- [x] `ExportSection` в настройках: кнопка «Экспортировать», список с опросом статуса, «Скачать»
+- [x] Тесты unit: YAML корректно экранирует `:` и кавычки в заголовке; slug для кириллицы; блок кода
+- [x] Тесты интеграционные: архив содержит все записи пользователя, файлы документов и валидный `export.json`; не содержит чужих записей; второй экспорт параллельно → `409`; просроченный удаляется; скачивание чужого → `404` (`IsolationTests`)
+- [x] Тест фронта: кнопка неактивна, пока экспорт в процессе
 
 **Проверка:**
-- [ ] `dotnet test tests/KnowledgeHub.UnitTests --filter "FullyQualifiedName~Export"` — `Passed!  - Failed:     0`
-- [ ] `dotnet test tests/KnowledgeHub.IntegrationTests --filter "FullyQualifiedName~Export|FullyQualifiedName~Isolation"` — `Passed!  - Failed:     0`
-- [ ] `npm --prefix src/KnowledgeHub.Web test` — все тесты проходят
+- [x] `dotnet test tests/KnowledgeHub.UnitTests --filter "FullyQualifiedName~Export"` — `Passed!  - Failed:     0`
+- [x] `dotnet test tests/KnowledgeHub.IntegrationTests --filter "FullyQualifiedName~Export|FullyQualifiedName~Isolation"` — `Passed!  - Failed:     0`
+- [x] `npm --prefix src/KnowledgeHub.Web test` — все тесты проходят
 
 ---
 

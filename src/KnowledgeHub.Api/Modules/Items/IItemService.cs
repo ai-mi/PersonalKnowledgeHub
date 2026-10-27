@@ -17,6 +17,9 @@ public interface IItemService
 
     Task<Item?> GetAsync(Guid id, CancellationToken ct);
 
+    /// <summary>Все записи пользователя с тегами и коллекциями, порциями (для экспорта); без отслеживания изменений.</summary>
+    IAsyncEnumerable<Item> StreamAllAsync(CancellationToken ct);
+
     Task<PagedResult<ItemSummary>> ListAsync(ListItemsQuery query, CancellationToken ct);
 
     /// <summary>Непрочитанные записи, созданные не позже <paramref name="createdBefore"/>; самые старые первыми (для дайджеста).</summary>

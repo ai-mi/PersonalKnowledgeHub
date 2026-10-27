@@ -17,6 +17,7 @@ let current: Me = me
 
 const server = setupServer(
   http.get('*/api/me/tokens', () => HttpResponse.json([])),
+  http.get('*/api/exports', () => HttpResponse.json([])),
   http.get('*/api/me/telegram', () => HttpResponse.json({ linked: false, linkedAt: null })),
 )
 

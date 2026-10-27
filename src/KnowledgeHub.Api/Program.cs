@@ -5,6 +5,7 @@ using KnowledgeHub.Api.Infrastructure.Persistence;
 using KnowledgeHub.Api.Infrastructure.Storage;
 using KnowledgeHub.Api.Infrastructure.Web;
 using KnowledgeHub.Api.Modules.Bot;
+using KnowledgeHub.Api.Modules.Export;
 using KnowledgeHub.Api.Modules.Identity;
 using KnowledgeHub.Api.Modules.Ingestion;
 using KnowledgeHub.Api.Modules.Items;
@@ -29,6 +30,7 @@ builder.Services.AddSearchModule(builder.Configuration);
 builder.Services.AddIngestionModule(builder.Configuration);
 builder.Services.AddBotModule(builder.Configuration);
 builder.Services.AddRemindersModule(builder.Configuration);
+builder.Services.AddExportModule(builder.Configuration);
 // После AddPersistence: DatabaseRoleGuard (проверка роли и миграции) стартует раньше воркеров.
 builder.Services.AddJobsModule(builder.Configuration);
 
@@ -57,6 +59,7 @@ api.MapItemsEndpoints();
 api.MapSearchEndpoints();
 api.MapBotEndpoints();
 api.MapRemindersEndpoints();
+api.MapExportEndpoints();
 // Webhook вне /api: без cookie-аутентификации и antiforgery, запрос подтверждает секретный заголовок.
 app.MapWebhookEndpoint();
 

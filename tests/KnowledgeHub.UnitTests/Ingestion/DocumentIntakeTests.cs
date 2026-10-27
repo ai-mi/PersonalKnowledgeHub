@@ -18,6 +18,7 @@ public sealed class DocumentIntakeTests
         public Task<CreateItemResult> CreateAsync(CreateItemCommand command, CancellationToken ct) => throw new NotSupportedException();
 
         public Task<Item?> GetAsync(Guid id, CancellationToken ct) => throw new NotSupportedException();
+        public IAsyncEnumerable<Item> StreamAllAsync(CancellationToken ct) => throw new NotSupportedException();
 
         public Task<PagedResult<ItemSummary>> ListAsync(ListItemsQuery query, CancellationToken ct) => throw new NotSupportedException();
         public Task<IReadOnlyList<ItemSummary>> ListUnreadCreatedBeforeAsync(DateTimeOffset createdBefore, int limit, CancellationToken ct) => throw new NotSupportedException();

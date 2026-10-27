@@ -5,4 +5,7 @@ public interface IUserContactService
 {
     /// <summary>Адрес для уведомлений: <c>user_settings.email</c>, иначе e-mail профиля; <c>null</c> — адреса нет.</summary>
     Task<string?> FindEmailAsync(Guid userId, CancellationToken ct);
+
+    /// <summary>Настройки пользователя (для экспорта); <c>null</c> — их нет.</summary>
+    Task<UserSettings?> FindSettingsAsync(Guid userId, CancellationToken ct);
 }
