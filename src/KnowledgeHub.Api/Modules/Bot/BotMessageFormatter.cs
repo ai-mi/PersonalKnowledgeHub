@@ -14,6 +14,17 @@ public static class BotMessageFormatter
 
     public static string Ready(string title) => $"Готово: {Escape(title)}";
 
+    /// <summary>
+    /// Аккаунт в ответах о привязке — по нему пользователь замечает чужую ссылку. Почта маскируется до первой буквы:
+    /// ссылку мог открыть не её владелец, полный адрес ему ни к чему, а свой адрес узнать хватит.
+    /// </summary>
+    public static string Account(string displayName, string? email)
+    {
+        var name = $"«{Escape(displayName)}»";
+        var at = email?.IndexOf('@') ?? -1;
+        return at > 0 ? $"{name} ({Escape(email![..1])}***{Escape(email[at..])})" : name;
+    }
+
     public static string Failed(string error) => $"Не удалось обработать: {Escape(error)}";
 
     /// <summary>Заголовок для показа: у записи без заголовка — адрес, иначе заглушка.</summary>

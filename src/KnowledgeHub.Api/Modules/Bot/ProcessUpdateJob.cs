@@ -28,9 +28,11 @@ public sealed partial class ProcessUpdateJob(
     /// <summary>Callback кнопки подтверждения переноса: префикс + код привязки (22 символа, вместе меньше лимита Telegram в 64 байта).</summary>
     private const string RelinkCallbackPrefix = "relink:";
 
+    /// <summary>{0} — аккаунт, к которому хотят перенести чат (<see cref="BotMessageFormatter.Account"/>).</summary>
     private const string RelinkWarningText =
-        "Этот чат уже привязан к другому аккаунту Personal Knowledge Hub. Если вы сами не открывали ссылку привязки " +
-        "к новому аккаунту — ничего не нажимайте: возможно, вам прислали чужую ссылку, чтобы ваши сообщения сохранялись у другого человека.";
+        "Этот чат уже привязан к другому аккаунту Personal Knowledge Hub. Ссылка переносит его в аккаунт {0}. " +
+        "Если вы сами не открывали ссылку привязки к этому аккаунту — ничего не нажимайте: возможно, вам прислали " +
+        "чужую ссылку, чтобы ваши сообщения сохранялись у другого человека.";
 
     private const string NotLinkedText =
         "Этот чат не привязан к аккаунту. Откройте «Настройки» в Personal Knowledge Hub, нажмите «Привязать Telegram» и перейдите по ссылке.";
@@ -100,7 +102,7 @@ public sealed partial class ProcessUpdateJob(
         else if (callback.Data?.StartsWith(RelinkCallbackPrefix, StringComparison.Ordinal) == true)
         {
             // Владелец чата сам подтвердил перенос кнопкой из предупреждения (см. LinkChatAsync).
-            answer = await links.RedeemAsync(callback.Data[RelinkCallbackPrefix.Length..], chatId, replaceOtherOwner: true, ct) == RedeemOutcome.Linked
+            answer = (await links.RedeemAsync(callback.Data[RelinkCallbackPrefix.Length..], chatId, replaceOtherOwner: true, ct)).Outcome == RedeemOutcome.Linked
                 ? "Чат привязан к новому аккаунту"
                 : InvalidCodeText;
         }
@@ -126,14 +128,19 @@ public sealed partial class ProcessUpdateJob(
 
     private async Task LinkChatAsync(long chatId, string code, CancellationToken ct)
     {
-        switch (await links.RedeemAsync(code, chatId, replaceOtherOwner: false, ct))
+        var result = await links.RedeemAsync(code, chatId, replaceOtherOwner: false, ct);
+        switch (result.Outcome)
         {
             case RedeemOutcome.Linked:
-                await ReplyAsync(chatId, "Аккаунт привязан. Присылайте ссылки, заметки и файлы — я их сохраню. Хэштеги в тексте станут тегами.", ct);
+                // Аккаунт назван явно: открыв чужую ссылку, пользователь увидит не своё имя и почту.
+                await ReplyAsync(chatId,
+                    $"Аккаунт привязан: {result.Account}. Если это не ваш аккаунт — отвяжите чат в «Настройках» или пришлите ссылку из своего. " +
+                    "Присылайте ссылки, заметки и файлы — я их сохраню. Хэштеги в тексте станут тегами.", ct);
                 break;
             case RedeemOutcome.NeedsConfirmation:
                 // Сообщение уходит в этот же чат, то есть текущему владельцу привязки: он и решает, отдавать ли чат.
-                await ReplyAsync(chatId, RelinkWarningText, ct, [new InlineButton("Привязать к новому аккаунту", RelinkCallbackPrefix + code)]);
+                await ReplyAsync(chatId, string.Format(RelinkWarningText, result.Account), ct,
+                    [new InlineButton("Привязать к новому аккаунту", RelinkCallbackPrefix + code)]);
                 break;
             default:
                 await ReplyAsync(chatId, InvalidCodeText, ct);

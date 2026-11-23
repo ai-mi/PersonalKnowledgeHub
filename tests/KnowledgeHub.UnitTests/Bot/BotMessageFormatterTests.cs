@@ -8,6 +8,18 @@ public sealed class BotMessageFormatterTests
     private static ItemSummary Summary(Guid id, string? title, string? url = null) =>
         new(id, ItemType.Link, title, url, ItemStatus.Ready, null, DateTimeOffset.UnixEpoch, DateTimeOffset.UnixEpoch, []);
 
+    // Аккаунт в ответе бота при привязке: по нему пользователь замечает чужую ссылку привязки.
+    // Почта маскируется — ссылку мог открыть не её владелец, полный адрес ему ни к чему.
+    [Theory]
+    [InlineData("Анна", "anna@example.com", "«Анна» (a***@example.com)")]
+    [InlineData("Анна", "a@example.com", "«Анна» (a***@example.com)")]
+    [InlineData("Анна", null, "«Анна»")]
+    [InlineData("Анна", "", "«Анна»")]
+    [InlineData("Анна", "no-at-sign", "«Анна»")]
+    [InlineData("<b>Ева</b>", "eva@example.com", "«&lt;b&gt;Ева&lt;/b&gt;» (e***@example.com)")]
+    public void Account_ShowsNameAndMaskedEmail(string displayName, string? email, string expected) =>
+        BotMessageFormatter.Account(displayName, email).ShouldBe(expected);
+
     [Fact]
     public void Escape_ReplacesHtmlSpecialCharacters()
     {

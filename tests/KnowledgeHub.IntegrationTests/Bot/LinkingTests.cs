@@ -31,7 +31,17 @@ public sealed class LinkingTests(ApiFactory factory) : BotTestBase(factory)
         var status = await StatusAsync(user);
         status.GetProperty("linked").GetBoolean().ShouldBeTrue();
         status.GetProperty("linkedAt").GetDateTimeOffset().ShouldBeGreaterThan(DateTimeOffset.UtcNow.AddMinutes(-5));
-        Telegram.TextsTo(ChatId).ShouldHaveSingleItem().ShouldStartWith("Аккаунт привязан");
+        var reply = Telegram.TextsTo(ChatId).ShouldHaveSingleItem();
+        reply.ShouldStartWith("Аккаунт привязан");
+        // Видно, к какому аккаунту: так пользователь заметит, что открыл чужую ссылку привязки.
+        reply.ShouldContain(await AccountOfAsync(user));
+    }
+
+    /// <summary>Как бот показывает аккаунт пользователя: имя и замаскированная почта (тестовая фабрика задаёт обе).</summary>
+    private async Task<string> AccountOfAsync(HttpClient user)
+    {
+        var me = await user.GetFromJsonAsync<JsonElement>("/api/me", Ct);
+        return BotMessageFormatter.Account(me.GetProperty("displayName").GetString()!, me.GetProperty("email").GetString());
     }
 
     [Fact]
@@ -130,6 +140,8 @@ public sealed class LinkingTests(ApiFactory factory) : BotTestBase(factory)
         var warning = Telegram.Sent.ShouldHaveSingleItem();
         warning.ChatId.ShouldBe(ChatId);
         warning.Text.ShouldContain("уже привязан к другому аккаунту");
+        // Владелец чата видит, к чьему аккаунту чат хотят перенести.
+        warning.Text.ShouldContain(await AccountOfAsync(other));
         warning.Buttons.ShouldNotBeNull().ShouldHaveSingleItem().CallbackData.ShouldStartWith("relink:");
         // Код не потрачен: им ещё можно подтвердить перенос.
         (await WithDbAsync((db, _) => db.TelegramLinkCodes.CountAsync(Ct))).ShouldBe(1);
