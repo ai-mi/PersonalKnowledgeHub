@@ -16,3 +16,5 @@ param botUsername = readEnvironmentVariable('BOT_USERNAME', '')
 param botWebhookUrl = readEnvironmentVariable('BOT_WEBHOOK_URL', '')
 // Алерты Azure Monitor и уведомления о бюджете ($60/мес, пороги 80% и 100%).
 param alertEmail = readEnvironmentVariable('ALERT_EMAIL', '')
+// Месяц первого развёртывания бюджета; дату начала существующего бюджета Azure менять не даёт.
+param budgetStartDate = '2026-11-01'

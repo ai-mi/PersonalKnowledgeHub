@@ -14,8 +14,8 @@ $pg = '<имя сервера PostgreSQL без .postgres.database.azure.com>'
 | Алерт | Условие | Что делать |
 |---|---|---|
 | `*-exceptions` | > 10 исключений за 15 минут | Application Insights → Failures: найти исключение, проверить последний деплой |
-| `*-availability` | `/health` недоступен минимум из 2 из 3 точек | Проверить App Service и PostgreSQL (health check включает БД); при необходимости перезапустить Web App |
-| `*-failed-jobs` | в логе есть `JobFailed` за 15 минут | Задача исчерпала 4 попытки. Запрос в Logs: `traces \| where message startswith "JobFailed" \| order by timestamp desc`. Для записи — кнопка «Повторить» или `POST /api/items/{id}/reprocess` |
+| `*-availability` | стандартный тест `/health` не проходит минимум из 2 из 3 точек | Проверить App Service и PostgreSQL (health check включает БД); при необходимости перезапустить Web App |
+| `*-failed-jobs` | в логе есть `JobFailed` за 15 минут | Задача исчерпала 4 попытки. Запись идёт с исключением, поэтому лежит в `exceptions`, а не в `traces`. Запрос в Logs: `union traces, exceptions \| where message startswith "JobFailed" or tostring(customDimensions["{OriginalFormat}"]) startswith "JobFailed" or tostring(customDimensions.EventName) == "JobFailed" \| order by timestamp desc`. Для записи — кнопка «Повторить» или `POST /api/items/{id}/reprocess` |
 
 Бюджет: $60/мес на resource group, письма на 80% и 100% (`infra/modules/budget.bicep`). Ожидаемые расходы ≈ $30/мес — сверяйте в Cost Management.
 

@@ -16,7 +16,11 @@ param botUsername string = ''
 param botWebhookUrl string = ''
 
 @description('E-mail для алертов и уведомлений о бюджете.')
+@minLength(3)
 param alertEmail string
+
+@description('Начало действия бюджета, yyyy-MM-01. Задаётся один раз и не меняется между развёртываниями.')
+param budgetStartDate string
 
 var suffix = uniqueString(resourceGroup().id)
 var webAppName = '${namePrefix}-${suffix}'
@@ -114,6 +118,7 @@ module budget 'modules/budget.bicep' = {
   params: {
     name: '${namePrefix}-monthly'
     contactEmail: alertEmail
+    startDate: budgetStartDate
   }
 }
 

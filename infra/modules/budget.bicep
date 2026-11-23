@@ -3,8 +3,10 @@ param name string
 param amount int = 60
 @description('Кому слать уведомления о расходах.')
 param contactEmail string
-@description('Первое число месяца начала действия бюджета (формат yyyy-MM-01).')
-param startDate string = '${utcNow('yyyy-MM')}-01'
+// Без значения по умолчанию: utcNow() давал новую дату при каждом развёртывании в следующем месяце,
+// а дату начала существующего бюджета менять нельзя.
+@description('Первое число месяца начала действия бюджета (формат yyyy-MM-01). Не менять после первого развёртывания.')
+param startDate string
 
 resource budget 'Microsoft.Consumption/budgets@2023-05-01' = {
   name: name

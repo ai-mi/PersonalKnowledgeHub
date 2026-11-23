@@ -89,6 +89,31 @@ public class RateLimitingTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
+    public async Task Webhook_WithValidSecret_IsNotLimitedPerIp()
+    {
+        // Все настоящие обновления приходят с серверов Telegram — с нескольких IP на всех пользователей бота,
+        // поэтому лимит по IP для них стал бы общей квотой. Подлинные запросы (с верным секретом) лимитом не режутся.
+        await using var factory = Factory.WithWebHostBuilder(b => b.UseSetting("RateLimiting:WebhookPerMinute", "1"));
+        using var client = factory.CreateClient();
+        var updateIdBase = Random.Shared.Next(1_000_000, int.MaxValue - 10);
+
+        for (var i = 0; i < 3; i++)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Post, "/telegram/webhook")
+            {
+                Content = new StringContent($"{{\"update_id\":{updateIdBase + i}}}", System.Text.Encoding.UTF8, "application/json"),
+            };
+            request.Headers.Add("X-Telegram-Bot-Api-Secret-Token", ApiFactory.BotWebhookSecret);
+
+            (await client.SendAsync(request, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        }
+
+        // Запросы без секрета по-прежнему ограничены по IP.
+        (await client.PostAsync("/telegram/webhook", null, Ct)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        (await client.PostAsync("/telegram/webhook", null, Ct)).StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
+    }
+
+    [Fact]
     public async Task Upload_HasOwnLimit()
     {
         await using var factory = Factory.WithWebHostBuilder(b => b.UseSetting("RateLimiting:UploadPerMinute", "1"));

@@ -24,10 +24,18 @@ public static class WebhookEndpoint
     public static void MapWebhookEndpoint(this IEndpointRouteBuilder routes) =>
         routes.MapPost(Path, Receive).AllowAnonymous().RequireRateLimiting(RateLimitPolicies.Webhook).WithMetadata(new RequestSizeLimitAttribute(MaxBodyBytes));
 
+    /// <summary>
+    /// Запрос пришёл от Telegram: секретный заголовок совпадает с настроенным. Используется и лимитером:
+    /// подлинные запросы идут с общих серверов Telegram, лимит по IP для них стал бы общей квотой всех пользователей.
+    /// </summary>
+    public static bool IsAuthentic(HttpRequest request) =>
+        IsSecretValid(request.Headers[SecretHeader].ToString(),
+            request.HttpContext.RequestServices.GetRequiredService<IOptions<BotOptions>>().Value.WebhookSecret);
+
     private static async Task<Results<Ok, UnauthorizedHttpResult, BadRequest>> Receive(
-        HttpRequest request, IOptions<BotOptions> options, IJobQueue jobs, CancellationToken ct)
+        HttpRequest request, IJobQueue jobs, CancellationToken ct)
     {
-        if (!IsSecretValid(request.Headers[SecretHeader].ToString(), options.Value.WebhookSecret))
+        if (!IsAuthentic(request))
         {
             return TypedResults.Unauthorized();
         }

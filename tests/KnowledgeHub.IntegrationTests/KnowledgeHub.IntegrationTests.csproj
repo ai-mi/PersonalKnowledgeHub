@@ -16,6 +16,8 @@
     <PackageReference Include="Testcontainers.Azurite" />
     <PackageReference Include="Respawn" />
     <PackageReference Include="WireMock.Net" />
+    <!-- Явная ссылка поднимает уязвимую транзитивную версию из WireMock.Net (см. Directory.Packages.props). -->
+    <PackageReference Include="Microsoft.AspNetCore.WebUtilities" />
   </ItemGroup>
 
   <ItemGroup>

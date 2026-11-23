@@ -141,6 +141,27 @@ it('does not add the XSRF header to GET requests', async () => {
   clearXsrfCookie()
 })
 
+it('exposes Retry-After of a 429 response in milliseconds', async () => {
+  server.use(
+    http.get('*/api/items', () =>
+      HttpResponse.json({ title: 'Too Many Requests', status: 429 }, { status: 429, headers: { 'Retry-After': '17' } }),
+    ),
+  )
+
+  const error = await apiFetch('/api/items').catch((e: unknown) => e)
+
+  expect(error).toBeInstanceOf(ApiError)
+  expect(error).toMatchObject({ status: 429, retryAfterMs: 17_000 })
+})
+
+it('leaves retryAfterMs undefined without a Retry-After header', async () => {
+  server.use(http.get('*/api/items', () => new HttpResponse(null, { status: 503 })))
+
+  const error = await apiFetch('/api/items').catch((e: unknown) => e)
+
+  expect(error).toMatchObject({ status: 503, retryAfterMs: undefined })
+})
+
 it('aborts the request when the signal is aborted', async () => {
   server.use(http.get('*/api/slow', async () => new Promise<Response>(() => {})))
   const controller = new AbortController()

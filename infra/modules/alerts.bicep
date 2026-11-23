@@ -56,13 +56,14 @@ resource exceptionsAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   }
 }
 
-// Доступность: ping-тест /health из нескольких точек, алерт при недоступности минимум из двух.
+// Доступность: стандартный тест /health из нескольких точек, алерт при недоступности минимум из двух.
+// Классические URL ping-тесты (kind 'ping' с XML WebTest) Microsoft вывела из эксплуатации 30.09.2026.
 var availabilityTestName = '${name}-health'
 
 resource healthTest 'Microsoft.Insights/webtests@2022-06-15' = {
   name: availabilityTestName
   location: location
-  kind: 'ping'
+  kind: 'standard'
   tags: {
     // Связь теста с ресурсом Application Insights.
     'hidden-link:${appInsights.id}': 'Resource'
@@ -73,15 +74,21 @@ resource healthTest 'Microsoft.Insights/webtests@2022-06-15' = {
     Enabled: true
     Frequency: 300
     Timeout: 30
-    Kind: 'ping'
+    Kind: 'standard'
     RetryEnabled: true
     Locations: [
       { Id: 'us-va-ash-azr' }
       { Id: 'emea-nl-ams-azr' }
       { Id: 'emea-gb-db3-azr' }
     ]
-    Configuration: {
-      WebTest: '<WebTest Name="${availabilityTestName}" Enabled="True" Timeout="30" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010"><Items><Request Method="GET" Version="1.1" Url="https://${webAppHostName}/health" ThinkTime="0" Timeout="30" ParseDependentRequests="False" FollowRedirects="True" RecordResult="True" Cache="False" ResponseTimeGoal="0" Encoding="utf-8" ExpectedHttpStatusCode="200" ExpectedResponseUrl="" ReportingName="" IgnoreHttpStatusCode="False" /></Items></WebTest>'
+    Request: {
+      RequestUrl: 'https://${webAppHostName}/health'
+      HttpVerb: 'GET'
+      ParseDependentRequests: false
+      FollowRedirects: true
+    }
+    ValidationRules: {
+      ExpectedHttpStatusCode: 200
     }
   }
 }
@@ -107,6 +114,8 @@ resource availabilityAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
 }
 
 // Упавшие задачи: JobWorker пишет сообщение «JobFailed: …» (LoggerMessage, EventName = JobFailed), когда задача исчерпала попытки.
+// Запись идёт с исключением, а такие записи экспортёр Azure Monitor кладёт в таблицу exceptions, а не traces;
+// ищем в обеих, по тексту сообщения, шаблону и имени события. После первого реального сбоя проверить запрос в Logs.
 resource failedJobsAlert 'Microsoft.Insights/scheduledQueryRules@2022-06-15' = {
   name: '${name}-failed-jobs'
   location: location
@@ -121,7 +130,7 @@ resource failedJobsAlert 'Microsoft.Insights/scheduledQueryRules@2022-06-15' = {
     criteria: {
       allOf: [
         {
-          query: 'traces | where message startswith "JobFailed"'
+          query: 'union traces, exceptions | where message startswith "JobFailed" or tostring(customDimensions["{OriginalFormat}"]) startswith "JobFailed" or tostring(customDimensions.EventName) == "JobFailed"'
           timeAggregation: 'Count'
           operator: 'GreaterThan'
           threshold: 0

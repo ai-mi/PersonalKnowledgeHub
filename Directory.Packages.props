@@ -27,6 +27,8 @@
     <PackageVersion Include="Testcontainers.Azurite" Version="4.16.0" />
     <PackageVersion Include="Telegram.Bot" Version="22.10.3.3" />
     <PackageVersion Include="WireMock.Net" Version="2.20.0" />
+    <!-- Транзитивная зависимость WireMock.Net (через Microsoft.AspNetCore.Http 2.3.9): 2.3.0 уязвима (GHSA-6527-9fp8-r4x6), исправлено в 2.3.14. -->
+    <PackageVersion Include="Microsoft.AspNetCore.WebUtilities" Version="2.3.14" />
     <PackageVersion Include="YamlDotNet" Version="18.1.0" />
   </ItemGroup>
 </Project>

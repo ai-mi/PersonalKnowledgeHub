@@ -22,8 +22,10 @@ export class ApiError extends Error {
   readonly title: string
   readonly detail?: string
   readonly errors?: Record<string, string[]>
+  /** Через сколько повторять запрос — из заголовка `Retry-After` (429 от лимитера API). */
+  readonly retryAfterMs?: number
 
-  constructor(status: number, problem: ProblemDetails) {
+  constructor(status: number, problem: ProblemDetails, retryAfterMs?: number) {
     const title = problem.title ?? `HTTP ${status}`
     super(problem.detail ?? title)
     this.name = 'ApiError'
@@ -31,7 +33,14 @@ export class ApiError extends Error {
     this.title = title
     this.detail = problem.detail
     this.errors = problem.errors
+    this.retryAfterMs = retryAfterMs
   }
+}
+
+// API отдаёт Retry-After в секундах (RateLimitingExtensions.OnRejected).
+function parseRetryAfter(value: string | null): number | undefined {
+  const seconds = value === null ? Number.NaN : Number(value)
+  return Number.isFinite(seconds) && seconds >= 0 ? seconds * 1000 : undefined
 }
 
 export interface RequestOptions {
@@ -53,11 +62,11 @@ function xsrfHeaders(method: string): Record<string, string> {
   return xsrf === undefined ? {} : { [XSRF_HEADER]: xsrf }
 }
 
-function toApiError(status: number, problem: ProblemDetails): ApiError {
+function toApiError(status: number, problem: ProblemDetails, retryAfter: string | null = null): ApiError {
   if (status === 401) {
     window.dispatchEvent(new Event(UNAUTHORIZED_EVENT))
   }
-  return new ApiError(status, problem)
+  return new ApiError(status, problem, parseRetryAfter(retryAfter))
 }
 
 /** Отправка `multipart/form-data` через XHR — `fetch` не умеет сообщать прогресс отправки. */
@@ -82,7 +91,7 @@ export function apiUpload<T>(path: string, form: FormData, onProgress?: (fractio
         // Пустое или не JSON-тело: ошибка опишется статусом.
       }
       if (xhr.status >= 200 && xhr.status < 300) resolve(parsed as T)
-      else reject(toApiError(xhr.status, parsed as ProblemDetails))
+      else reject(toApiError(xhr.status, parsed as ProblemDetails, xhr.getResponseHeader('Retry-After')))
     }
     xhr.send(form)
   })
@@ -103,7 +112,7 @@ export async function apiFetch<T>(path: string, { method = 'GET', body, signal }
   })
 
   if (!response.ok) {
-    throw toApiError(response.status, await readProblem(response))
+    throw toApiError(response.status, await readProblem(response), response.headers.get('Retry-After'))
   }
 
   return response.status === 204 ? (undefined as T) : ((await response.json()) as T)
