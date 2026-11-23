@@ -7,7 +7,7 @@ namespace KnowledgeHub.UnitTests.Bot;
 
 public sealed class TelegramClientTests
 {
-    private const string Token = ***
+    private const string Token = "TEST_TOKEN";
 
     private sealed class StubHandler(Func<HttpRequestMessage, string, (HttpStatusCode, string)> respond) : HttpMessageHandler
     {
@@ -22,10 +22,11 @@ public sealed class TelegramClientTests
         }
     }
 
-    private static (TelegramClient Client, StubHandler Handler) Create(string result, string token = ***
+    private static (TelegramClient Client, StubHandler Handler) Create(string result, HttpStatusCode status = HttpStatusCode.OK)
     {
         var handler = new StubHandler((_, _) => (status, result));
-        var client = new TelegramClient(Options.Create(new BotOptions { Token = ***
+        var http = new HttpClient(handler) { BaseAddress = new Uri("https://api.telegram.org") };
+        var client = new TelegramClient(Options.Create(new BotOptions { Token = Token }), http);
         return (client, handler);
     }
 

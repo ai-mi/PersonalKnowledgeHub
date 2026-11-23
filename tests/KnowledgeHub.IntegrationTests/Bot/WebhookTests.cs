@@ -167,7 +167,7 @@ public sealed class WebhookTests(ApiFactory factory) : BotTestBase(factory)
     [Fact]
     public async Task EmptySecretInSettings_RejectsEverything()
     {
-        using var noSecret = ***
+        using var noSecret = Factory.WithWebHostBuilder(b => b.UseSetting("Bot:WebhookSecret", ""));
         using var client = noSecret.CreateClient();
         using var request = new HttpRequestMessage(HttpMethod.Post, WebhookEndpoint.Path) { Content = new StringContent(TextUpdate("x")) };
         request.Headers.Add(WebhookEndpoint.SecretHeader, "");
