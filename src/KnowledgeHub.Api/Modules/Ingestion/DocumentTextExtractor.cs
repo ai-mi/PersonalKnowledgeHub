@@ -83,7 +83,7 @@ public static class DocumentTextExtractor
             onParserStarted?.Invoke(process.Id);
             using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             timeoutCts.CancelAfter(timeout);
-            var token = ***
+            var token = timeoutCts.Token;
 
             var output = ReadAsync(process.StandardOutput.BaseStream, MaxOutputBytes, token);
             var errors = ReadAsync(process.StandardError.BaseStream, MaxErrorBytes, token);
@@ -252,7 +252,7 @@ public static class DocumentTextExtractor
         {
             DocumentKind.Pdf => ExtractPdf(stream),
             DocumentKind.Docx => ExtractDocx(stream),
-            _ => Utf8.GetString(ReadAll(stream)).TrimStart('\uFEFF'),
+            _ => Utf8.GetString(ReadAll(stream)).TrimStart('﻿'),
         };
     }
 

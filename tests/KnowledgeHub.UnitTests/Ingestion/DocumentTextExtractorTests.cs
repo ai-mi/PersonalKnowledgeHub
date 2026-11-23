@@ -86,7 +86,7 @@ public sealed class DocumentTextExtractorTests
     /// <summary>Поток, чтение которого «зависает»: процесс разбора ждёт конца stdin и сам не завершится никогда.</summary>
     private sealed class HangingStream() : MemoryStream("начало"u8.ToArray())
     {
-        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = ***)
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
         {
             await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
             return 0;

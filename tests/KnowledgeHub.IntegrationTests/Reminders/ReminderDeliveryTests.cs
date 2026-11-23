@@ -173,7 +173,7 @@ public sealed class ReminderDeliveryTests : BotTestBase
         Time.Advance(TimeSpan.FromMinutes(6));
         await TickAsync();
 
-        await WithDbAsync((_, queue) => queue.EnqueueAsync(SendReminderJob.JobType, new SendReminderPayload(id), userId, dedupKey: "manual-repeat", Ct));
+        await WithDbAsync((_, queue) => queue.EnqueueAsync(SendReminderJob.JobType, new SendReminderPayload(id), userId, dedupKey: "manual-repeat", ct: Ct));
         await TickAsync();
 
         Telegram.Sent.ShouldHaveSingleItem();

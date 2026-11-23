@@ -73,7 +73,7 @@ public sealed class LinkIngestionTests(ApiFactory factory) : JobsTestBase(factor
         item.GetProperty("title").GetString().ShouldBe("Service Bus queues explained");
         item.GetProperty("body").GetString().ShouldNotBeNull().ShouldContain("duplicate detection");
         item.GetProperty("error").ValueKind.ShouldBe(JsonValueKind.Null);
-        (await Search.SearchTests.SearchAsync(user, "\"duplicate detection\""))..GetProperty("total").GetInt32().ShouldBe(1);
+        (await Search.SearchTests.SearchAsync(user, "\"duplicate detection\"")).GetProperty("total").GetInt32().ShouldBe(1);
     }
 
     [Fact]

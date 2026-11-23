@@ -55,7 +55,7 @@ public static class DigestFormatter
             var number = 0;
             foreach (var line in lines)
             {
-                result.Append('\n').Append(++number).Append('.').Append(' ');
+                result.Append('\n').Append(++number).Append(". ");
                 if (html)
                 {
                     var title = BotMessageFormatter.Escape(line.Title);

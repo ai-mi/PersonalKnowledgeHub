@@ -30,7 +30,7 @@ public sealed class FaultInjectionTests(ApiFactory factory) : IntegrationTest(fa
     private sealed class SavingInterceptor(Func<DbContext, CancellationToken, Task> onSaving) : SaveChangesInterceptor
     {
         public override async ValueTask<InterceptionResult<int>> SavingChangesAsync(
-            DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = ***)
+            DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)
         {
             await onSaving(eventData.Context!, cancellationToken);
             return result;
@@ -63,7 +63,7 @@ public sealed class FaultInjectionTests(ApiFactory factory) : IntegrationTest(fa
 
     private (WebApplicationFactory<Program> Host, FailingBlobStore Blobs) WithFailingBlobs()
     {
-        var blobs = new FailingBlobStore(new AzureBlobStore(Options.Create(new StorageOptions { ConnectionString = *** })));
+        var blobs = new FailingBlobStore(new AzureBlobStore(Options.Create(new StorageOptions { ConnectionString = Factory.AzuriteConnectionString })));
         return (Factory.WithWebHostBuilder(b => b.ConfigureTestServices(services => services.AddSingleton<IBlobStore>(blobs))), blobs);
     }
 
@@ -327,7 +327,7 @@ public sealed class FaultInjectionTests(ApiFactory factory) : IntegrationTest(fa
     [Fact]
     public async Task BlobStore_WritesThroughStreamAndReadsBack()
     {
-        var store = new AzureBlobStore(Options.Create(new StorageOptions { ConnectionString = *** }));
+        var store = new AzureBlobStore(Options.Create(new StorageOptions { ConnectionString = Factory.AzuriteConnectionString }));
         await store.EnsureContainersAsync(Ct);
         var path = $"{Guid.CreateVersion7()}/stream.txt";
 

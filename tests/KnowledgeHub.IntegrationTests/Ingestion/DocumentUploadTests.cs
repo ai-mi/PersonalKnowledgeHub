@@ -255,7 +255,7 @@ public sealed class DocumentUploadTests(ApiFactory factory) : JobsTestBase(facto
         (await cookies.PostAsJsonAsync("/api/auth/dev-login", new { email = "uploader@example.com" }, Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
         var xsrf = await AntiforgeryTests.FetchXsrfTokenAsync(cookies, Ct);
 
-        var withoutToken = ***
+        var withoutToken = await UploadAsync(cookies, Fixture("sample.txt"), "notes.txt");
         withoutToken.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await withoutToken.Content.ReadAsStringAsync(Ct)).ShouldContain("antiforgery");
 

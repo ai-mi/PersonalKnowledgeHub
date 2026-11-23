@@ -195,7 +195,7 @@ public sealed partial class SafeHttpFetcher : IDisposable
         return Encoding.UTF8;
     }
 
-    [GeneratedRegex(@"<meta[^>]+charset\s*=\s*[\"\']?\s*([\w\-]+)", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"<meta[^>]+charset\s*=\s*[""']?\s*([\w\-]+)", RegexOptions.IgnoreCase)]
     private static partial Regex MetaCharsetRegex();
 
     private static IngestionException? FindIngestionException(Exception e)
