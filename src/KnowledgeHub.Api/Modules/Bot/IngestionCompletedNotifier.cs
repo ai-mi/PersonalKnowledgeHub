@@ -26,7 +26,7 @@ public sealed class IngestionCompletedNotifier(IItemService items, IBotNotifier 
         }
         else
         {
-            text = BotMessageFormatter.Failed(error ?? "неизвестная ошибка");
+            text = BotMessageFormatter.Failed(error ?? "unknown error");
         }
 
         await notifier.SendAsync(currentUser.RequireUserId(), text, ct: ct);

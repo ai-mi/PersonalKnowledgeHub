@@ -66,7 +66,7 @@ public sealed class WebhookTests(ApiFactory factory) : BotTestBase(factory)
 
         (await ItemsOfAsync(other)).ShouldBeEmpty();
         (await WithDbAsync((db, _) => Task.FromResult(db.Items.Count()))).ShouldBe(0);
-        Telegram.TextsTo(2).ShouldHaveSingleItem().ShouldContain("Привязать Telegram");
+        Telegram.TextsTo(2).ShouldHaveSingleItem().ShouldContain("Link Telegram");
     }
 
     [Fact]
@@ -88,7 +88,7 @@ public sealed class WebhookTests(ApiFactory factory) : BotTestBase(factory)
         item.UserNote.ShouldBe("Про шину");
         item.Tags.Select(t => t.Name).Order().ShouldBe(["azure", "dotnet"]);
         item.Status.ShouldBe(ItemStatus.Pending);
-        Telegram.TextsTo(ChatId).ShouldBe(["Сохранено"]);
+        Telegram.TextsTo(ChatId).ShouldBe(["Saved"]);
         (await AllJobsAsync()).Count(j => j.Type == "ingest").ShouldBe(1);
     }
 
@@ -103,7 +103,7 @@ public sealed class WebhookTests(ApiFactory factory) : BotTestBase(factory)
         await SendAsync(TextUpdate(text, entities: entities));
 
         (await ItemsOfAsync(userId)).ShouldHaveSingleItem();
-        Telegram.TextsTo(ChatId).ShouldBe(["Сохранено", "Уже было сохранено"]);
+        Telegram.TextsTo(ChatId).ShouldBe(["Saved", "Already saved"]);
     }
 
     [Fact]
@@ -135,7 +135,7 @@ public sealed class WebhookTests(ApiFactory factory) : BotTestBase(factory)
         item.UserNote.ShouldBe("Договор");
         item.Tags.Select(t => t.Name).ShouldBe(["legal"]);
         item.BlobPath.ShouldNotBeNull().ShouldEndWith("contract.pdf");
-        Telegram.TextsTo(ChatId).ShouldBe(["Сохранено"]);
+        Telegram.TextsTo(ChatId).ShouldBe(["Saved"]);
         (await AllJobsAsync()).Count(j => j.Type == "ingest").ShouldBe(1);
     }
 
@@ -148,7 +148,7 @@ public sealed class WebhookTests(ApiFactory factory) : BotTestBase(factory)
         await SendAsync(DocumentUpdate("huge", "huge.pdf", 25L * 1024 * 1024));
 
         (await ItemsOfAsync(userId)).ShouldBeEmpty();
-        Telegram.TextsTo(ChatId).ShouldHaveSingleItem().ShouldContain("20 МБ");
+        Telegram.TextsTo(ChatId).ShouldHaveSingleItem().ShouldContain("20 MB");
     }
 
     [Fact]
@@ -160,14 +160,14 @@ public sealed class WebhookTests(ApiFactory factory) : BotTestBase(factory)
         await SendAsync(DocumentUpdate("exe", "tool.exe", 10));
 
         (await ItemsOfAsync(userId)).ShouldBeEmpty();
-        Telegram.TextsTo(ChatId).ShouldHaveSingleItem().ShouldStartWith("Не удалось сохранить: Unsupported file type");
+        Telegram.TextsTo(ChatId).ShouldHaveSingleItem().ShouldStartWith("Could not save: Unsupported file type");
         (await AllJobsAsync()).Single().Status.ShouldBe(JobStatus.Completed);
     }
 
     [Fact]
     public async Task EmptySecretInSettings_RejectsEverything()
     {
-        using var noSecret = Factory.WithWebHostBuilder(b => b.UseSetting("Bot:WebhookSecret", ""));
+        using var noSecret = ***
         using var client = noSecret.CreateClient();
         using var request = new HttpRequestMessage(HttpMethod.Post, WebhookEndpoint.Path) { Content = new StringContent(TextUpdate("x")) };
         request.Headers.Add(WebhookEndpoint.SecretHeader, "");
@@ -207,7 +207,7 @@ public sealed class WebhookTests(ApiFactory factory) : BotTestBase(factory)
         await SendAsync(TextUpdate(text, entities: [Entity("hashtag", text, text)]));
 
         (await ItemsOfAsync(userId)).ShouldBeEmpty();
-        Telegram.TextsTo(ChatId).ShouldHaveSingleItem().ShouldContain("Не нашёл");
+        Telegram.TextsTo(ChatId).ShouldHaveSingleItem().ShouldContain("couldn't find");
     }
 
     [Fact]
@@ -220,7 +220,7 @@ public sealed class WebhookTests(ApiFactory factory) : BotTestBase(factory)
         await SendAsync(DocumentUpdate("big", "big.txt", 10));
 
         (await ItemsOfAsync(userId)).ShouldBeEmpty();
-        Telegram.TextsTo(ChatId).ShouldHaveSingleItem().ShouldContain("20 МБ");
+        Telegram.TextsTo(ChatId).ShouldHaveSingleItem().ShouldContain("20 MB");
     }
 
     [Fact]
@@ -232,7 +232,7 @@ public sealed class WebhookTests(ApiFactory factory) : BotTestBase(factory)
         await SendAsync(DocumentUpdate("liar", "liar.txt", 10));
 
         (await ItemsOfAsync(userId)).ShouldBeEmpty();
-        Telegram.TextsTo(ChatId).ShouldHaveSingleItem().ShouldStartWith("Не удалось сохранить: The file must be at most 20 MB");
+        Telegram.TextsTo(ChatId).ShouldHaveSingleItem().ShouldStartWith("Could not save: The file must be at most 20 MB");
     }
 
     [Fact]
@@ -244,7 +244,7 @@ public sealed class WebhookTests(ApiFactory factory) : BotTestBase(factory)
         await SendAsync(TextUpdate(text, entities: [Entity("bot_command", text, "/unknown")]));
 
         (await ItemsOfAsync(userId)).ShouldBeEmpty();
-        Telegram.TextsTo(ChatId).ShouldHaveSingleItem().ShouldContain("Неизвестная команда");
+        Telegram.TextsTo(ChatId).ShouldHaveSingleItem().ShouldContain("Unknown command");
     }
 
     [Fact]

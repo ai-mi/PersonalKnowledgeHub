@@ -7,7 +7,7 @@ namespace KnowledgeHub.UnitTests.Bot;
 
 public sealed class TelegramClientTests
 {
-    private const string Token = "123456:TEST-token";
+    private const string Token = ***
 
     private sealed class StubHandler(Func<HttpRequestMessage, string, (HttpStatusCode, string)> respond) : HttpMessageHandler
     {
@@ -22,10 +22,10 @@ public sealed class TelegramClientTests
         }
     }
 
-    private static (TelegramClient Client, StubHandler Handler) Create(string result, string token = Token, HttpStatusCode status = HttpStatusCode.OK)
+    private static (TelegramClient Client, StubHandler Handler) Create(string result, string token = ***
     {
         var handler = new StubHandler((_, _) => (status, result));
-        var client = new TelegramClient(Options.Create(new BotOptions { Token = token }), new HttpClient(handler));
+        var client = new TelegramClient(Options.Create(new BotOptions { Token = ***
         return (client, handler);
     }
 
@@ -125,7 +125,7 @@ public sealed class TelegramClientTests
     {
         var (client, handler) = Create(Ok("true"));
 
-        await client.AnswerCallbackQueryAsync("cb-1", "Готово", Ct);
+        await client.AnswerCallbackQueryAsync("cb-1", "Done", Ct);
 
         var request = handler.Requests.ShouldHaveSingleItem();
         request.Path.ShouldBe($"/bot{Token}/answerCallbackQuery");

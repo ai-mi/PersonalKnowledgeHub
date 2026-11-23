@@ -12,7 +12,7 @@ public static class BotMessageFormatter
     public static string Escape(string text) =>
         text.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;").Replace("\"", "&quot;");
 
-    public static string Ready(string title) => $"Готово: {Escape(title)}";
+    public static string Ready(string title) => $"Ready: {Escape(title)}";
 
     /// <summary>
     /// Аккаунт в ответах о привязке — по нему пользователь замечает чужую ссылку. Почта маскируется до первой буквы:
@@ -25,13 +25,13 @@ public static class BotMessageFormatter
         return at > 0 ? $"{name} ({Escape(email![..1])}***{Escape(email[at..])})" : name;
     }
 
-    public static string Failed(string error) => $"Не удалось обработать: {Escape(error)}";
+    public static string Failed(string error) => $"Failed to process: {Escape(error)}";
 
     /// <summary>Заголовок для показа: у записи без заголовка — адрес, иначе заглушка.</summary>
     public static string DisplayTitle(ItemSummary item) => DisplayTitle(item.Title, item.Url);
 
     public static string DisplayTitle(string? title, string? url) =>
-        !string.IsNullOrWhiteSpace(title) ? title : !string.IsNullOrWhiteSpace(url) ? url : "Без названия";
+        !string.IsNullOrWhiteSpace(title) ? title : !string.IsNullOrWhiteSpace(url) ? url : "Untitled";
 
     /// <summary>Нумерованный список записей; заголовок — ссылка на запись в вебе, если задан <paramref name="webBaseUrl"/>.</summary>
     public static string ItemList(string heading, IEnumerable<ItemSummary> items, string webBaseUrl)
@@ -48,7 +48,7 @@ public static class BotMessageFormatter
         return text.ToString();
     }
 
-    public static InlineButton ReadButton(Guid itemId, string text = "Прочитано") => new(text, ReadPrefix + itemId);
+    public static InlineButton ReadButton(Guid itemId, string text = "Read") => new(text, ReadPrefix + itemId);
 
     /// <summary><c>callback_data</c> кнопки «Прочитано» → идентификатор записи.</summary>
     public static bool TryParseReadCallback(string? data, out Guid itemId)

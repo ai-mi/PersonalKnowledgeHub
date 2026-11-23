@@ -23,7 +23,7 @@ public sealed class GroupChatTests(ApiFactory factory) : BotTestBase(factory)
         await SendAsync(TextUpdate(text, GroupChatId, [Entity("bot_command", text, "/start")], chatType: chatType));
 
         (await LinkCountAsync()).ShouldBe(0);
-        Telegram.TextsTo(GroupChatId).ShouldHaveSingleItem().ShouldContain("личном чате");
+        Telegram.TextsTo(GroupChatId).ShouldHaveSingleItem().ShouldContain("private chat");
     }
 
     [Fact]
@@ -40,6 +40,6 @@ public sealed class GroupChatTests(ApiFactory factory) : BotTestBase(factory)
         var items = await ItemsOfAsync(owner);
         items.ShouldHaveSingleItem().ReadAt.ShouldBeNull();
         Telegram.TextsTo(GroupChatId).ShouldAllBe(t => !t.Contains("Зарплата"));
-        Telegram.Answers.ShouldHaveSingleItem().Text.ShouldNotBe("Отмечено прочитанным");
+        Telegram.Answers.ShouldHaveSingleItem().Text.ShouldNotBe("Marked as read");
     }
 }

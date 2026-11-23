@@ -22,7 +22,7 @@ public sealed class CommandsTests(ApiFactory factory) : BotTestBase(factory)
         await SendAsync(CommandUpdate("search", "kubernetes"));
 
         var lines = RepliedLines();
-        lines[0].ShouldBe("Найдено:");
+        lines[0].ShouldBe("Found:");
         lines.Length.ShouldBe(6);
         lines.Skip(1).ShouldAllBe(l => l.Contains("Мой документ"));
         Telegram.Sent.ShouldAllBe(m => !m.Text.Contains("Чужой секрет"));
@@ -37,7 +37,7 @@ public sealed class CommandsTests(ApiFactory factory) : BotTestBase(factory)
 
         await SendAsync(CommandUpdate("search", "kubernetes", chatId: 2));
 
-        Telegram.TextsTo(2).ShouldHaveSingleItem().ShouldBe("Ничего не найдено");
+        Telegram.TextsTo(2).ShouldHaveSingleItem().ShouldBe("Nothing found");
     }
 
     [Fact]
@@ -47,7 +47,7 @@ public sealed class CommandsTests(ApiFactory factory) : BotTestBase(factory)
 
         await SendAsync(CommandUpdate("search"));
 
-        Telegram.TextsTo(ChatId).ShouldHaveSingleItem().ShouldBe("Использование: /search &lt;запрос&gt;");
+        Telegram.TextsTo(ChatId).ShouldHaveSingleItem().ShouldBe("Usage: /search &lt;query&gt;");
     }
 
     [Fact]
@@ -68,7 +68,7 @@ public sealed class CommandsTests(ApiFactory factory) : BotTestBase(factory)
     {
         await SendAsync(CommandUpdate("search", "kubernetes", chatId: 99));
 
-        Telegram.TextsTo(99).ShouldHaveSingleItem().ShouldContain("Привязать Telegram");
+        Telegram.TextsTo(99).ShouldHaveSingleItem().ShouldContain("Link Telegram");
     }
 
     [Fact]
@@ -83,7 +83,7 @@ public sealed class CommandsTests(ApiFactory factory) : BotTestBase(factory)
         await SendAsync(CommandUpdate("recent"));
 
         var lines = RepliedLines();
-        lines[0].ShouldBe("Последние записи:");
+        lines[0].ShouldBe("Recent items:");
         lines.Skip(1).ShouldBe(["1. Запись 6", "2. Запись 5", "3. Запись 4", "4. Запись 3", "5. Запись 2"]);
     }
 
@@ -94,7 +94,7 @@ public sealed class CommandsTests(ApiFactory factory) : BotTestBase(factory)
 
         await SendAsync(CommandUpdate("recent"));
 
-        Telegram.TextsTo(ChatId).ShouldHaveSingleItem().ShouldBe("Записей пока нет");
+        Telegram.TextsTo(ChatId).ShouldHaveSingleItem().ShouldBe("No items yet");
     }
 
     [Fact]
@@ -106,7 +106,7 @@ public sealed class CommandsTests(ApiFactory factory) : BotTestBase(factory)
         await SendAsync(CallbackUpdate($"read:{itemId}"));
 
         (await ItemsOfAsync(userId)).ShouldHaveSingleItem().ReadAt.ShouldNotBeNull();
-        Telegram.Answers.ShouldHaveSingleItem().ShouldBe(("cb-1", "Отмечено прочитанным"));
+        Telegram.Answers.ShouldHaveSingleItem().ShouldBe(("cb-1", "Marked as read"));
     }
 
     [Fact]
@@ -119,7 +119,7 @@ public sealed class CommandsTests(ApiFactory factory) : BotTestBase(factory)
         await SendAsync(CallbackUpdate($"read:{foreignItem}"));
 
         (await ItemsOfAsync(stranger)).ShouldHaveSingleItem().ReadAt.ShouldBeNull();
-        Telegram.Answers.ShouldHaveSingleItem().Text.ShouldBe("Запись не найдена");
+        Telegram.Answers.ShouldHaveSingleItem().Text.ShouldBe("Item not found");
     }
 
     [Theory]
@@ -132,7 +132,7 @@ public sealed class CommandsTests(ApiFactory factory) : BotTestBase(factory)
 
         await SendAsync(CallbackUpdate(data));
 
-        Telegram.Answers.ShouldHaveSingleItem().Text.ShouldBe("Запись не найдена");
+        Telegram.Answers.ShouldHaveSingleItem().Text.ShouldBe("Item not found");
     }
 
     [Fact]
@@ -144,6 +144,6 @@ public sealed class CommandsTests(ApiFactory factory) : BotTestBase(factory)
         await SendAsync(CallbackUpdate($"read:{itemId}", chatId: 99));
 
         (await ItemsOfAsync(stranger)).ShouldHaveSingleItem().ReadAt.ShouldBeNull();
-        Telegram.Answers.ShouldHaveSingleItem().Text.ShouldBe("Чат не привязан к аккаунту");
+        Telegram.Answers.ShouldHaveSingleItem().Text.ShouldBe("Chat is not linked to an account");
     }
 }

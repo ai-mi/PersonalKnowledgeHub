@@ -51,7 +51,7 @@ public sealed class NotificationsTests(ApiFactory factory) : BotTestBase(factory
 
         await SendLinkAsync(Url(server));
 
-        Telegram.TextsTo(ChatId).ShouldBe(["Сохранено", "Готово: Service Bus queues explained"]);
+        Telegram.TextsTo(ChatId).ShouldBe(["Saved", "Ready: Service Bus queues explained"]);
     }
 
     [Fact]
@@ -64,9 +64,9 @@ public sealed class NotificationsTests(ApiFactory factory) : BotTestBase(factory
         await SendLinkAsync(Url(server));
 
         var texts = Telegram.TextsTo(ChatId).ToList();
-        texts[0].ShouldBe("Сохранено");
+        texts[0].ShouldBe("Saved");
         texts.Count.ShouldBe(2);
-        texts[1].ShouldStartWith("Не удалось обработать: ");
+        texts[1].ShouldStartWith("Failed to process: ");
     }
 
     [Fact]
@@ -92,7 +92,7 @@ public sealed class NotificationsTests(ApiFactory factory) : BotTestBase(factory
 
         await SendAsync(DocumentUpdate("note-file", "bus-notes.txt", 40), runIngest: true);
 
-        Telegram.TextsTo(ChatId).ShouldBe(["Сохранено", "Готово: bus-notes"]);
+        Telegram.TextsTo(ChatId).ShouldBe(["Saved", "Ready: bus-notes"]);
     }
 
     [Fact]
@@ -108,7 +108,7 @@ public sealed class NotificationsTests(ApiFactory factory) : BotTestBase(factory
             return 0;
         });
 
-        Telegram.TextsTo(ChatId).ShouldHaveSingleItem().ShouldBe("Готово: &lt;script&gt;alert(1)&lt;/script&gt;");
+        Telegram.TextsTo(ChatId).ShouldHaveSingleItem().ShouldBe("Ready: &lt;script&gt;alert(1)&lt;/script&gt;");
     }
 
     [Fact]

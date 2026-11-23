@@ -21,21 +21,21 @@ public sealed partial class ProcessUpdateJob(
     public const string JobType = "telegram.update";
     public static string Type => JobType;
 
-    private const string PrivateChatOnlyText = "Я работаю только в личном чате. Напишите мне напрямую.";
+    private const string PrivateChatOnlyText = "I only work in a private chat. Message me directly.";
 
-    private const string InvalidCodeText = "Ссылка привязки недействительна или устарела. Создайте новую в «Настройках».";
+    private const string InvalidCodeText = "The link code is invalid or expired. Create a new one in Settings.";
 
     /// <summary>Callback кнопки подтверждения переноса: префикс + код привязки (22 символа, вместе меньше лимита Telegram в 64 байта).</summary>
     private const string RelinkCallbackPrefix = "relink:";
 
     /// <summary>{0} — аккаунт, к которому хотят перенести чат (<see cref="BotMessageFormatter.Account"/>).</summary>
     private const string RelinkWarningText =
-        "Этот чат уже привязан к другому аккаунту Personal Knowledge Hub. Ссылка переносит его в аккаунт {0}. " +
-        "Если вы сами не открывали ссылку привязки к этому аккаунту — ничего не нажимайте: возможно, вам прислали " +
-        "чужую ссылку, чтобы ваши сообщения сохранялись у другого человека.";
+        "This chat is already linked to another Personal Knowledge Hub account. The link will move it to account {0}. " +
+        "If you didn't open the linking link for that account yourself, do not press anything: someone may have sent you " +
+        "someone else's link so that your messages are saved in another person's account.";
 
     private const string NotLinkedText =
-        "Этот чат не привязан к аккаунту. Откройте «Настройки» в Personal Knowledge Hub, нажмите «Привязать Telegram» и перейдите по ссылке.";
+        "This chat is not linked to an account. Open Settings in Personal Knowledge Hub, click Link Telegram, and follow the link.";
 
     public async Task HandleAsync(TelegramUpdatePayload payload, CancellationToken ct)
     {
@@ -103,7 +103,7 @@ public sealed partial class ProcessUpdateJob(
         {
             // Владелец чата сам подтвердил перенос кнопкой из предупреждения (см. LinkChatAsync).
             answer = (await links.RedeemAsync(callback.Data[RelinkCallbackPrefix.Length..], chatId, replaceOtherOwner: true, ct)).Outcome == RedeemOutcome.Linked
-                ? "Чат привязан к новому аккаунту"
+                ? "Chat linked to the new account"
                 : InvalidCodeText;
         }
         else if (await links.FindByChatAsync(chatId, ct) is { } link)
@@ -113,7 +113,7 @@ public sealed partial class ProcessUpdateJob(
         }
         else
         {
-            answer = "Чат не привязан к аккаунту";
+            answer = "Chat is not linked to an account";
         }
 
         try
@@ -134,13 +134,13 @@ public sealed partial class ProcessUpdateJob(
             case RedeemOutcome.Linked:
                 // Аккаунт назван явно: открыв чужую ссылку, пользователь увидит не своё имя и почту.
                 await ReplyAsync(chatId,
-                    $"Аккаунт привязан: {result.Account}. Если это не ваш аккаунт — отвяжите чат в «Настройках» или пришлите ссылку из своего. " +
-                    "Присылайте ссылки, заметки и файлы — я их сохраню. Хэштеги в тексте станут тегами.", ct);
+                    $"Account linked: {result.Account}. If this is not your account, unlink the chat in Settings or send the link from your own account. " +
+                    "Send me links, notes, and files — I'll save them. Hashtags in the text will become tags.", ct);
                 break;
             case RedeemOutcome.NeedsConfirmation:
                 // Сообщение уходит в этот же чат, то есть текущему владельцу привязки: он и решает, отдавать ли чат.
                 await ReplyAsync(chatId, string.Format(RelinkWarningText, result.Account), ct,
-                    [new InlineButton("Привязать к новому аккаунту", RelinkCallbackPrefix + code)]);
+                    [new InlineButton("Link to the new account", RelinkCallbackPrefix + code)]);
                 break;
             default:
                 await ReplyAsync(chatId, InvalidCodeText, ct);
@@ -153,7 +153,7 @@ public sealed partial class ProcessUpdateJob(
         var parsed = MessageParser.Parse(message);
         if (parsed is null)
         {
-            await ReplyAsync(chatId, "Не нашёл, что сохранить. Пришлите ссылку, текст или файл (PDF, DOCX, TXT, MD).", ct);
+            await ReplyAsync(chatId, "I couldn't find what to save. Send a link, text, or a file (PDF, DOCX, TXT, MD).", ct);
             return;
         }
 
@@ -165,13 +165,13 @@ public sealed partial class ProcessUpdateJob(
             // created == null: ответ уже отправлен (файл слишком большой).
             if (created is { } isNew)
             {
-                await ReplyAsync(chatId, isNew ? "Сохранено" : "Уже было сохранено", ct);
+                await ReplyAsync(chatId, isNew ? "Saved" : "Already saved", ct);
             }
         }
         catch (AppException e)
         {
             // Ошибки валидации и размера — не сбой: повтор задачи ничего не изменит.
-            await ReplyAsync(chatId, $"Не удалось сохранить: {BotMessageFormatter.Escape(Describe(e))}", ct);
+            await ReplyAsync(chatId, $"Could not save: {BotMessageFormatter.Escape(Describe(e))}", ct);
         }
     }
 
@@ -179,7 +179,7 @@ public sealed partial class ProcessUpdateJob(
     private async Task<bool?> SaveDocumentAsync(long chatId, ParsedDocument document, CancellationToken ct)
     {
         var maxBytes = ingestionOptions.Value.MaxDocumentBytes;
-        var tooBigText = $"Файл больше {maxBytes / (1024 * 1024)} МБ — Telegram не отдаёт такие файлы ботам. Загрузите его через веб-интерфейс.";
+        var tooBigText = $"The file is larger than {maxBytes / (1024 * 1024)} MB — Telegram does not provide such files to bots. Upload it via the web app.";
         if (document.FileSize > maxBytes)
         {
             await ReplyAsync(chatId, tooBigText, ct);

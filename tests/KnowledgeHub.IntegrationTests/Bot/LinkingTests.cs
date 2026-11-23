@@ -32,7 +32,7 @@ public sealed class LinkingTests(ApiFactory factory) : BotTestBase(factory)
         status.GetProperty("linked").GetBoolean().ShouldBeTrue();
         status.GetProperty("linkedAt").GetDateTimeOffset().ShouldBeGreaterThan(DateTimeOffset.UtcNow.AddMinutes(-5));
         var reply = Telegram.TextsTo(ChatId).ShouldHaveSingleItem();
-        reply.ShouldStartWith("Аккаунт привязан");
+        reply.ShouldStartWith("Account linked");
         // Видно, к какому аккаунту: так пользователь заметит, что открыл чужую ссылку привязки.
         reply.ShouldContain(await AccountOfAsync(user));
     }
@@ -70,7 +70,7 @@ public sealed class LinkingTests(ApiFactory factory) : BotTestBase(factory)
         await StartAsync(code, chatId: 999);
 
         (await LinkCountAsync()).ShouldBe(1);
-        Telegram.TextsTo(999).ShouldHaveSingleItem().ShouldContain("недействительна");
+        Telegram.TextsTo(999).ShouldHaveSingleItem().ShouldContain("invalid");
         (await WithDbAsync((db, _) => db.TelegramLinkCodes.CountAsync(Ct))).ShouldBe(0);
     }
 
@@ -84,7 +84,7 @@ public sealed class LinkingTests(ApiFactory factory) : BotTestBase(factory)
         await StartAsync(code);
 
         (await StatusAsync(user)).GetProperty("linked").GetBoolean().ShouldBeFalse();
-        Telegram.TextsTo(ChatId).ShouldHaveSingleItem().ShouldContain("недействительна");
+        Telegram.TextsTo(ChatId).ShouldHaveSingleItem().ShouldContain("invalid");
     }
 
     [Fact]
@@ -93,7 +93,7 @@ public sealed class LinkingTests(ApiFactory factory) : BotTestBase(factory)
         await StartAsync("no-such-code");
 
         (await LinkCountAsync()).ShouldBe(0);
-        Telegram.TextsTo(ChatId).ShouldHaveSingleItem().ShouldContain("недействительна");
+        Telegram.TextsTo(ChatId).ShouldHaveSingleItem().ShouldContain("invalid");
     }
 
     [Fact]
@@ -139,7 +139,7 @@ public sealed class LinkingTests(ApiFactory factory) : BotTestBase(factory)
         (await StatusAsync(other)).GetProperty("linked").GetBoolean().ShouldBeFalse();
         var warning = Telegram.Sent.ShouldHaveSingleItem();
         warning.ChatId.ShouldBe(ChatId);
-        warning.Text.ShouldContain("уже привязан к другому аккаунту");
+        warning.Text.ShouldContain("already linked to another account");
         // Владелец чата видит, к чьему аккаунту чат хотят перенести.
         warning.Text.ShouldContain(await AccountOfAsync(other));
         warning.Buttons.ShouldNotBeNull().ShouldHaveSingleItem().CallbackData.ShouldStartWith("relink:");
@@ -160,7 +160,7 @@ public sealed class LinkingTests(ApiFactory factory) : BotTestBase(factory)
 
         (await StatusAsync(owner)).GetProperty("linked").GetBoolean().ShouldBeFalse();
         (await StatusAsync(other)).GetProperty("linked").GetBoolean().ShouldBeTrue();
-        Telegram.Answers.ShouldHaveSingleItem().Text.ShouldBe("Чат привязан к новому аккаунту");
+        Telegram.Answers.ShouldHaveSingleItem().Text.ShouldBe("Chat linked to the new account");
         (await WithDbAsync((db, _) => db.TelegramLinkCodes.CountAsync(Ct))).ShouldBe(0);
     }
 
@@ -178,7 +178,7 @@ public sealed class LinkingTests(ApiFactory factory) : BotTestBase(factory)
 
         (await StatusAsync(owner)).GetProperty("linked").GetBoolean().ShouldBeTrue();
         (await StatusAsync(other)).GetProperty("linked").GetBoolean().ShouldBeFalse();
-        Telegram.Answers.ShouldHaveSingleItem().Text.ShouldNotBeNull().ShouldContain("недействительна");
+        Telegram.Answers.ShouldHaveSingleItem().Text.ShouldNotBeNull().ShouldContain("invalid");
     }
 
     [Fact]
@@ -219,6 +219,6 @@ public sealed class LinkingTests(ApiFactory factory) : BotTestBase(factory)
     {
         await SendAsync(TextUpdate("/start", entities: [Entity("bot_command", "/start", "/start")]));
 
-        Telegram.TextsTo(ChatId).ShouldHaveSingleItem().ShouldContain("Привязать Telegram");
+        Telegram.TextsTo(ChatId).ShouldHaveSingleItem().ShouldContain("Link Telegram");
     }
 }
