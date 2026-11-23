@@ -9,4 +9,7 @@ public sealed class EmailOptions
 
     /// <summary>Адрес отправителя на Azure Managed Domain, например <c>DoNotReply@xxxx.azurecomm.net</c>.</summary>
     public string From { get; set; } = "";
+
+    /// <summary>Только для локального запуска: письма пишутся в журнал вместо отправки (<see cref="LoggingEmailSender"/>).</summary>
+    public bool LogOnly { get; set; }
 }
