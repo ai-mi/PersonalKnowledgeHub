@@ -1,6 +1,7 @@
 using System.Net.Mail;
 using KnowledgeHub.Api.Common;
 using KnowledgeHub.Api.Infrastructure.Persistence;
+using KnowledgeHub.Api.Infrastructure.Web;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,7 +14,24 @@ public static class MeEndpoints
         var group = routes.MapGroup("/me").RequireAuthorization();
         group.MapGet("", GetMe);
         group.MapPut("/settings", UpdateSettings);
+
+        // Смена адреса писем — только из сессии в браузере: утёкший API-токен не должен перенаправлять дайджесты.
+        var email = routes.MapGroup("/me/email").RequireAuthorization(AuthPolicies.Session);
+        email.MapPost("", RequestEmailChange).RequireRateLimiting(RateLimitPolicies.EmailCode);
+        email.MapPost("/confirm", ConfirmEmailChange);
     }
+
+    public sealed record EmailChangeRequest(string? Email);
+
+    public sealed record EmailConfirmRequest(string? Code);
+
+    private static async Task<Ok<SettingsDto>> RequestEmailChange(
+        EmailChangeRequest request, EmailConfirmationService confirmation, CancellationToken ct) =>
+        TypedResults.Ok(SettingsDto.From(await confirmation.RequestAsync(request.Email, ct)));
+
+    private static async Task<Ok<SettingsDto>> ConfirmEmailChange(
+        EmailConfirmRequest request, EmailConfirmationService confirmation, CancellationToken ct) =>
+        TypedResults.Ok(SettingsDto.From(await confirmation.ConfirmAsync(request.Code, ct)));
 
     private static async Task<Results<Ok<MeResponse>, UnauthorizedHttpResult>> GetMe(ICurrentUser currentUser, AppDbContext db, CancellationToken ct)
     {
@@ -37,6 +55,11 @@ public static class MeEndpoints
         var userId = currentUser.RequireUserId();
         var settings = await db.UserSettings.FirstOrDefaultAsync(s => s.UserId == userId, ct)
             ?? throw Errors.NotFound();
+        var profileEmail = await db.Users.Where(u => u.Id == userId).Select(u => u.Email).FirstOrDefaultAsync(ct);
+        if (!EmailConfirmationService.NeedsNoConfirmation(request.Email, profileEmail, settings.Email))
+        {
+            throw Errors.Validation("email", "A new e-mail must be confirmed with a code: POST /api/me/email.");
+        }
 
         settings.Timezone = request.Timezone;
         settings.DigestFrequency = request.DigestFrequency;
@@ -99,6 +122,9 @@ public static class MeEndpoints
         public required string[] DigestChannels { get; init; }
         public string? Email { get; init; }
 
+        /// <summary>Адрес, ждущий подтверждения кодом; только в ответах (в <c>PUT /me/settings</c> игнорируется).</summary>
+        public string? PendingEmail { get; init; }
+
         public static SettingsDto From(UserSettings s) => new()
         {
             Timezone = s.Timezone,
@@ -106,6 +132,7 @@ public static class MeEndpoints
             DigestDay = s.DigestDay,
             DigestChannels = s.DigestChannels,
             Email = s.Email,
+            PendingEmail = s.PendingEmail,
         };
     }
 }

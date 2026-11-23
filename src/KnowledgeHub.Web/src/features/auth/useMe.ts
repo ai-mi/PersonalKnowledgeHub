@@ -7,6 +7,8 @@ export interface Settings {
   digestDay: string
   digestChannels: string[]
   email: string | null
+  /** Адрес, ждущий подтверждения кодом из письма (письма на него ещё не идут). */
+  pendingEmail?: string | null
 }
 
 export interface Me {

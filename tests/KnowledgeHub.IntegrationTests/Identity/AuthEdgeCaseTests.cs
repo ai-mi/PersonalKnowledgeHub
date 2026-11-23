@@ -295,9 +295,10 @@ public sealed class AuthEdgeCaseTests : IntegrationTest, IDisposable
     [Fact]
     public async Task Settings_EmailOverMaxLength_Returns400_AtMaxLengthIsAccepted()
     {
-        using var client = await Factory.CreateClientForAsync(Guid.CreateVersion7());
         var atLimit = new string('a', User.MaxEmailLength - "@x.io".Length) + "@x.io";
         var overLimit = new string('a', User.MaxEmailLength - "@x.io".Length + 1) + "@x.io";
+        // Адрес профиля сохраняется без подтверждения кодом (новые адреса — см. EmailConfirmationTests).
+        using var client = await Factory.CreateClientForAsync(Guid.CreateVersion7(), atLimit);
 
         (await client.PutAsync("/api/me/settings", Settings(email: overLimit), Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await client.PutAsync("/api/me/settings", Settings(email: atLimit), Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -311,8 +312,8 @@ public sealed class AuthEdgeCaseTests : IntegrationTest, IDisposable
         var blank = await client.PutAsync("/api/me/settings", Settings(email: "   "), Ct);
         (await blank.Content.ReadFromJsonAsync<JsonElement>(Ct)).GetProperty("email").ValueKind.ShouldBe(JsonValueKind.Null);
 
-        var trimmed = await client.PutAsync("/api/me/settings", Settings(email: "  me@example.com "), Ct);
-        (await trimmed.Content.ReadFromJsonAsync<JsonElement>(Ct)).GetProperty("email").GetString().ShouldBe("me@example.com");
+        var trimmed = await client.PutAsync("/api/me/settings", Settings(email: "  kept@example.com "), Ct);
+        (await trimmed.Content.ReadFromJsonAsync<JsonElement>(Ct)).GetProperty("email").GetString().ShouldBe("kept@example.com");
     }
 
     [Fact]

@@ -53,6 +53,8 @@ public sealed class UserSettingsConfiguration : IEntityTypeConfiguration<UserSet
         builder.Property(s => s.UserId).ValueGeneratedNever();
         builder.Property(s => s.Timezone).HasMaxLength(100);
         builder.Property(s => s.Email).HasMaxLength(User.MaxEmailLength);
+        builder.Property(s => s.PendingEmail).HasMaxLength(User.MaxEmailLength);
+        builder.Property(s => s.PendingEmailCodeHash).HasMaxLength(64);
         builder.Property(s => s.DigestFrequency).HasConversion(new LowercaseEnumConverter<DigestFrequency>()).HasMaxLength(20);
         builder.Property(s => s.DigestDay).HasConversion(new LowercaseEnumConverter<DayOfWeek>()).HasMaxLength(20);
         builder.HasOne<User>().WithOne().HasForeignKey<UserSettings>(s => s.UserId).OnDelete(DeleteBehavior.Cascade);

@@ -18,6 +18,9 @@ public sealed class RateLimitOptions
     public int WebhookPerMinute { get; set; } = 60;
 
     public int UploadPerMinute { get; set; } = 10;
+
+    /// <summary>Писем с кодом подтверждения адреса в час на пользователя: адрес получателя задаёт пользователь, поэтому лимит строгий.</summary>
+    public int EmailCodesPerHour { get; set; } = 5;
 }
 
 public static class RateLimitPolicies
@@ -36,6 +39,9 @@ public static class RateLimitPolicies
 
     /// <summary>Загрузка документов; партиция — пользователь, иначе IP.</summary>
     public const string Upload = "upload";
+
+    /// <summary>Письма с кодом подтверждения адреса (<c>POST /api/me/email</c>); партиция — пользователь, окно — час.</summary>
+    public const string EmailCode = "email-code";
 }
 
 public static class RateLimitingExtensions
@@ -67,15 +73,17 @@ public static class RateLimitingExtensions
                 ? RateLimitPartition.GetNoLimiter("telegram")
                 : FixedWindow(Ip(context), value.WebhookPerMinute));
             options.AddPolicy(RateLimitPolicies.Upload, context => FixedWindow(UserOrIp(context), value.UploadPerMinute));
+            options.AddPolicy(RateLimitPolicies.EmailCode, context =>
+                FixedWindow(UserOrIp(context), value.EmailCodesPerHour, TimeSpan.FromHours(1)));
         });
         return services;
     }
 
-    private static RateLimitPartition<string> FixedWindow(string key, int permitLimit) =>
+    private static RateLimitPartition<string> FixedWindow(string key, int permitLimit, TimeSpan? window = null) =>
         RateLimitPartition.GetFixedWindowLimiter(key, _ => new FixedWindowRateLimiterOptions
         {
             PermitLimit = permitLimit,
-            Window = Window,
+            Window = window ?? Window,
             QueueLimit = 0,
         });
 

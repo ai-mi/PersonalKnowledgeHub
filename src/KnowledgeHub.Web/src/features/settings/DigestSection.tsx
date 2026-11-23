@@ -29,17 +29,17 @@ export function DigestSection({ me }: { me: Me }) {
   const [frequency, setFrequency] = useState(me.settings.digestFrequency)
   const [day, setDay] = useState(me.settings.digestDay)
   const [selected, setSelected] = useState(me.settings.digestChannels)
-  const [email, setEmail] = useState(me.settings.email ?? '')
   const save = useMutation({
     mutationFn: () =>
       apiFetch<Settings>('/api/me/settings', {
         method: 'PUT',
         body: {
-          ...me.settings,
+          timezone: me.settings.timezone,
           digestFrequency: frequency,
           digestDay: day,
           digestChannels: selected,
-          email: email.trim() === '' ? null : email.trim(),
+          // Адрес меняется только через подтверждение кодом (NotificationEmail); здесь — действующий.
+          email: me.settings.email,
         },
       }),
     onSuccess: (settings) => queryClient.setQueryData<Me>(meQueryKey, { ...me, settings }),
@@ -91,18 +91,90 @@ export function DigestSection({ me }: { me: Me }) {
             </label>
           ))}
         </fieldset>
-        <p>
-          <label>
-            E-mail для уведомлений{' '}
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={me.email ?? ''} />
-          </label>
-        </p>
         <button type="submit" disabled={save.isPending}>
           Сохранить дайджест
         </button>
         {save.isSuccess && <span role="status"> Сохранено</span>}
         {save.error && <p role="alert">{save.error.message}</p>}
       </form>
+      <NotificationEmail me={me} />
     </section>
+  )
+}
+
+/**
+ * Адрес для дайджестов и напоминаний. Новый адрес начинает получать письма только после ввода кода, отправленного
+ * на него; пустое поле — письма на адрес профиля.
+ */
+function NotificationEmail({ me }: { me: Me }) {
+  const queryClient = useQueryClient()
+  const [email, setEmail] = useState(me.settings.email ?? '')
+  const [code, setCode] = useState('')
+  // Последний ответ сервера — свежее, чем `me` из пропсов (родитель перерисуется из кэша позже или не перерисуется вовсе).
+  const [latest, setLatest] = useState<Settings | null>(null)
+  const pending = (latest ?? me.settings).pendingEmail ?? null
+  const update = (settings: Settings) => {
+    setLatest(settings)
+    queryClient.setQueryData<Me>(meQueryKey, { ...me, settings })
+  }
+
+  const request = useMutation({
+    mutationFn: () =>
+      apiFetch<Settings>('/api/me/email', { method: 'POST', body: { email: email.trim() === '' ? null : email.trim() } }),
+    onSuccess: (settings) => {
+      setCode('')
+      update(settings)
+    },
+  })
+  const confirm = useMutation({
+    mutationFn: () => apiFetch<Settings>('/api/me/email/confirm', { method: 'POST', body: { code: code.trim() } }),
+    onSuccess: update,
+  })
+
+  return (
+    <>
+      <form
+        onSubmit={(e: SubmitEvent) => {
+          e.preventDefault()
+          confirm.reset()
+          request.mutate()
+        }}
+      >
+        <p>
+          <label>
+            E-mail для уведомлений{' '}
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={me.email ?? ''} />
+          </label>{' '}
+          <button type="submit" disabled={request.isPending}>
+            Сохранить адрес
+          </button>
+          {request.isSuccess && !pending && <span role="status"> Адрес сохранён</span>}
+        </p>
+        {request.error && <p role="alert">{request.error.message}</p>}
+      </form>
+      {pending && (
+        <form
+          onSubmit={(e: SubmitEvent) => {
+            e.preventDefault()
+            confirm.mutate()
+          }}
+        >
+          <p>
+            Код отправлен на {pending}. Введите его, чтобы письма шли на этот адрес; до тех пор они идут на прежний.
+          </p>
+          <p>
+            <label>
+              Код из письма{' '}
+              <input inputMode="numeric" autoComplete="one-time-code" value={code} onChange={(e) => setCode(e.target.value)} />
+            </label>{' '}
+            <button type="submit" disabled={confirm.isPending || code.trim() === ''}>
+              Подтвердить
+            </button>
+          </p>
+          {confirm.error && <p role="alert">{confirm.error.message}</p>}
+        </form>
+      )}
+      {confirm.isSuccess && !pending && <p role="status">Адрес подтверждён</p>}
+    </>
   )
 }

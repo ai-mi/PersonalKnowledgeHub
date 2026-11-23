@@ -186,7 +186,8 @@ public sealed class AuthTests(ApiFactory factory) : IntegrationTest(factory)
             digestFrequency = "weekly",
             digestDay = "friday",
             digestChannels = new[] { "telegram", "email", "email" },
-            email = "digest@example.com",
+            // Новый адрес без подтверждения кодом не принимается (EmailConfirmationTests); пустой — письма на адрес профиля.
+            email = (string?)null,
         }, Ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -196,7 +197,7 @@ public sealed class AuthTests(ApiFactory factory) : IntegrationTest(factory)
         settings.GetProperty("digestFrequency").GetString().ShouldBe("weekly");
         settings.GetProperty("digestDay").GetString().ShouldBe("friday");
         settings.GetProperty("digestChannels").EnumerateArray().Select(e => e.GetString()).ShouldBe(["telegram", "email"]);
-        settings.GetProperty("email").GetString().ShouldBe("digest@example.com");
+        settings.GetProperty("email").ValueKind.ShouldBe(JsonValueKind.Null);
     }
 
     [Theory]

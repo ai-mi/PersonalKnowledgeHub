@@ -129,7 +129,9 @@ collection_items collection_id, item_id              -- запись может 
 
 reminders        id, user_id, item_id, remind_at, channel, sent_at
 user_settings    user_id, timezone, digest_frequency (off|daily|weekly),
-                 digest_channels, email
+                 digest_channels, email,
+                 pending_email, pending_email_code_hash,      -- новый адрес ждёт
+                 pending_email_expires_at, pending_email_attempts  -- кода из письма
 jobs             id, type, payload (jsonb), status, attempts,
                  run_after, locked_until, last_error
 exports          id, user_id, status, blob_path, expires_at

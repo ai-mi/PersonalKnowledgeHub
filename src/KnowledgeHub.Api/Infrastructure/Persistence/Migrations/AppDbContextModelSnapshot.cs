@@ -255,6 +255,24 @@ namespace KnowledgeHub.Api.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(320)")
                         .HasColumnName("email");
 
+                    b.Property<string>("PendingEmail")
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasColumnName("pending_email");
+
+                    b.Property<int>("PendingEmailAttempts")
+                        .HasColumnType("integer")
+                        .HasColumnName("pending_email_attempts");
+
+                    b.Property<string>("PendingEmailCodeHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("pending_email_code_hash");
+
+                    b.Property<DateTimeOffset?>("PendingEmailExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("pending_email_expires_at");
+
                     b.Property<string>("Timezone")
                         .IsRequired()
                         .HasMaxLength(100)
