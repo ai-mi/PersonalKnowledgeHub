@@ -7,7 +7,7 @@ namespace KnowledgeHub.UnitTests.Bot;
 
 public sealed class TelegramClientTests
 {
-    private const string Token = "TEST_TOKEN";
+    private const string Token = "123456:TEST-token";
 
     private sealed class StubHandler(Func<HttpRequestMessage, string, (HttpStatusCode, string)> respond) : HttpMessageHandler
     {
@@ -22,11 +22,10 @@ public sealed class TelegramClientTests
         }
     }
 
-    private static (TelegramClient Client, StubHandler Handler) Create(string result, HttpStatusCode status = HttpStatusCode.OK)
+    private static (TelegramClient Client, StubHandler Handler) Create(string result, string token = Token, HttpStatusCode status = HttpStatusCode.OK)
     {
         var handler = new StubHandler((_, _) => (status, result));
-        var http = new HttpClient(handler) { BaseAddress = new Uri("https://api.telegram.org") };
-        var client = new TelegramClient(Options.Create(new BotOptions { Token = Token }), http);
+        var client = new TelegramClient(Options.Create(new BotOptions { Token = token }), new HttpClient(handler));
         return (client, handler);
     }
 
@@ -62,7 +61,7 @@ public sealed class TelegramClientTests
     {
         var (client, handler) = Create(Ok("""{"message_id":1,"date":1,"chat":{"id":7,"type":"private"}}"""));
 
-        await client.SendMessageAsync(7, "<b>x</b>", Ct, [new InlineButton("Прочитано", "read:1")]);
+        await client.SendMessageAsync(7, "<b>x</b>", Ct, [new InlineButton("Read", "read:1")]);
 
         var body = handler.Requests.ShouldHaveSingleItem().Body;
         body.ShouldContain("\"parse_mode\":\"HTML\"");
@@ -112,12 +111,12 @@ public sealed class TelegramClientTests
     [Fact]
     public async Task DownloadFile_StreamsTheFileContent()
     {
-        var (client, handler) = Create("содержимое");
+        var (client, handler) = Create("content");
         using var destination = new MemoryStream();
 
         await client.DownloadFileAsync("docs/a.pdf", destination, Ct);
 
-        Encoding.UTF8.GetString(destination.ToArray()).ShouldBe("содержимое");
+        Encoding.UTF8.GetString(destination.ToArray()).ShouldBe("content");
         handler.Requests.ShouldHaveSingleItem().Path.ShouldBe($"/file/bot{Token}/docs/a.pdf");
     }
 

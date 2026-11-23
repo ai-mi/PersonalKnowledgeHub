@@ -139,7 +139,7 @@ public sealed class LinkingTests(ApiFactory factory) : BotTestBase(factory)
         (await StatusAsync(other)).GetProperty("linked").GetBoolean().ShouldBeFalse();
         var warning = Telegram.Sent.ShouldHaveSingleItem();
         warning.ChatId.ShouldBe(ChatId);
-        warning.Text.ShouldContain("already linked to another account");
+        warning.Text.ShouldContain("already linked to another Personal Knowledge Hub account");
         // Владелец чата видит, к чьему аккаунту чат хотят перенести.
         warning.Text.ShouldContain(await AccountOfAsync(other));
         warning.Buttons.ShouldNotBeNull().ShouldHaveSingleItem().CallbackData.ShouldStartWith("relink:");

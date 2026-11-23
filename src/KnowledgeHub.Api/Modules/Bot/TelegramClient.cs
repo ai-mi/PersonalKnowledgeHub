@@ -13,7 +13,7 @@ public sealed class TelegramClient(IOptions<BotOptions> options, HttpClient? htt
     // Клиент создаётся при первом обращении: без токена (локально, в тестах) приложение всё равно должно стартовать.
     private readonly Lazy<TelegramBotClient> _client = new(() =>
         string.IsNullOrWhiteSpace(options.Value.Token)
-            ? throw new InvalidOperationException("Не задан токен Telegram-бота (Bot:Token).")
+            ? throw new InvalidOperationException("The Telegram bot token is not set (Bot:Token).")
             : new TelegramBotClient(options.Value.Token, httpClient));
 
     public async Task SendMessageAsync(long chatId, string text, CancellationToken ct, IReadOnlyList<InlineButton>? buttons = null)
@@ -36,7 +36,7 @@ public sealed class TelegramClient(IOptions<BotOptions> options, HttpClient? htt
     public async Task<TelegramFile> GetFileAsync(string fileId, CancellationToken ct)
     {
         var file = await _client.Value.GetFile(fileId, ct);
-        return new TelegramFile(file.FilePath ?? throw new InvalidOperationException("Telegram не вернул путь к файлу."), file.FileSize);
+        return new TelegramFile(file.FilePath ?? throw new InvalidOperationException("Telegram did not return the file path."), file.FileSize);
     }
 
     public Task DownloadFileAsync(string filePath, Stream destination, CancellationToken ct) =>
@@ -46,5 +46,5 @@ public sealed class TelegramClient(IOptions<BotOptions> options, HttpClient? htt
         await _client.Value.AnswerCallbackQuery(callbackQueryId, text, cancellationToken: ct);
 
     public Task SetWebhookAsync(string url, string secretToken, CancellationToken ct) =>
-        _client.Value.SetWebhook(url, secretToken: secretToken, allowedUpdates: new[] { UpdateType.Message, UpdateType.CallbackQuery }, cancellationToken: ct);
+        _client.Value.SetWebhook(url, secretToken: secretToken, allowedUpdates: [UpdateType.Message, UpdateType.CallbackQuery], cancellationToken: ct);
 }
