@@ -19,6 +19,23 @@ public static class RlsMigrationExtensions
             CREATE POLICY "{PolicyName(table)}" ON "{table}" USING ({Predicate}) WITH CHECK ({Predicate});
             """);
 
+    /// <summary>
+    /// RLS для таблицы связей без <c>user_id</c> (item_tags, collection_items): строка видна и записывается, только если видны
+    /// все строки, на которые она ссылается. Подзапросы в политике сами идут под RLS тех таблиц, так что владелец
+    /// определяется их политиками, а системный режим видит всё. Без этого внешний ключ (он проверяется в обход RLS)
+    /// пропустил бы связь своей записи с чужим тегом.
+    /// </summary>
+    public static void EnableLinkRls(this MigrationBuilder migrationBuilder, string table, params (string Column, string ReferencedTable)[] references)
+    {
+        var predicate = string.Join(" AND ", references.Select(r =>
+            $"""EXISTS (SELECT 1 FROM "{r.ReferencedTable}" referenced WHERE referenced.id = "{table}"."{r.Column}")"""));
+        migrationBuilder.Sql($"""
+            ALTER TABLE "{table}" ENABLE ROW LEVEL SECURITY;
+            ALTER TABLE "{table}" FORCE ROW LEVEL SECURITY;
+            CREATE POLICY "{PolicyName(table)}" ON "{table}" USING ({predicate}) WITH CHECK ({predicate});
+            """);
+    }
+
     public static void DisableUserRls(this MigrationBuilder migrationBuilder, string table) =>
         migrationBuilder.Sql($"""
             DROP POLICY "{PolicyName(table)}" ON "{table}";

@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using KnowledgeHub.Api.Common;
 using KnowledgeHub.Api.Infrastructure.Web;
 using KnowledgeHub.Api.Modules.Jobs;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -33,7 +34,7 @@ public static class WebhookEndpoint
             request.HttpContext.RequestServices.GetRequiredService<IOptions<BotOptions>>().Value.WebhookSecret);
 
     private static async Task<Results<Ok, UnauthorizedHttpResult, BadRequest>> Receive(
-        HttpRequest request, IJobQueue jobs, CancellationToken ct)
+        HttpRequest request, IJobQueue jobs, SystemContext systemContext, CancellationToken ct)
     {
         if (!IsAuthentic(request))
         {
@@ -59,6 +60,10 @@ public static class WebhookEndpoint
             return TypedResults.BadRequest();
         }
 
+        // Задача без пользователя (чей это чат, решит воркер) — системная: RLS на jobs пускает такие только из системного
+        // режима, а подлинность запроса уже подтверждена секретом. До этой строки запрос к БД не обращался, поэтому
+        // соединение откроется уже в системном режиме (контекст выставляется при открытии соединения).
+        using var _ = systemContext.Enter();
         // Повторная доставка того же update_id игнорируется ключом дедупликации.
         await jobs.EnqueueAsync(ProcessUpdateJob.JobType, new TelegramUpdatePayload(json), dedupKey: $"tg:{update.Id}", ct: ct);
         return TypedResults.Ok();
