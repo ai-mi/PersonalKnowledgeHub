@@ -3,7 +3,7 @@ import { useState, type SubmitEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { apiFetch } from '../../api/client'
 
-/** Принимаем только локальные пути, как и сервер: `//host` и `/\\host` — внешние. */
+/** Принимаем только локальные пути, как и сервер: `//host` и `/\host` — внешние. */
 function localReturnUrl(value: string | null): string {
   return value !== null && /^\/(?![/\\])/.test(value) ? value : '/'
 }
