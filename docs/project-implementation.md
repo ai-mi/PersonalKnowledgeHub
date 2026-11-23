@@ -103,7 +103,7 @@ infra/                                — Bicep
 
 ### Подводные камни (учесть при реализации)
 
-1. **RLS и пул соединений.** Контекст пользователя ставится `set_config('app.user_id', …, false)` при **каждом** открытии соединения (EF `DbConnectionInterceptor`), обязательно вместе с `app.is_system` — так значение от прошлого запроса не может «просочиться». Таблицы — `ENABLE` + `FORCE ROW LEVEL SECURITY` (иначе владелец таблиц обходит политики). Роль приложения не должна быть superuser и не иметь `BYPASSRLS` — это проверяется при старте (`DatabaseRoleGuard`).
+1. **RLS и пул соединений.** Контекст пользователя ставится `set_config('app.user_id', …, false)` при **каждом** открытии соединения (EF `DbConnectionInterceptor`), обязательно вместе с `app.is_system` — так значение от прошлого запроса не может «просочиться». Если `SystemContext` переключается, пока EF держит соединение (транзакция), тот же перехватчик (`IDbCommandInterceptor`) перед командой ставит контекст заново; после отката транзакции или savepoint — тоже (откат отменяет и `set_config`). Таблицы — `ENABLE` + `FORCE ROW LEVEL SECURITY` (иначе владелец таблиц обходит политики). Роль приложения не должна быть superuser и не иметь `BYPASSRLS` — это проверяется при старте (`DatabaseRoleGuard`).
 2. **Testcontainers и RLS.** Пользователь `postgres` в контейнере — superuser и игнорирует RLS. Приложение в тестах подключается ролью `kh_app` (NOSUPERUSER, NOBYPASSRLS), а Respawn сбрасывает данные соединением `postgres`.
 3. **Entra ID для PostgreSQL.** Пароль = токен Entra, область `https://ossrdbms-aad.database.windows.net/.default`, токен живёт ~60–90 мин → `NpgsqlDataSourceBuilder.UsePeriodicPasswordProvider(...)` с обновлением раз в 50 мин. Имя пользователя БД = имя managed identity (имя Web App). **Managed identity приложения не делать Entra-администратором сервера:** администратор входит в `azure_pg_admin` и может обходить RLS. Администратор — владелец подписки (или группа), а роль приложения создаётся им вручную как обычная: `SELECT * FROM pgaadauth_create_principal('<имя Web App>', false, false);` + владелец базы `knowledgehub`. `DatabaseRoleGuard` дополнительно проверяет членство в `azure_pg_admin`.
 4. **Миграции.** Firewall PostgreSQL пускает только App Service, поэтому GitHub runner до БД не достанет. Миграции применяются **при старте приложения** (`Database:MigrateOnStartup=true`), это отклонение от «migrations bundle в CI» из дизайна.
@@ -273,13 +273,13 @@ infra/                                — Bicep
 **Цель:** данные пользователя недоступны другим ни через EF, ни через сырой SQL; фоновые задачи могут работать в системном контексте; есть переиспользуемый тест изоляции.
 
 **Файлы:**
-- Создать: `src/KnowledgeHub.Api/Common/IUserOwned.cs`, `src/KnowledgeHub.Api/Infrastructure/Persistence/UserContextConnectionInterceptor.cs`, `.../Persistence/RlsMigrationExtensions.cs`, `src/KnowledgeHub.Api/Common/SystemContext.cs`
+- Создать: `src/KnowledgeHub.Api/Common/IUserOwned.cs`, `src/KnowledgeHub.Api/Infrastructure/Persistence/UserContextInterceptor.cs`, `.../Persistence/RlsMigrationExtensions.cs`, `src/KnowledgeHub.Api/Common/SystemContext.cs`
 - Изменить: `src/KnowledgeHub.Api/Infrastructure/Persistence/AppDbContext.cs`, `.../Persistence/PersistenceExtensions.cs`
 - Тесты: `tests/KnowledgeHub.IntegrationTests/Identity/RlsTests.cs`, `tests/KnowledgeHub.IntegrationTests/Identity/IsolationTests.cs`
 
 **Шаги:**
 - [x] `IUserOwned { Guid UserId }`; в `AppDbContext.OnModelCreating` — глобальный фильтр `e.UserId == currentUser.UserId` для всех `IUserOwned` (через цикл по типам, без копипасты); при сохранении новых `IUserOwned` `UserId` проставляется автоматически
-- [x] `UserContextConnectionInterceptor.ConnectionOpened(Async)`: `SELECT set_config('app.user_id', @uid, false), set_config('app.is_system', @sys, false)` — оба значения на **каждое** открытие (п.1 «Подводных камней»)
+- [x] `UserContextInterceptor.ConnectionOpened(Async)`: `SELECT set_config('app.user_id', @uid, false), set_config('app.is_system', @sys, false)` — оба значения на **каждое** открытие (п.1 «Подводных камней»)
 - [x] `SystemContext.Enter()` (`IDisposable`, scoped): переводит `ICurrentUser` в системный режим (EF-фильтр отключается через флаг в выражении фильтра) или в режим конкретного пользователя `RunAs(userId)` — используется воркерами
 - [x] `RlsMigrationExtensions.EnableUserRls(this MigrationBuilder, string table)`: `ENABLE` + `FORCE ROW LEVEL SECURITY` + политика `USING/WITH CHECK (user_id = nullif(current_setting('app.user_id', true), '')::uuid OR current_setting('app.is_system', true) = 'on')`; применить к `user_settings` (миграция `Rls`), далее — в каждой миграции с новой пользовательской таблицей
 - [x] `RlsTests`: под пользователем A сырой SQL `SELECT count(*) FROM user_settings` видит только свою строку; без контекста — 0 строк; `INSERT` с чужим `user_id` → ошибка политики; в системном контексте видны все

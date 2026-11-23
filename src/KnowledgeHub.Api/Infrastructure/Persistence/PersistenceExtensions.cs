@@ -14,11 +14,11 @@ public static class PersistenceExtensions
         services.AddSingleton(sp =>
             DataSourceFactory.Create(sp.GetRequiredService<IOptions<DatabaseOptions>>().Value));
 
-        services.AddScoped<UserContextConnectionInterceptor>();
+        services.AddScoped<UserContextInterceptor>();
         services.AddDbContext<AppDbContext>((sp, o) => o
             .UseNpgsql(sp.GetRequiredService<NpgsqlDataSource>())
             .UseSnakeCaseNamingConvention()
-            .AddInterceptors(sp.GetRequiredService<UserContextConnectionInterceptor>()));
+            .AddInterceptors(sp.GetRequiredService<UserContextInterceptor>()));
 
         services.AddHostedService<DatabaseRoleGuard>();
         services.AddHealthChecks().AddDbContextCheck<AppDbContext>();

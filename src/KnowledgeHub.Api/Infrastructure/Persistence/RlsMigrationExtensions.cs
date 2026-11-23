@@ -4,7 +4,7 @@ namespace KnowledgeHub.Api.Infrastructure.Persistence;
 
 public static class RlsMigrationExtensions
 {
-    // Пользователь берётся из app.user_id (его ставит UserContextConnectionInterceptor); пустая строка — «нет пользователя».
+    // Пользователь берётся из app.user_id (его ставит UserContextInterceptor); пустая строка — «нет пользователя».
     private const string Predicate =
         "user_id = nullif(current_setting('app.user_id', true), '')::uuid OR current_setting('app.is_system', true) = 'on'";
 

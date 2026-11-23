@@ -305,4 +305,93 @@ public sealed class RlsTests(ApiFactory factory) : IntegrationTest(factory)
 
         (await RawOwnersAsync(db)).ShouldBeEmpty();
     }
+
+    // ---- Переключение контекста, пока EF держит соединение (S9) ----
+    // Внутри транзакции соединение не закрывается между командами, поэтому контекст, выставленный при открытии, устарел бы:
+    // фильтр EF уже видит нового пользователя, а политики PostgreSQL — прежнего. Сырой SQL фильтр EF не защищает.
+
+    [Fact]
+    public async Task SystemContext_SwitchFromSystemToUserInsideTransaction_ReachesRawSql()
+    {
+        await SeedAandBAsync();
+        await using var scope = Factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var system = scope.ServiceProvider.GetRequiredService<SystemContext>();
+
+        using (system.Enter())
+        {
+            await using var transaction = await db.Database.BeginTransactionAsync(Ct);
+            (await RawOwnersAsync(db)).Count.ShouldBe(2);
+
+            using (system.RunAs(_b))
+            {
+                (await RawOwnersAsync(db)).ShouldBe([_b]);
+            }
+
+            (await RawOwnersAsync(db)).Count.ShouldBe(2);
+            await transaction.CommitAsync(Ct);
+        }
+    }
+
+    [Fact]
+    public async Task SystemContext_SwitchFromUserToSystemInsideTransaction_ReachesRawSql()
+    {
+        await SeedAandBAsync();
+        await using var scope = Factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var system = scope.ServiceProvider.GetRequiredService<SystemContext>();
+
+        using (system.RunAs(_a))
+        {
+            await using var transaction = await db.Database.BeginTransactionAsync(Ct);
+            (await RawOwnersAsync(db)).ShouldBe([_a]);
+
+            using (system.Enter())
+            {
+                (await RawOwnersAsync(db)).Count.ShouldBe(2);
+            }
+
+            (await RawOwnersAsync(db)).ShouldBe([_a]);
+            await transaction.CommitAsync(Ct);
+        }
+    }
+
+    [Fact]
+    public async Task SystemContext_RollbackUndoesSetConfig_NextCommandStillRunsAsCurrentUser()
+    {
+        // set_config внутри транзакции откатывается вместе с ней: запомненное «уже выставлено» после отката неверно.
+        await SeedAandBAsync();
+        await using var scope = Factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var system = scope.ServiceProvider.GetRequiredService<SystemContext>();
+        await db.Database.OpenConnectionAsync(Ct);
+
+        using (system.RunAs(_b))
+        {
+            await using (var transaction = await db.Database.BeginTransactionAsync(Ct))
+            {
+                (await RawOwnersAsync(db)).ShouldBe([_b]);
+                await transaction.RollbackAsync(Ct);
+            }
+
+            (await RawOwnersAsync(db)).ShouldBe([_b]);
+        }
+
+        using (system.RunAs(_a))
+        {
+            await using var transaction = await db.Database.BeginTransactionAsync(Ct);
+            await transaction.CreateSavepointAsync("before", Ct);
+            using (system.RunAs(_b))
+            {
+                (await RawOwnersAsync(db)).ShouldBe([_b]);
+                await transaction.RollbackToSavepointAsync("before", Ct);
+                (await RawOwnersAsync(db)).ShouldBe([_b]);
+            }
+
+            (await RawOwnersAsync(db)).ShouldBe([_a]);
+            await transaction.CommitAsync(Ct);
+        }
+
+        await db.Database.CloseConnectionAsync();
+    }
 }

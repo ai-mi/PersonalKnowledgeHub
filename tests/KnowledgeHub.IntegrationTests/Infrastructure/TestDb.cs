@@ -33,7 +33,7 @@ public static class TestDb
         new(new DbContextOptionsBuilder<AppDbContext>()
             .UseNpgsql(connectionString)
             .UseSnakeCaseNamingConvention()
-            .AddInterceptors(new UserContextConnectionInterceptor(connectionUser ?? user))
+            .AddInterceptors(new UserContextInterceptor(connectionUser ?? user))
             .AddInterceptors(extraInterceptors)
             .Options, user);
 }
