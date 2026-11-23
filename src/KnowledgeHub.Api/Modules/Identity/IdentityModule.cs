@@ -51,7 +51,9 @@ public static class IdentityModule
                 (o.ClientId, o.ClientSecret) = ExternalProviders.Credentials(configuration, AuthSchemes.Google);
             });
 
-        services.AddAuthorization();
+        services.AddAuthorization(o => o.AddPolicy(AuthPolicies.Session, p => p
+            .RequireAuthenticatedUser()
+            .RequireAssertion(c => c.User.Identity?.AuthenticationType != AuthSchemes.ApiToken)));
         services.AddAntiforgeryProtection();
         return services;
     }

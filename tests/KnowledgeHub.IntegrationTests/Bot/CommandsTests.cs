@@ -1,16 +1,9 @@
 using KnowledgeHub.IntegrationTests.Infrastructure;
-using KnowledgeHub.IntegrationTests.Items;
 
 namespace KnowledgeHub.IntegrationTests.Bot;
 
 public sealed class CommandsTests(ApiFactory factory) : BotTestBase(factory)
 {
-    private async Task<string> SaveNoteAsync(Guid userId, string title, string body = "kubernetes")
-    {
-        using var client = ClientFor(userId);
-        return (await ItemEndpointsTests.CreateAsync(client, new { type = "note", title, body })).GetProperty("id").GetString()!;
-    }
-
     private string[] RepliedLines(long chatId = ChatId) =>
         Telegram.TextsTo(chatId).ShouldHaveSingleItem().Split('\n');
 

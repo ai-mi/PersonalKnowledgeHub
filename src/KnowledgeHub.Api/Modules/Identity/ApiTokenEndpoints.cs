@@ -7,7 +7,7 @@ public static class ApiTokenEndpoints
 {
     public static void MapApiTokenEndpoints(this IEndpointRouteBuilder routes)
     {
-        var group = routes.MapGroup("/me/tokens").RequireAuthorization();
+        var group = routes.MapGroup("/me/tokens").RequireAuthorization(AuthPolicies.Session);
         group.MapPost("", Create);
         group.MapGet("", List);
         group.MapDelete("/{id:guid}", Revoke);

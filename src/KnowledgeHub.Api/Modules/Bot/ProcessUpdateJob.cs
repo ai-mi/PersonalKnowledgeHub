@@ -6,6 +6,7 @@ using KnowledgeHub.Api.Modules.Jobs;
 using Microsoft.Extensions.Options;
 using Telegram.Bot;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 
 namespace KnowledgeHub.Api.Modules.Bot;
 
@@ -19,6 +20,8 @@ public sealed partial class ProcessUpdateJob(
 {
     public const string JobType = "telegram.update";
     public static string Type => JobType;
+
+    private const string PrivateChatOnlyText = "Я работаю только в личном чате. Напишите мне напрямую.";
 
     private const string NotLinkedText =
         "Этот чат не привязан к аккаунту. Откройте «Настройки» в Personal Knowledge Hub, нажмите «Привязать Telegram» и перейдите по ссылке.";
@@ -39,6 +42,18 @@ public sealed partial class ProcessUpdateJob(
 
         var chatId = message.Chat.Id;
         var command = MessageParser.ParseCommand(message);
+
+        // Только личный чат: привязанная группа или канал дали бы всем участникам права владельца аккаунта.
+        // На команды отвечаем подсказкой, обычные сообщения группы молча пропускаем — бот не должен в ней шуметь.
+        if (message.Chat.Type != ChatType.Private)
+        {
+            if (command is not null)
+            {
+                await ReplyAsync(chatId, PrivateChatOnlyText, ct);
+            }
+
+            return;
+        }
 
         if (command is { Name: "start", Argument.Length: > 0 })
         {
@@ -69,7 +84,11 @@ public sealed partial class ProcessUpdateJob(
         // В личном чате идентификатор чата совпадает с идентификатором пользователя Telegram.
         var chatId = callback.Message?.Chat.Id ?? callback.From.Id;
         string answer;
-        if (await links.FindByChatAsync(chatId, ct) is { } link)
+        if (callback.Message is { } source && source.Chat.Type != ChatType.Private)
+        {
+            answer = PrivateChatOnlyText;
+        }
+        else if (await links.FindByChatAsync(chatId, ct) is { } link)
         {
             using var _ = systemContext.RunAs(link.UserId);
             answer = await commands.MarkReadAsync(callback.Data, ct);

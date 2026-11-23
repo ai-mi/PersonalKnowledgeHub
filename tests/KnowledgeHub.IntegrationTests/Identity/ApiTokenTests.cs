@@ -50,6 +50,27 @@ public sealed class ApiTokenTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
+    public async Task Token_CannotManageTokensOrLinkTelegram()
+    {
+        // Утёкший токен не должен уметь выпустить себе бессрочную замену (отзыв исходного тогда ничего не даёт)
+        // или привязать чужой Telegram: управление доступом — только из сессии в браузере.
+        using var user = await Factory.CreateClientForAsync(Guid.CreateVersion7());
+        var (id, token) = await CreateTokenAsync(user);
+        using var bearer = BearerClient(token);
+
+        (await bearer.PostAsJsonAsync("/api/me/tokens", new { name = "replacement" }, Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await bearer.GetAsync("/api/me/tokens", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await bearer.DeleteAsync($"/api/me/tokens/{id}", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await bearer.GetAsync("/api/me/telegram", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await bearer.PostAsync("/api/me/telegram/link", null, Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await bearer.DeleteAsync("/api/me/telegram/link", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+
+        // Остальной API токену по-прежнему доступен, а сессия по-прежнему управляет токенами.
+        (await bearer.GetAsync("/api/items", Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await user.GetAsync("/api/me/tokens", Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
     public async Task List_DoesNotExposeTokenValue_AndShowsLastUse()
     {
         using var user = await Factory.CreateClientForAsync(Guid.CreateVersion7());

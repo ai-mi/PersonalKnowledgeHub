@@ -20,3 +20,12 @@ public static class AuthSchemes
     /// <summary>Claim с идентификатором пользователя приложения.</summary>
     public const string UserIdClaim = "kh_user_id";
 }
+
+public static class AuthPolicies
+{
+    /// <summary>
+    /// Вошедший пользователь, но не по API-токену: управление доступом (токены, привязка Telegram).
+    /// Иначе утёкший токен выпустил бы себе бессрочную замену, и его отзыв ничего бы не дал.
+    /// </summary>
+    public const string Session = "Session";
+}

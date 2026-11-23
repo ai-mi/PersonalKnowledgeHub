@@ -1,4 +1,5 @@
 using KnowledgeHub.Api.Common;
+using KnowledgeHub.Api.Modules.Identity;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Options;
 
@@ -8,7 +9,7 @@ public static class LinkEndpoints
 {
     public static void MapLinkEndpoints(this IEndpointRouteBuilder routes)
     {
-        var group = routes.MapGroup("/me/telegram").RequireAuthorization();
+        var group = routes.MapGroup("/me/telegram").RequireAuthorization(AuthPolicies.Session);
         group.MapGet("", GetStatus);
         group.MapPost("/link", CreateLink);
         group.MapDelete("/link", Unlink);

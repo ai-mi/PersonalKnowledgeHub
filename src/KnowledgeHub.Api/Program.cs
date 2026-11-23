@@ -37,7 +37,10 @@ builder.Services.AddJobsModule(builder.Configuration);
 
 if (!string.IsNullOrWhiteSpace(builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]))
 {
-    builder.Services.AddOpenTelemetry().UseAzureMonitor();
+    // Редактор токена бота — раньше UseAzureMonitor: процессоры OnEnd идут в порядке добавления, он должен успеть до экспортёра.
+    builder.Services.AddOpenTelemetry()
+        .WithTracing(tracing => tracing.AddTelegramTokenRedaction())
+        .UseAzureMonitor();
 }
 
 var app = builder.Build();

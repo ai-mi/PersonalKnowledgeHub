@@ -22,8 +22,9 @@ public abstract class BotTestBase : JobsTestBase
     protected FakeTelegramClient Telegram => Factory.Telegram;
 
     /// <summary>Update с текстовым сообщением; <paramref name="entities"/> — как в Bot API: <c>type</c>, <c>offset</c>, <c>length</c>.</summary>
-    protected string TextUpdate(string text, long chatId = ChatId, IEnumerable<object>? entities = null, int? updateId = null) =>
-        Update(updateId, new Dictionary<string, object?> { ["text"] = text, ["entities"] = entities?.ToArray() }, chatId);
+    protected string TextUpdate(
+        string text, long chatId = ChatId, IEnumerable<object>? entities = null, int? updateId = null, string chatType = "private") =>
+        Update(updateId, new Dictionary<string, object?> { ["text"] = text, ["entities"] = entities?.ToArray() }, chatId, chatType);
 
     protected string DocumentUpdate(string fileId, string fileName, long fileSize, string? caption = null, IEnumerable<object>? captionEntities = null) =>
         Update(null, new Dictionary<string, object?>
@@ -33,14 +34,17 @@ public abstract class BotTestBase : JobsTestBase
             ["caption_entities"] = captionEntities?.ToArray(),
         }, ChatId);
 
-    private string Update(int? updateId, Dictionary<string, object?> content, long chatId)
+    /// <summary>Отправитель сообщения в группе: в личном чате его id совпадает с id чата, в группе — нет.</summary>
+    protected const long GroupMemberId = 777;
+
+    private string Update(int? updateId, Dictionary<string, object?> content, long chatId, string chatType = "private")
     {
         var message = new Dictionary<string, object?>
         {
             ["message_id"] = 1,
             ["date"] = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-            ["chat"] = new { id = chatId, type = "private" },
-            ["from"] = new { id = chatId, is_bot = false, first_name = "Test" },
+            ["chat"] = new { id = chatId, type = chatType },
+            ["from"] = new { id = chatType == "private" ? chatId : GroupMemberId, is_bot = false, first_name = "Test" },
         };
         foreach (var (key, value) in content.Where(c => c.Value is not null))
         {
@@ -51,24 +55,24 @@ public abstract class BotTestBase : JobsTestBase
     }
 
     /// <summary>Нажатие inline-кнопки в сообщении бота.</summary>
-    protected string CallbackUpdate(string data, long chatId = ChatId, string callbackId = "cb-1") =>
+    protected string CallbackUpdate(string data, long chatId = ChatId, string callbackId = "cb-1", string chatType = "private") =>
         JsonSerializer.Serialize(new
         {
             update_id = _nextUpdateId++,
             callback_query = new
             {
                 id = callbackId,
-                from = new { id = chatId, is_bot = false, first_name = "Test" },
-                message = new { message_id = 1, date = DateTimeOffset.UtcNow.ToUnixTimeSeconds(), chat = new { id = chatId, type = "private" } },
+                from = new { id = chatType == "private" ? chatId : GroupMemberId, is_bot = false, first_name = "Test" },
+                message = new { message_id = 1, date = DateTimeOffset.UtcNow.ToUnixTimeSeconds(), chat = new { id = chatId, type = chatType } },
                 chat_instance = "ci",
                 data,
             },
         });
 
-    protected string CommandUpdate(string name, string argument = "", long chatId = ChatId)
+    protected string CommandUpdate(string name, string argument = "", long chatId = ChatId, string chatType = "private")
     {
         var text = argument.Length == 0 ? $"/{name}" : $"/{name} {argument}";
-        return TextUpdate(text, chatId, [Entity("bot_command", text, $"/{name}")]);
+        return TextUpdate(text, chatId, [Entity("bot_command", text, $"/{name}")], chatType: chatType);
     }
 
     /// <summary>Клиент API, аутентифицированный как уже существующий пользователь (см. <see cref="LinkedUserAsync"/>).</summary>
@@ -133,6 +137,14 @@ public abstract class BotTestBase : JobsTestBase
             return 0;
         });
         return userId;
+    }
+
+    /// <summary>Создаёт заметку от имени пользователя через API и возвращает её id.</summary>
+    protected async Task<string> SaveNoteAsync(Guid userId, string title, string body = "kubernetes")
+    {
+        using var client = ClientFor(userId);
+        return (await KnowledgeHub.IntegrationTests.Items.ItemEndpointsTests.CreateAsync(client, new { type = "note", title, body }))
+            .GetProperty("id").GetString()!;
     }
 
     protected Task<List<Item>> ItemsOfAsync(Guid userId) =>
