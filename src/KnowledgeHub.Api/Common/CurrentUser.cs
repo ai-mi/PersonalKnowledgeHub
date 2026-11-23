@@ -27,5 +27,5 @@ public sealed class CurrentUser(IHttpContextAccessor httpContextAccessor, System
     public bool IsSystem => systemContext.IsSystem;
 
     public Guid RequireUserId() =>
-        UserId ?? throw new InvalidOperationException("Текущий пользователь не определён.");
+        UserId ?? throw new InvalidOperationException("Current user is not available.");
 }

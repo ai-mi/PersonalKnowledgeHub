@@ -14,7 +14,7 @@ public sealed class AcsEmailSender(IOptions<EmailOptions> options) : IEmailSende
     {
         if (string.IsNullOrWhiteSpace(options.Value.ConnectionString) || string.IsNullOrWhiteSpace(options.Value.From))
         {
-            throw new InvalidOperationException("Отправка e-mail не настроена: задайте Email:ConnectionString и Email:From.");
+            throw new InvalidOperationException("E-mail sending is not configured: set Email:ConnectionString and Email:From.");
         }
 
         // Started: письмо принято сервисом; ждать окончания доставки незачем.

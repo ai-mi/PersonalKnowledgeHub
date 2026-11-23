@@ -20,7 +20,7 @@ public sealed partial class EmailConfirmationService(
 {
     public static readonly TimeSpan CodeLifetime = TimeSpan.FromMinutes(15);
     public const int MaxAttempts = 5;
-    public const string Subject = "Код подтверждения адреса — Personal Knowledge Hub";
+    public const string Subject = "Email confirmation code — Personal Knowledge Hub";
 
     /// <summary>Адрес можно сохранить без подтверждения: пустой, адрес профиля или уже действующий.</summary>
     public static bool NeedsNoConfirmation(string? address, string? profileEmail, string? currentEmail) =>
@@ -108,11 +108,11 @@ public sealed partial class EmailConfirmationService(
     private async Task SendCodeAsync(string address, string code, CancellationToken ct)
     {
         var text =
-            $"Код для подтверждения адреса для дайджестов и напоминаний: {code}\n\n" +
-            $"Код действует {CodeLifetime.TotalMinutes:0} минут. Если вы не меняли адрес в Personal Knowledge Hub, просто проигнорируйте это письмо.";
+            $"Your confirmation code for digests and reminders: {code}\n\n" +
+            $"The code is valid for {CodeLifetime.TotalMinutes:0} minutes. If you didn't change the address in Personal Knowledge Hub, just ignore this e-mail.";
         var html =
-            $"<p>Код для подтверждения адреса для дайджестов и напоминаний: <strong>{WebUtility.HtmlEncode(code)}</strong></p>" +
-            $"<p>Код действует {CodeLifetime.TotalMinutes:0} минут. Если вы не меняли адрес в Personal Knowledge Hub, просто проигнорируйте это письмо.</p>";
+            $"<p>Your confirmation code for digests and reminders: <strong>{WebUtility.HtmlEncode(code)}</strong></p>" +
+            $"<p>The code is valid for {CodeLifetime.TotalMinutes:0} minutes. If you didn't change the address in Personal Knowledge Hub, just ignore this e-mail.</p>";
         try
         {
             await email.SendAsync(address, Subject, html, text, ct);

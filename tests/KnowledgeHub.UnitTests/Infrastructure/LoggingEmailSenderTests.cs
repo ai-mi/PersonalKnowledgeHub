@@ -31,13 +31,13 @@ public sealed class LoggingEmailSenderTests
     {
         var logger = new RecordingLogger<LoggingEmailSender>();
 
-        await new LoggingEmailSender(logger).SendAsync("to@example.com", "Код", "<p>html</p>", "Ваш код: 123456", Ct);
+        await new LoggingEmailSender(logger).SendAsync("to@example.com", "Email confirmation code — Personal Knowledge Hub", "<p>html</p>", "Your confirmation code: 123456", Ct);
 
         var (level, message) = logger.Entries.ShouldHaveSingleItem();
         level.ShouldBe(LogLevel.Warning);
         message.ShouldContain("to@example.com");
-        message.ShouldContain("Код");
-        message.ShouldContain("Ваш код: 123456");
+        message.ShouldContain("confirmation code");
+        message.ShouldContain("Your confirmation code: 123456");
     }
 
     private static IEmailSender ResolveSender(Dictionary<string, string?> settings)
