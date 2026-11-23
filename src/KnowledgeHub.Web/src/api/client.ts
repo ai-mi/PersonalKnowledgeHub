@@ -82,7 +82,7 @@ export function apiUpload<T>(path: string, form: FormData, onProgress?: (fractio
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable) onProgress?.(e.loaded / e.total)
     }
-    xhr.onerror = () => reject(new ApiError(0, { title: 'Не удалось отправить файл' }))
+    xhr.onerror = () => reject(new ApiError(0, { title: 'Failed to upload the file' }))
     xhr.onload = () => {
       let parsed: unknown = {}
       try {

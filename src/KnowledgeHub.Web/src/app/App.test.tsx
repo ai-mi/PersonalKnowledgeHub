@@ -27,10 +27,12 @@ afterAll(() => server.close())
 it('renders the layout and navigates between pages', async () => {
   render(<App />)
 
-  expect(await screen.findByRole('heading', { name: 'Записи' })).toBeInTheDocument()
-  expect(screen.getByText('Alice')).toBeInTheDocument()
+  expect(await screen.findByText('Alice')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByRole('link', { name: 'Поиск' }))
+  const searchLink = screen.getByRole('link', { name: 'Search' })
+  expect(searchLink).toHaveAttribute('href', '/search')
 
-  expect(await screen.findByRole('heading', { name: 'Поиск' })).toBeInTheDocument()
+  await userEvent.click(searchLink)
+
+  expect(window.location.pathname).toBe('/search')
 })

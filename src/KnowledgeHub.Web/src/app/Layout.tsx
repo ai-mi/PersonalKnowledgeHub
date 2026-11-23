@@ -4,10 +4,10 @@ import { apiFetch } from '../api/client'
 import { useMe } from '../features/auth/useMe'
 
 const links = [
-  { to: '/', label: 'Записи' },
-  { to: '/collections', label: 'Коллекции' },
-  { to: '/search', label: 'Поиск' },
-  { to: '/settings', label: 'Настройки' },
+  { to: '/', label: 'Items' },
+  { to: '/collections', label: 'Collections' },
+  { to: '/search', label: 'Search' },
+  { to: '/settings', label: 'Settings' },
 ]
 
 export function Layout() {
@@ -45,8 +45,8 @@ export function Layout() {
           <input
             type="search"
             name="q"
-            aria-label="Быстрый поиск"
-            placeholder="Поиск"
+            aria-label="Quick search"
+            placeholder="Search"
             key={searchParams.get('q')}
             defaultValue={searchParams.get('q') ?? ''}
           />
@@ -54,7 +54,7 @@ export function Layout() {
         <span className="spacer" />
         {me && <span>{me.displayName}</span>}
         <button type="button" onClick={() => logout.mutate()} disabled={logout.isPending}>
-          Выйти
+          Sign out
         </button>
       </header>
       <main>

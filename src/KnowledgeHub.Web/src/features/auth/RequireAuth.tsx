@@ -17,10 +17,10 @@ export function RequireAuth() {
   }, [queryClient])
 
   if (isPending) {
-    return <p>Загрузка…</p>
+    return <p>Loading…</p>
   }
   if (error) {
-    return <p role="alert">Не удалось загрузить профиль: {error.message}</p>
+    return <p role="alert">Failed to load profile: {error.message}</p>
   }
   if (me === null) {
     const returnUrl = location.pathname + location.search

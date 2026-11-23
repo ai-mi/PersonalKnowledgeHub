@@ -3,7 +3,7 @@ import { useState, type SubmitEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { apiFetch } from '../../api/client'
 
-/** Принимаем только локальные пути, как и сервер: `//host` и `/\host` — внешние. */
+/** Принимаем только локальные пути, как и сервер: `//host` и `/\\host` — внешние. */
 function localReturnUrl(value: string | null): string {
   return value !== null && /^\/(?![/\\])/.test(value) ? value : '/'
 }
@@ -15,13 +15,13 @@ export function LoginPage() {
 
   return (
     <main>
-      <h1>Вход</h1>
-      {params.get('error') && <p role="alert">Не удалось войти. Попробуйте ещё раз.</p>}
+      <h1>Sign in</h1>
+      {params.get('error') && <p role="alert">Could not sign in. Please try again.</p>}
       <p>
-        <a href={`/api/auth/login/microsoft${query}`}>Войти через Microsoft</a>
+        <a href={`/api/auth/login/microsoft${query}`}>Sign in with Microsoft</a>
       </p>
       <p>
-        <a href={`/api/auth/login/google${query}`}>Войти через Google</a>
+        <a href={`/api/auth/login/google${query}`}>Sign in with Google</a>
       </p>
       {import.meta.env.DEV && <DevLoginForm returnUrl={returnUrl} />}
     </main>
@@ -47,12 +47,12 @@ function DevLoginForm({ returnUrl }: { returnUrl: string }) {
         login.mutate()
       }}
     >
-      <h2>Dev-вход</h2>
+      <h2>Dev sign-in</h2>
       <label>
         E-mail <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
       </label>{' '}
       <button type="submit" disabled={login.isPending}>
-        Войти
+        Sign in
       </button>
       {login.error && <p role="alert">{login.error.message}</p>}
     </form>

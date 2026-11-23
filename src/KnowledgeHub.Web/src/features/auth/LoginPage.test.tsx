@@ -33,11 +33,11 @@ function renderAt(path: string) {
 it('links to both providers carrying the local returnUrl', () => {
   renderAt('/login?returnUrl=%2Ftarget%3Fa%3D1')
 
-  expect(screen.getByRole('link', { name: 'Войти через Microsoft' })).toHaveAttribute(
+  expect(screen.getByRole('link', { name: 'Sign in with Microsoft' })).toHaveAttribute(
     'href',
     '/api/auth/login/microsoft?returnUrl=%2Ftarget%3Fa%3D1',
   )
-  expect(screen.getByRole('link', { name: 'Войти через Google' })).toHaveAttribute(
+  expect(screen.getByRole('link', { name: 'Sign in with Google' })).toHaveAttribute(
     'href',
     '/api/auth/login/google?returnUrl=%2Ftarget%3Fa%3D1',
   )
@@ -46,20 +46,20 @@ it('links to both providers carrying the local returnUrl', () => {
 it.each(['https://evil.com', '//evil.com', '/\\evil.com', 'evil'])('replaces non-local returnUrl %s with /', (value) => {
   renderAt(`/login?returnUrl=${encodeURIComponent(value)}`)
 
-  expect(screen.getByRole('link', { name: 'Войти через Google' })).toHaveAttribute('href', '/api/auth/login/google?returnUrl=%2F')
+  expect(screen.getByRole('link', { name: 'Sign in with Google' })).toHaveAttribute('href', '/api/auth/login/google?returnUrl=%2F')
 })
 
 it('defaults returnUrl to / and hides the error', () => {
   renderAt('/login')
 
-  expect(screen.getByRole('link', { name: 'Войти через Microsoft' })).toHaveAttribute('href', '/api/auth/login/microsoft?returnUrl=%2F')
+  expect(screen.getByRole('link', { name: 'Sign in with Microsoft' })).toHaveAttribute('href', '/api/auth/login/microsoft?returnUrl=%2F')
   expect(screen.queryByRole('alert')).not.toBeInTheDocument()
 })
 
 it('shows a message after a failed external sign-in', () => {
   renderAt('/login?error=1')
 
-  expect(screen.getByRole('alert')).toHaveTextContent('Не удалось войти')
+  expect(screen.getByRole('alert')).toHaveTextContent('Could not sign in')
 })
 
 it('dev login posts the email and navigates to the returnUrl', async () => {
@@ -74,7 +74,7 @@ it('dev login posts the email and navigates to the returnUrl', async () => {
 
   await userEvent.clear(screen.getByLabelText('E-mail'))
   await userEvent.type(screen.getByLabelText('E-mail'), 'me@x.io')
-  await userEvent.click(screen.getByRole('button', { name: 'Войти' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Sign in' }))
 
   expect(await screen.findByRole('heading', { name: 'Target' })).toBeInTheDocument()
   expect(body).toEqual({ email: 'me@x.io' })
@@ -85,7 +85,7 @@ it('dev login shows the server error', async () => {
   server.use(http.post('*/api/auth/dev-login', () => HttpResponse.json({ title: 'Disabled' }, { status: 404 })))
   renderAt('/login')
 
-  await userEvent.click(screen.getByRole('button', { name: 'Войти' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Sign in' }))
 
   expect(await screen.findByRole('alert')).toHaveTextContent('Disabled')
 })

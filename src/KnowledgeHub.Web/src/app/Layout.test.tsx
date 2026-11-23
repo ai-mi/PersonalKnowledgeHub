@@ -34,7 +34,7 @@ it('shows the user name and the navigation', async () => {
   renderLayout()
 
   expect(await screen.findByText('Alice')).toBeInTheDocument()
-  expect(screen.getByRole('link', { name: 'Коллекции' })).toHaveAttribute('href', '/collections')
+  expect(screen.getByRole('link', { name: 'Collections' })).toHaveAttribute('href', '/collections')
 })
 
 it('logs out: posts, clears the cache and goes to /login', async () => {
@@ -50,7 +50,7 @@ it('logs out: posts, clears the cache and goes to /login', async () => {
   const clear = vi.spyOn(client, 'clear')
   await screen.findByText('Alice')
 
-  await userEvent.click(screen.getByRole('button', { name: 'Выйти' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Sign out' }))
 
   expect(await screen.findByRole('heading', { name: 'Login' })).toBeInTheDocument()
   expect(logouts).toBe(1)
@@ -66,8 +66,8 @@ it('stays put when logout fails', async () => {
   const { router } = renderLayout()
   await screen.findByText('Alice')
 
-  await userEvent.click(screen.getByRole('button', { name: 'Выйти' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Sign out' }))
 
-  await screen.findByRole('button', { name: 'Выйти' })
+  await screen.findByRole('button', { name: 'Sign out' })
   expect(router.state.location.pathname).toBe('/')
 })
