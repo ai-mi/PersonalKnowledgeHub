@@ -15,6 +15,15 @@ public sealed class FileSignatureTests
     public void Pdf_IsRecognizedByContent() =>
         FileSignature.Detect(Fixture("sample.pdf"), "report.pdf").ShouldBe(DocumentKind.Pdf);
 
+    // Определение типа идёт в запросе загрузки: распаковка бомбы здесь уронила бы API для всех.
+    [Fact]
+    public void CompressionBombDocx_IsNotRecognized()
+    {
+        using var bomb = ZipLimitsTests.CompressionBombDocx();
+
+        FileSignature.Detect(bomb, "notes.docx").ShouldBeNull();
+    }
+
     [Fact]
     public void Docx_IsRecognizedByContent() =>
         FileSignature.Detect(Fixture("sample.docx"), "notes.docx").ShouldBe(DocumentKind.Docx);

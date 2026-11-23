@@ -62,13 +62,30 @@ public static class FileSignature
     public static string ContentTypeFor(string fileName) =>
         ContentTypes.GetValueOrDefault(Path.GetExtension(fileName), "application/octet-stream");
 
+    /// <summary>Файл — zip-архив (DOCX или что-то другое).</summary>
+    public static bool IsZip(Stream stream)
+    {
+        stream.Position = 0;
+        var header = new byte[ZipMagic.Length];
+        var read = stream.ReadAtLeast(header, header.Length, throwOnEndOfStream: false);
+        stream.Position = 0;
+        return header.AsSpan(0, read).SequenceEqual(ZipMagic);
+    }
+
+    // Только структура пакета: содержимое document.xml здесь не читается — это запрос загрузки, а не разбор.
+    // Пределы распаковки проверяются до открытия пакета (см. ZipLimits).
     private static bool IsWordDocument(Stream stream)
     {
+        if (!ZipLimits.IsWithinLimits(stream))
+        {
+            return false;
+        }
+
         try
         {
             stream.Position = 0;
             using var document = WordprocessingDocument.Open(stream, isEditable: false);
-            return document.MainDocumentPart?.Document is not null;
+            return document.MainDocumentPart is not null;
         }
         catch (Exception e) when (e is not OperationCanceledException)
         {

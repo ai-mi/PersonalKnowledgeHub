@@ -65,7 +65,15 @@ public static class DocumentTextExtractor
 
     private static string ExtractDocx(Stream stream)
     {
-        using var document = WordprocessingDocument.Open(stream, isEditable: false);
+        // Файл мог попасть в хранилище до появления проверки при загрузке — проверяем и здесь, до открытия пакета.
+        if (!ZipLimits.IsWithinLimits(stream))
+        {
+            throw new IngestionException("Документ слишком большой в распакованном виде.", retryable: false);
+        }
+
+        // Второй барьер внутри OpenXML: предел символов на часть пакета при разборе XML.
+        using var document = WordprocessingDocument.Open(stream, isEditable: false,
+            new OpenSettings { MaxCharactersInPart = ZipLimits.MaxUncompressedBytes });
         var paragraphs = document.MainDocumentPart?.Document?.Body?.Descendants<Paragraph>() ?? [];
         return string.Join('\n', paragraphs.Select(p => p.InnerText).Where(t => t.Length > 0));
     }

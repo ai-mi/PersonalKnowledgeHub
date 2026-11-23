@@ -22,8 +22,7 @@ public sealed class DocumentIntake(
             bufferSize: 81920, FileOptions.DeleteOnClose | FileOptions.Asynchronous);
         var hash = await CopyAndHashAsync(content, file, options.Value.MaxDocumentBytes, ct);
 
-        var kind = FileSignature.Detect(file, fileName)
-            ?? throw Errors.Validation("file", "Unsupported file type. Allowed: PDF, DOCX, TXT, MD.");
+        var kind = FileSignature.Detect(file, fileName) ?? throw UnsupportedFile(file);
 
         if (await items.FindByContentHashAsync(hash, ct) is { } existing)
         {
@@ -88,6 +87,15 @@ public sealed class DocumentIntake(
         var ext = Path.GetExtension(name);
         return stem[..Math.Min(stem.Length, MaxFileNameLength)] + ext;
     }
+
+    // Архив сверх пределов распаковки — не «неподдерживаемый тип»: обычный большой DOCX тоже может сюда попасть,
+    // и пользователю нужна понятная причина. Повторная проверка — только на пути отказа.
+    private static AppException UnsupportedFile(Stream file) =>
+        FileSignature.IsZip(file) && !ZipLimits.IsWithinLimits(file)
+            ? Errors.Validation("file",
+                $"The document is too large when unpacked: at most {ZipLimits.MaxUncompressedBytes / (1024 * 1024)} MB " +
+                $"and at most {ZipLimits.MaxCompressionRatio} times the file size.")
+            : Errors.Validation("file", "Unsupported file type. Allowed: PDF, DOCX, TXT, MD.");
 
     private static async Task<string> CopyAndHashAsync(Stream source, Stream target, long maxBytes, CancellationToken ct)
     {

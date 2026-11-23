@@ -74,6 +74,22 @@ public sealed class DocumentIntakeTests
             .AcceptAsync(new MemoryStream(Encoding.UTF8.GetBytes("plain text")), "note.txt", new DocumentMetadata(), TestContext.Current.CancellationToken);
 
     [Fact]
+    public async Task CompressionBombDocx_IsRejectedWithAClearMessage()
+    {
+        var blobs = new RecordingBlobs();
+        using var bomb = ZipLimitsTests.CompressionBombDocx();
+        var intake = new DocumentIntake(new StubItems(_ => new CreateItemResult(AnItem(), true)), blobs, new FixedUser(),
+            Options.Create(new IngestionOptions()));
+
+        var error = await Should.ThrowAsync<AppException>(() =>
+            intake.AcceptAsync(bomb, "notes.docx", new DocumentMetadata(), TestContext.Current.CancellationToken));
+
+        error.Status.ShouldBe(400);
+        error.Errors.ShouldNotBeNull()["file"].ShouldHaveSingleItem().ShouldContain("unpacked");
+        blobs.Uploaded.ShouldBeEmpty();
+    }
+
+    [Fact]
     public async Task NewDocument_KeepsItsBlob()
     {
         var blobs = new RecordingBlobs();

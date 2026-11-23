@@ -105,6 +105,17 @@ public sealed class DocumentTextExtractorTests
     }
 
     [Fact]
+    public async Task CompressionBombDocx_IsRejectedBeforeParsing()
+    {
+        using var bomb = ZipLimitsTests.CompressionBombDocx();
+
+        var error = await Should.ThrowAsync<IngestionException>(() => DocumentTextExtractor.ExtractAsync(bomb, DocumentKind.Docx, Ct));
+
+        error.Message.ShouldContain("распакованном виде");
+        error.Retryable.ShouldBeFalse();
+    }
+
+    [Fact]
     public async Task Docx_WithoutMainPart_HasNoText()
     {
         using var docx = DocxWith(_ => { });
