@@ -30,7 +30,7 @@ public sealed class FaultInjectionTests(ApiFactory factory) : IntegrationTest(fa
     private sealed class SavingInterceptor(Func<DbContext, CancellationToken, Task> onSaving) : SaveChangesInterceptor
     {
         public override async ValueTask<InterceptionResult<int>> SavingChangesAsync(
-            DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)
+            DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = ***)
         {
             await onSaving(eventData.Context!, cancellationToken);
             return result;
@@ -63,7 +63,7 @@ public sealed class FaultInjectionTests(ApiFactory factory) : IntegrationTest(fa
 
     private (WebApplicationFactory<Program> Host, FailingBlobStore Blobs) WithFailingBlobs()
     {
-        var blobs = new FailingBlobStore(new AzureBlobStore(Options.Create(new StorageOptions { ConnectionString = Factory.AzuriteConnectionString })));
+        var blobs = new FailingBlobStore(new AzureBlobStore(Options.Create(new StorageOptions { ConnectionString = *** })));
         return (Factory.WithWebHostBuilder(b => b.ConfigureTestServices(services => services.AddSingleton<IBlobStore>(blobs))), blobs);
     }
 
@@ -254,7 +254,7 @@ public sealed class FaultInjectionTests(ApiFactory factory) : IntegrationTest(fa
         using var system = scope.ServiceProvider.GetRequiredService<SystemContext>().Enter();
         var job = await scope.ServiceProvider.GetRequiredService<AppDbContext>().Jobs.AsNoTracking().SingleAsync(j => j.Type == "ingest", Ct);
         job.Status.ShouldBe(JobStatus.Pending);
-        job.LastError.ShouldNotBeNull().ShouldContain("Не удалось обработать запись");
+        job.LastError.ShouldNotBeNull().ShouldContain("Failed to process the item");
     }
 
     // --- прочее ---
@@ -327,7 +327,7 @@ public sealed class FaultInjectionTests(ApiFactory factory) : IntegrationTest(fa
     [Fact]
     public async Task BlobStore_WritesThroughStreamAndReadsBack()
     {
-        var store = new AzureBlobStore(Options.Create(new StorageOptions { ConnectionString = Factory.AzuriteConnectionString }));
+        var store = new AzureBlobStore(Options.Create(new StorageOptions { ConnectionString = *** }));
         await store.EnsureContainersAsync(Ct);
         var path = $"{Guid.CreateVersion7()}/stream.txt";
 

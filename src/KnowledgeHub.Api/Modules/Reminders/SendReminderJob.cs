@@ -41,13 +41,13 @@ public sealed class SendReminderJob(
     private static NotificationMessage BuildMessage(Item item, string webBaseUrl)
     {
         var title = BotMessageFormatter.DisplayTitle(item.Title, item.Url);
-        var heading = $"Напоминание: {title}";
+        var heading = $"Reminder: {title}";
         var html = BotMessageFormatter.Escape(heading);
         var text = heading;
         if (!string.IsNullOrWhiteSpace(webBaseUrl))
         {
             var link = $"{webBaseUrl.TrimEnd('/')}/items/{item.Id}";
-            html += $"\n<a href=\"{BotMessageFormatter.Escape(link)}\">Открыть запись</a>";
+            html += $"\n<a href=\"{BotMessageFormatter.Escape(link)}\">Open the item</a>";
             text += $"\n{link}";
         }
 

@@ -40,7 +40,7 @@ public sealed class IngestItemJob(
         catch (Exception e) when (e is not (OperationCanceledException or IngestionException))
         {
             // Внутренние детали (стек, тексты библиотек) пользователю не показываем.
-            throw new IngestionException("Не удалось обработать запись.", retryable: true, e);
+            throw new IngestionException("Failed to process the item.", retryable: true, e);
         }
 
         // Заголовок, заданный пользователем, не перезаписываем.
@@ -59,7 +59,7 @@ public sealed class IngestItemJob(
     {
         var kind = KindOf(item.BlobPath!);
         await using var blob = await blobs.OpenReadAsync(BlobContainers.Documents, item.BlobPath!, ct)
-            ?? throw new IngestionException("Файл документа не найден.", retryable: false);
+            ?? throw new IngestionException("Document file not found.", retryable: false);
 
         // Парсеры PDF и DOCX работают с перематываемым потоком; файл не больше лимита загрузки.
         using var content = new MemoryStream();

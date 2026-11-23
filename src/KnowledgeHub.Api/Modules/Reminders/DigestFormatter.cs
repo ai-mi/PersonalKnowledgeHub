@@ -8,7 +8,7 @@ namespace KnowledgeHub.Api.Modules.Reminders;
 /// <summary>Превращает <see cref="Digest"/> в письмо и сообщение Telegram: HTML (экранирование — <see cref="BotMessageFormatter"/>) и текст.</summary>
 public static class DigestFormatter
 {
-    public const string Subject = "Дайджест Personal Knowledge Hub";
+    public const string Subject = "Personal Knowledge Hub digest";
 
     /// <summary>Кнопки Telegram идут одним рядом, поэтому «Прочитано» есть только у первых непрочитанных записей.</summary>
     public const int MaxReadButtons = 5;
@@ -20,22 +20,22 @@ public static class DigestFormatter
         var sections = new List<(string Heading, List<Line> Lines)>();
         if (digest.Unread.Count > 0)
         {
-            sections.Add(("Непрочитанное", digest.Unread.Select(i => ItemLine(i, webBaseUrl)).ToList()));
+            sections.Add(("Unread", digest.Unread.Select(i => ItemLine(i, webBaseUrl)).ToList()));
         }
 
         if (digest.YearAgo.Count > 0)
         {
-            sections.Add(("Сохранено год назад", digest.YearAgo.Select(i => ItemLine(i, webBaseUrl)).ToList()));
+            sections.Add(("Saved a year ago", digest.YearAgo.Select(i => ItemLine(i, webBaseUrl)).ToList()));
         }
 
         if (digest.Reminders.Count > 0)
         {
-            sections.Add(("Ближайшие напоминания", digest.Reminders.Select(r =>
+            sections.Add(("Upcoming reminders", digest.Reminders.Select(r =>
                 new Line(r.Title, ItemLink(webBaseUrl, r.ItemId), r.LocalRemindAt.ToString("dd.MM HH:mm", CultureInfo.InvariantCulture))).ToList()));
         }
 
         var buttons = digest.Unread.Take(MaxReadButtons)
-            .Select((item, index) => BotMessageFormatter.ReadButton(item.Id, $"Прочитано {index + 1}"))
+            .Select((item, index) => BotMessageFormatter.ReadButton(item.Id, $"Read {index + 1}"))
             .ToList();
         return new NotificationMessage(Subject, Render(sections, html: true), Render(sections, html: false), buttons);
     }
@@ -55,7 +55,7 @@ public static class DigestFormatter
             var number = 0;
             foreach (var line in lines)
             {
-                result.Append('\n').Append(++number).Append(". ");
+                result.Append('\n').Append(++number).Append('.').Append(' ');
                 if (html)
                 {
                     var title = BotMessageFormatter.Escape(line.Title);

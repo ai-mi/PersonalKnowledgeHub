@@ -25,9 +25,9 @@ public sealed class DigestFormatterTests
         var message = DigestFormatter.Format(digest, WebBaseUrl);
 
         message.Subject.ShouldBe(DigestFormatter.Subject);
-        message.Html.ShouldContain("Непрочитанное");
-        message.Html.ShouldContain("Сохранено год назад");
-        message.Html.ShouldContain("Ближайшие напоминания");
+        message.Html.ShouldContain("Unread");
+        message.Html.ShouldContain("Saved a year ago");
+        message.Html.ShouldContain("Upcoming reminders");
         message.Html.ShouldContain($"<a href=\"https://kh.example.com/items/{unreadId}\">Непрочитанная</a>");
         message.Html.ShouldContain("Напомнить</a> — 02.11 18:30");
         message.Text.ShouldContain($"1. Старая\n   https://kh.example.com/items/{oldId}");
@@ -40,8 +40,8 @@ public sealed class DigestFormatterTests
     {
         var message = DigestFormatter.Format(new Digest([Summary(Guid.CreateVersion7(), "Одна")], [], []), WebBaseUrl);
 
-        message.Html.ShouldNotContain("Сохранено год назад");
-        message.Html.ShouldNotContain("Ближайшие напоминания");
+        message.Html.ShouldNotContain("Saved a year ago");
+        message.Html.ShouldNotContain("Upcoming reminders");
     }
 
     [Fact]
@@ -78,8 +78,8 @@ public sealed class DigestFormatterTests
         var message = DigestFormatter.Format(new Digest(unread, [], []), WebBaseUrl);
 
         message.Buttons.ShouldNotBeNull().Count.ShouldBe(DigestFormatter.MaxReadButtons);
-        message.Buttons[0].ShouldBe(BotMessageFormatter.ReadButton(unread[0].Id, "Прочитано 1"));
-        message.Buttons[^1].Text.ShouldBe($"Прочитано {DigestFormatter.MaxReadButtons}");
+        message.Buttons[0].ShouldBe(BotMessageFormatter.ReadButton(unread[0].Id, "Read 1"));
+        message.Buttons[^1].Text.ShouldBe($"Read {DigestFormatter.MaxReadButtons}");
     }
 
     [Fact]

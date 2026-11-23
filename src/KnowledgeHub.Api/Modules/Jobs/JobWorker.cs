@@ -67,7 +67,7 @@ public sealed partial class JobWorker(
             await RunInUserContextAsync(job, async sp =>
             {
                 var handler = _handlers.GetValueOrDefault(job.Type)
-                    ?? throw new InvalidOperationException($"Для задач типа «{job.Type}» нет обработчика.");
+                    ?? throw new InvalidOperationException($"No handler is registered for jobs of type '{job.Type}'.");
                 await handler.Invoke(sp, job.Payload, ct);
             });
             await UpdateAsync(job, JobStatus.Completed, null, null, ct);

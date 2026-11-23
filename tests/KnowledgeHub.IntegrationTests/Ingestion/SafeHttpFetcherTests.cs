@@ -54,7 +54,7 @@ public sealed class SafeHttpFetcherTests : IDisposable
         var error = await FailureAsync(fetcher);
 
         error.Retryable.ShouldBeTrue();
-        error.Message.ShouldContain("вовремя");
+        error.Message.ShouldContain("in time");
     }
 
     [Fact]
@@ -76,7 +76,7 @@ public sealed class SafeHttpFetcherTests : IDisposable
         var error = await FailureAsync(fetcher);
 
         error.Retryable.ShouldBeFalse();
-        error.Message.ShouldContain("перенаправлений");
+        error.Message.ShouldContain("redirects");
     }
 
     [Fact]
@@ -88,7 +88,7 @@ public sealed class SafeHttpFetcherTests : IDisposable
         var error = await FailureAsync(fetcher);
 
         error.Retryable.ShouldBeFalse();
-        error.Message.ShouldContain("без адреса");
+        error.Message.ShouldContain("without a Location");
     }
 
     [Fact]
@@ -149,7 +149,7 @@ public sealed class SafeHttpFetcherTests : IDisposable
         var error = await FailureAsync(fetcher);
 
         error.Retryable.ShouldBeFalse();
-        error.Message.ShouldContain("не является HTML");
+        error.Message.ShouldContain("not an HTML");
     }
 
     [Fact]
@@ -161,7 +161,7 @@ public sealed class SafeHttpFetcherTests : IDisposable
         var error = await FailureAsync(fetcher);
 
         error.Retryable.ShouldBeFalse();
-        error.Message.ShouldContain("слишком большая");
+        error.Message.ShouldContain("too large");
     }
 
     [Fact]
@@ -207,7 +207,7 @@ public sealed class SafeHttpFetcherTests : IDisposable
         var error = await FailureAsync(fetcher, new Uri($"http://127.0.0.1:{FreePort()}/page"));
 
         error.Retryable.ShouldBeTrue();
-        error.Message.ShouldContain("подключиться");
+        error.Message.ShouldContain("connect");
     }
 
     [Fact]
@@ -298,7 +298,7 @@ public sealed class SafeHttpFetcherTests : IDisposable
             var error = await FailureAsync(fetcher, new Uri($"http://127.0.0.1:{port}/page"));
 
             error.Retryable.ShouldBeFalse();
-            error.Message.ShouldContain("слишком большая");
+            error.Message.ShouldContain("too large");
         }
         finally
         {

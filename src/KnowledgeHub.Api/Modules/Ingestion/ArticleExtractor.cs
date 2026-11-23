@@ -21,7 +21,7 @@ public static class ArticleExtractor
         var body = article.IsReadable ? Truncate(Normalize(article.TextContent), MaxBodyLength) : null;
 
         return title is null && body is null
-            ? throw new IngestionException("Не удалось извлечь содержимое страницы.", retryable: false)
+            ? throw new IngestionException("Could not extract the page content.", retryable: false)
             : new ExtractedArticle(title, body);
     }
 

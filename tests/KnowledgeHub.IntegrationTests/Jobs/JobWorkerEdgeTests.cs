@@ -16,7 +16,7 @@ public sealed class JobWorkerEdgeTests(ApiFactory factory) : JobsTestBase(factor
 
         var job = await OnlyJobAsync();
         job.Status.ShouldBe(JobStatus.Pending);
-        job.LastError.ShouldNotBeNull().ShouldContain("нет обработчика");
+        job.LastError.ShouldNotBeNull().ShouldContain("no handler");
     }
 
     [Fact]
@@ -26,7 +26,7 @@ public sealed class JobWorkerEdgeTests(ApiFactory factory) : JobsTestBase(factor
 
         (await ProcessAsync()).ShouldBeTrue();
 
-        (await OnlyJobAsync()).LastError.ShouldNotBeNull().ShouldContain("Пустой payload");
+        (await OnlyJobAsync()).LastError.ShouldNotBeNull().ShouldContain("Empty payload");
     }
 
     [Fact]

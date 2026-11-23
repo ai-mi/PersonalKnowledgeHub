@@ -255,7 +255,7 @@ public sealed class DocumentUploadTests(ApiFactory factory) : JobsTestBase(facto
         (await cookies.PostAsJsonAsync("/api/auth/dev-login", new { email = "uploader@example.com" }, Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
         var xsrf = await AntiforgeryTests.FetchXsrfTokenAsync(cookies, Ct);
 
-        var withoutToken = await UploadAsync(cookies, Fixture("sample.txt"), "notes.txt");
+        var withoutToken = ***
         withoutToken.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await withoutToken.Content.ReadAsStringAsync(Ct)).ShouldContain("antiforgery");
 
@@ -345,7 +345,7 @@ public sealed class DocumentUploadTests(ApiFactory factory) : JobsTestBase(facto
 
         var item = await GetItemAsync(user, id);
         item.GetProperty("status").GetString().ShouldBe("failed");
-        item.GetProperty("error").GetString().ShouldBe("Не удалось извлечь текст из документа.");
+        item.GetProperty("error").GetString().ShouldBe("Could not extract text from the document.");
         item.GetProperty("title").GetString().ShouldBe("broken");
         (await AllJobsAsync()).Single().Status.ToString().ShouldBe("Completed");
         // Запись остаётся находимой по заголовку, файл — доступным для скачивания.
@@ -366,7 +366,7 @@ public sealed class DocumentUploadTests(ApiFactory factory) : JobsTestBase(facto
 
         var item = await GetItemAsync(user, id);
         item.GetProperty("status").GetString().ShouldBe("failed");
-        item.GetProperty("error").GetString().ShouldBe("Файл документа не найден.");
+        item.GetProperty("error").GetString().ShouldBe("Document file not found.");
     }
 
     [Fact]

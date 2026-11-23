@@ -48,7 +48,7 @@ public sealed class DocumentTextExtractorTests
             DocumentTextExtractor.ExtractAsync(new MemoryStream(bytes[..40]), DocumentKind.Pdf, Ct));
 
         error.Retryable.ShouldBeFalse();
-        error.Message.ShouldBe("Не удалось извлечь текст из документа.");
+        error.Message.ShouldBe("Could not extract text from the document.");
     }
 
     [Fact]
@@ -86,7 +86,7 @@ public sealed class DocumentTextExtractorTests
     /// <summary>Поток, чтение которого «зависает»: процесс разбора ждёт конца stdin и сам не завершится никогда.</summary>
     private sealed class HangingStream() : MemoryStream("начало"u8.ToArray())
     {
-        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = ***)
         {
             await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
             return 0;
@@ -103,7 +103,7 @@ public sealed class DocumentTextExtractorTests
             new HangingStream(), DocumentKind.Text, TestContext.Current.CancellationToken, TimeSpan.FromMilliseconds(500), id => started = id));
 
         error.Retryable.ShouldBeFalse();
-        error.Message.ShouldBe("Документ обрабатывается слишком долго.");
+        error.Message.ShouldBe("The document is taking too long to process.");
         started.ShouldNotBeNull();
         HasExited(started.Value).ShouldBeTrue();
     }
@@ -160,7 +160,7 @@ public sealed class DocumentTextExtractorTests
 
         (GC.GetTotalAllocatedBytes(precise: true) - allocatedBefore).ShouldBeLessThan(300L * 1024 * 1024);
         error.Retryable.ShouldBeFalse();
-        error.Message.ShouldBeOneOf("Не удалось извлечь текст из документа.", "В документе не найден текст (возможно, это скан).");
+        error.Message.ShouldBeOneOf("Could not extract text from the document.", "No text found in the document (it may be a scan).");
     }
 
     [Fact]
@@ -241,7 +241,7 @@ public sealed class DocumentTextExtractorTests
 
         var error = await Should.ThrowAsync<IngestionException>(() => DocumentTextExtractor.ExtractAsync(bomb, DocumentKind.Docx, Ct));
 
-        error.Message.ShouldContain("распакованном виде");
+        error.Message.ShouldContain("unpacked");
         error.Retryable.ShouldBeFalse();
     }
 
@@ -260,7 +260,7 @@ public sealed class DocumentTextExtractorTests
 
         var error = await Should.ThrowAsync<IngestionException>(() => DocumentTextExtractor.ExtractAsync(docx, DocumentKind.Docx, Ct));
 
-        error.Message.ShouldContain("не найден текст");
+        error.Message.ShouldContain("No text");
     }
 
     [Fact]

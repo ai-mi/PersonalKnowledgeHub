@@ -48,7 +48,7 @@ public sealed class ArticleExtractorTests
         var error = Should.Throw<IngestionException>(() => ArticleExtractor.Extract(PageUrl, "<html><body></body></html>"));
 
         error.Retryable.ShouldBeFalse();
-        error.Message.ShouldContain("Не удалось извлечь содержимое");
+        error.Message.ShouldContain("extract the page content");
     }
 
     [Fact]

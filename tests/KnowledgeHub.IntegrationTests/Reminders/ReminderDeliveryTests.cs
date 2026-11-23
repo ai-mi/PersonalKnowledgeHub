@@ -75,7 +75,7 @@ public sealed class ReminderDeliveryTests : BotTestBase
 
         var message = Telegram.Sent.ShouldHaveSingleItem();
         message.ChatId.ShouldBe(ChatId);
-        message.Text.ShouldBe("Напоминание: Service Bus");
+        message.Text.ShouldBe("Reminder: Service Bus");
         message.Buttons.ShouldBe([BotMessageFormatter.ReadButton(itemId)]);
         Email.Sent.ShouldBeEmpty();
         (await ReminderAsync(id)).SentAt.ShouldNotBeNull();
@@ -93,8 +93,8 @@ public sealed class ReminderDeliveryTests : BotTestBase
         Telegram.Sent.ShouldHaveSingleItem();
         var mail = Email.Sent.ShouldHaveSingleItem();
         mail.To.ShouldBe($"{userId:N}@test.local");
-        mail.Subject.ShouldBe("Напоминание: Service Bus");
-        mail.Text.ShouldBe("Напоминание: Service Bus");
+        mail.Subject.ShouldBe("Reminder: Service Bus");
+        mail.Text.ShouldBe("Reminder: Service Bus");
     }
 
     [Fact]
@@ -173,7 +173,7 @@ public sealed class ReminderDeliveryTests : BotTestBase
         Time.Advance(TimeSpan.FromMinutes(6));
         await TickAsync();
 
-        await WithDbAsync((_, queue) => queue.EnqueueAsync(SendReminderJob.JobType, new SendReminderPayload(id), userId, dedupKey: "manual-repeat", ct: Ct));
+        await WithDbAsync((_, queue) => queue.EnqueueAsync(SendReminderJob.JobType, new SendReminderPayload(id), userId, dedupKey: "manual-repeat", Ct));
         await TickAsync();
 
         Telegram.Sent.ShouldHaveSingleItem();
@@ -188,7 +188,7 @@ public sealed class ReminderDeliveryTests : BotTestBase
         Time.Advance(TimeSpan.FromMinutes(6));
         await TickAsync();
 
-        Telegram.Sent.ShouldHaveSingleItem().Text.ShouldBe("Напоминание: &lt;script&gt;alert(1)&lt;/script&gt;");
+        Telegram.Sent.ShouldHaveSingleItem().Text.ShouldBe("Reminder: &lt;script&gt;alert(1)&lt;/script&gt;");
         Email.Sent.ShouldHaveSingleItem().Html.ShouldNotContain("<script>");
     }
 

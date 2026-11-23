@@ -73,7 +73,7 @@ public sealed class LinkIngestionTests(ApiFactory factory) : JobsTestBase(factor
         item.GetProperty("title").GetString().ShouldBe("Service Bus queues explained");
         item.GetProperty("body").GetString().ShouldNotBeNull().ShouldContain("duplicate detection");
         item.GetProperty("error").ValueKind.ShouldBe(JsonValueKind.Null);
-        (await Search.SearchTests.SearchAsync(user, "\"duplicate detection\"")).GetProperty("total").GetInt32().ShouldBe(1);
+        (await Search.SearchTests.SearchAsync(user, "\"duplicate detection\""))..GetProperty("total").GetInt32().ShouldBe(1);
     }
 
     [Fact]
@@ -141,7 +141,7 @@ public sealed class LinkIngestionTests(ApiFactory factory) : JobsTestBase(factor
 
         var item = await GetItemAsync(user, id);
         item.GetProperty("status").GetString().ShouldBe("failed");
-        item.GetProperty("error").GetString().ShouldNotBeNull().ShouldContain("слишком большая");
+        item.GetProperty("error").GetString().ShouldNotBeNull().ShouldContain("too large");
     }
 
     [Fact]
@@ -198,7 +198,7 @@ public sealed class LinkIngestionTests(ApiFactory factory) : JobsTestBase(factor
         (await AllJobsAsync()).Single().Status.ShouldBe(JobStatus.Failed);
         var item = await GetItemAsync(user, id);
         item.GetProperty("status").GetString().ShouldBe("failed");
-        item.GetProperty("error").GetString().ShouldBe("Страница ответила кодом 503.");
+        item.GetProperty("error").GetString().ShouldBe("The page returned status 503.");
     }
 
     [Fact]

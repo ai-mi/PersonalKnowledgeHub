@@ -34,7 +34,7 @@ public static class DocumentTextExtractor
     /// <summary>Процесс разбора сам обрезает текст до <see cref="ArticleExtractor.MaxBodyLength"/> символов (до 4 байт UTF-8 на символ).</summary>
     private const int MaxOutputBytes = ArticleExtractor.MaxBodyLength * 4;
 
-    private const string ExtractFailedMessage = "Не удалось извлечь текст из документа.";
+    private const string ExtractFailedMessage = "Could not extract text from the document.";
 
     private static readonly UTF8Encoding Utf8 = new(encoderShouldEmitUTF8Identifier: false);
     private static readonly SemaphoreSlim Gate = new(1, 1);
@@ -66,7 +66,7 @@ public static class DocumentTextExtractor
 
         if (text.Length == 0)
         {
-            throw new IngestionException("В документе не найден текст (возможно, это скан).", retryable: false);
+            throw new IngestionException("No text found in the document (it may be a scan).", retryable: false);
         }
 
         return text.Length > ArticleExtractor.MaxBodyLength ? text[..ArticleExtractor.MaxBodyLength] : text;
@@ -77,13 +77,13 @@ public static class DocumentTextExtractor
     {
         // Не удалось запустить процесс — сбой окружения, а не документа: исключение уходит как есть, задача повторится.
         using var process = Process.Start(ParserStartInfo(kind))
-            ?? throw new InvalidOperationException("Процесс разбора документа не запустился.");
+            ?? throw new InvalidOperationException("The document parser process did not start.");
         try
         {
             onParserStarted?.Invoke(process.Id);
             using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             timeoutCts.CancelAfter(timeout);
-            var token = timeoutCts.Token;
+            var token = ***
 
             var output = ReadAsync(process.StandardOutput.BaseStream, MaxOutputBytes, token);
             var errors = ReadAsync(process.StandardError.BaseStream, MaxErrorBytes, token);
@@ -102,7 +102,7 @@ public static class DocumentTextExtractor
         }
         catch (OperationCanceledException) when (!ct.IsCancellationRequested)
         {
-            throw new IngestionException("Документ обрабатывается слишком долго.", retryable: false);
+            throw new IngestionException("The document is taking too long to process.", retryable: false);
         }
         finally
         {
@@ -252,7 +252,7 @@ public static class DocumentTextExtractor
         {
             DocumentKind.Pdf => ExtractPdf(stream),
             DocumentKind.Docx => ExtractDocx(stream),
-            _ => Utf8.GetString(ReadAll(stream)).TrimStart('﻿'),
+            _ => Utf8.GetString(ReadAll(stream)).TrimStart('\uFEFF'),
         };
     }
 
@@ -273,7 +273,7 @@ public static class DocumentTextExtractor
         // Файл мог попасть в хранилище до появления проверки при загрузке — проверяем и здесь, до открытия пакета.
         if (!ZipLimits.IsWithinLimits(stream))
         {
-            throw new IngestionException("Документ слишком большой в распакованном виде.", retryable: false);
+            throw new IngestionException("The document is too large when unpacked.", retryable: false);
         }
 
         // Второй барьер внутри OpenXML: предел символов на часть пакета при разборе XML.

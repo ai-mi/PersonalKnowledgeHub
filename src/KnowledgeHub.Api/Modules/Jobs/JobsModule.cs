@@ -27,7 +27,7 @@ public static class JobsModule
         services.AddSingleton(new JobHandlerRegistration(THandler.Type, (sp, json, ct) =>
         {
             var payload = JsonSerializer.Deserialize<TPayload>(json)
-                ?? throw new InvalidOperationException($"Пустой payload задачи «{THandler.Type}».");
+                ?? throw new InvalidOperationException($"Empty payload of the '{THandler.Type}' job.");
             return sp.GetRequiredService<THandler>().HandleAsync(payload, ct);
         }));
         return services;

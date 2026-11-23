@@ -92,8 +92,8 @@ public sealed class DigestTests : BotTestBase
         await TickAsync();
 
         var text = Telegram.Sent.ShouldHaveSingleItem().Text;
-        text.ShouldContain("Непрочитанное\n1. Старое непрочитанное");
-        text.ShouldContain("Сохранено год назад\n1. Год назад");
+        text.ShouldContain("Unread\n1. Старое непрочитанное");
+        text.ShouldContain("Saved a year ago\n1. Год назад");
         text.ShouldNotContain("Уже прочитано");
         text.ShouldNotContain("Совсем свежее");
         text.ShouldNotContain("Чужое непрочитанное");
@@ -135,7 +135,7 @@ public sealed class DigestTests : BotTestBase
         await TickAsync(sendTime);
 
         var text = Telegram.Sent.ShouldHaveSingleItem().Text;
-        text.ShouldContain("Ближайшие напоминания\n1. Скоро — ");
+        text.ShouldContain("Upcoming reminders\n1. Скоро — ");
         text.ShouldNotContain("Нескоро");
         var expected = Time.GetUtcNow().AddDays(2).AddHours(1).ToOffset(TimeSpan.FromHours(3)).ToString("dd.MM HH:mm");
         text.ShouldContain($"Скоро — {expected}");
@@ -249,6 +249,6 @@ public sealed class DigestTests : BotTestBase
 
         await TickAsync();
 
-        Telegram.Sent.ShouldHaveSingleItem().Buttons.ShouldBe([Api.Modules.Bot.BotMessageFormatter.ReadButton(id, "Прочитано 1")]);
+        Telegram.Sent.ShouldHaveSingleItem().Buttons.ShouldBe([Api.Modules.Bot.BotMessageFormatter.ReadButton(id, "Read 1")]);
     }
 }

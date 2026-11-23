@@ -57,12 +57,12 @@ public sealed partial class SafeHttpFetcher : IDisposable
         }
         catch (OperationCanceledException) when (!ct.IsCancellationRequested)
         {
-            throw new IngestionException("Страница не ответила вовремя.", retryable: true);
+            throw new IngestionException("The page did not respond in time.", retryable: true);
         }
         catch (HttpRequestException e)
         {
             // Отказ из ConnectCallback приходит обёрнутым в HttpRequestException.
-            throw FindIngestionException(e) ?? new IngestionException("Не удалось подключиться к странице.", retryable: true, e);
+            throw FindIngestionException(e) ?? new IngestionException("Could not connect to the page.", retryable: true, e);
         }
     }
 
@@ -82,12 +82,12 @@ public sealed partial class SafeHttpFetcher : IDisposable
             {
                 if (redirects >= _options.MaxRedirects)
                 {
-                    throw new IngestionException("Слишком много перенаправлений.", retryable: false);
+                    throw new IngestionException("Too many redirects.", retryable: false);
                 }
 
                 url = response.Headers.Location is { } location
                     ? new Uri(url, location)
-                    : throw new IngestionException("Страница вернула перенаправление без адреса.", retryable: false);
+                    : throw new IngestionException("The page returned a redirect without a Location.", retryable: false);
                 continue;
             }
 
@@ -101,12 +101,12 @@ public sealed partial class SafeHttpFetcher : IDisposable
     {
         if (url.Scheme is not ("http" or "https"))
         {
-            throw new IngestionException("Поддерживаются только ссылки http и https.", retryable: false);
+            throw new IngestionException("Only http and https links are supported.", retryable: false);
         }
 
         if (!_options.AllowLoopbackForTests && url.Port is not (80 or 443))
         {
-            throw new IngestionException("Поддерживаются только стандартные порты 80 и 443.", retryable: false);
+            throw new IngestionException("Only standard ports 80 and 443 are supported.", retryable: false);
         }
     }
 
@@ -130,7 +130,7 @@ public sealed partial class SafeHttpFetcher : IDisposable
 
         // 5xx, 429 и 408 — временные: повтор может помочь; остальные 4xx — нет.
         var retryable = status >= 500 || status is 429 or 408;
-        throw new IngestionException($"Страница ответила кодом {status}.", retryable);
+        throw new IngestionException($"The page returned status {status}.", retryable);
     }
 
     private static void EnsureHtml(HttpResponseMessage response)
@@ -138,7 +138,7 @@ public sealed partial class SafeHttpFetcher : IDisposable
         var mediaType = response.Content.Headers.ContentType?.MediaType;
         if (!AllowedContentTypes.Contains(mediaType, StringComparer.OrdinalIgnoreCase))
         {
-            throw new IngestionException("Страница не является HTML-документом.", retryable: false);
+            throw new IngestionException("The page is not an HTML document.", retryable: false);
         }
     }
 
@@ -167,7 +167,7 @@ public sealed partial class SafeHttpFetcher : IDisposable
         return ResolveEncoding(response.Content.Headers.ContentType!.CharSet, bytes).GetString(bytes);
     }
 
-    private static IngestionException TooLarge() => new("Страница слишком большая.", retryable: false);
+    private static IngestionException TooLarge() => new("The page is too large.", retryable: false);
 
     /// <summary>Кодировка: заголовок Content-Type, затем meta charset в начале документа, иначе UTF-8.</summary>
     private static Encoding ResolveEncoding(string? charSet, byte[] bytes)
@@ -195,7 +195,7 @@ public sealed partial class SafeHttpFetcher : IDisposable
         return Encoding.UTF8;
     }
 
-    [GeneratedRegex(@"<meta[^>]+charset\s*=\s*[""']?\s*([\w\-]+)", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"<meta[^>]+charset\s*=\s*[\"\']?\s*([\w\-]+)", RegexOptions.IgnoreCase)]
     private static partial Regex MetaCharsetRegex();
 
     private static IngestionException? FindIngestionException(Exception e)
@@ -245,7 +245,7 @@ public sealed partial class SafeHttpFetcher : IDisposable
         throw last is null ? Unavailable() : last;
     }
 
-    private static IngestionException Unavailable() => new("Адрес страницы недоступен для сохранения.", retryable: false);
+    private static IngestionException Unavailable() => new("The page address is unavailable for saving.", retryable: false);
 
     private bool IsAllowed(IPAddress address) =>
         SsrfGuard.IsAllowed(address) || _options.AllowLoopbackForTests && IPAddress.IsLoopback(address);
