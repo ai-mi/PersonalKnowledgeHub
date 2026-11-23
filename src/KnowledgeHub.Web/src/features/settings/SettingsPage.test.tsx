@@ -40,11 +40,11 @@ function renderPage() {
 it('shows the profile and the tokens section', async () => {
   renderPage()
 
-  expect(await screen.findByText('Имя: Alice')).toBeInTheDocument()
+  expect(await screen.findByText('Name: Alice')).toBeInTheDocument()
   expect(screen.getByText('E-mail: a@b.c')).toBeInTheDocument()
-  expect(screen.getByLabelText('Часовой пояс')).toHaveValue('Europe/Berlin')
-  expect(await screen.findByRole('heading', { name: 'API-токены' })).toBeInTheDocument()
-  expect(screen.getByRole('heading', { name: 'Дайджест' })).toBeInTheDocument()
+  expect(screen.getByLabelText('Time zone')).toHaveValue('Europe/Berlin')
+  expect(await screen.findByRole('heading', { name: 'API tokens' })).toBeInTheDocument()
+  expect(screen.getByRole('heading', { name: 'Digest' })).toBeInTheDocument()
   expect(await screen.findByRole('heading', { name: 'Telegram' })).toBeInTheDocument()
 })
 
@@ -53,7 +53,7 @@ it('shows a dash when the user has no e-mail, and keeps a non-standard timezone 
   renderPage()
 
   expect(await screen.findByText('E-mail: —')).toBeInTheDocument()
-  expect(screen.getByLabelText('Часовой пояс')).toHaveValue('Custom/Zone')
+  expect(screen.getByLabelText('Time zone')).toHaveValue('Custom/Zone')
 })
 
 it('saves the timezone keeping the other settings', async () => {
@@ -66,10 +66,10 @@ it('saves the timezone keeping the other settings', async () => {
   )
   renderPage()
 
-  await userEvent.selectOptions(await screen.findByLabelText('Часовой пояс'), 'Asia/Tokyo')
-  await userEvent.click(screen.getByRole('button', { name: 'Сохранить' }))
+  await userEvent.selectOptions(await screen.findByLabelText('Time zone'), 'Asia/Tokyo')
+  await userEvent.click(screen.getByRole('button', { name: 'Save' }))
 
-  expect(await screen.findByRole('status')).toHaveTextContent('Сохранено')
+  expect(await screen.findByRole('status')).toHaveTextContent('Saved')
   expect(body).toEqual({ ...me.settings, timezone: 'Asia/Tokyo' })
 })
 
@@ -77,7 +77,7 @@ it('shows a save error', async () => {
   server.use(http.put('*/api/me/settings', () => HttpResponse.json({ title: 'Bad zone' }, { status: 400 })))
   renderPage()
 
-  await userEvent.click(await screen.findByRole('button', { name: 'Сохранить' }))
+  await userEvent.click(await screen.findByRole('button', { name: 'Save' }))
 
   expect(await screen.findByRole('alert')).toHaveTextContent('Bad zone')
   expect(screen.queryByRole('status')).not.toBeInTheDocument()
