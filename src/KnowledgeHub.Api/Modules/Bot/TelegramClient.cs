@@ -46,5 +46,5 @@ public sealed class TelegramClient(IOptions<BotOptions> options, HttpClient? htt
         await _client.Value.AnswerCallbackQuery(callbackQueryId, text, cancellationToken: ct);
 
     public Task SetWebhookAsync(string url, string secretToken, CancellationToken ct) =>
-        _client.Value.SetWebhook(url, secretToken: secretToken, allowedUpdates: [UpdateType.Message, UpdateType.CallbackQuery], cancellationToken: ct);
+        _client.Value.SetWebhook(url, secretToken: secretToken, allowedUpdates: new[] { UpdateType.Message, UpdateType.CallbackQuery }, cancellationToken: ct);
 }
