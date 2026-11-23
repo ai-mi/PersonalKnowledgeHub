@@ -111,16 +111,62 @@ public sealed class LinkingTests(ApiFactory factory) : BotTestBase(factory)
         link.ChatId.ShouldBe(2);
     }
 
+    /// <summary>
+    /// Чужая ссылка привязки (t.me/бот?start=код злоумышленника) не должна молча увести чат: всё, что жертва потом
+    /// пришлёт боту, сохранялось бы в чужой аккаунт. Чат, привязанный к другому пользователю, переходит только по кнопке.
+    /// </summary>
     [Fact]
-    public async Task ChatLinkedToAnotherUser_PassesToTheNewOwner()
+    public async Task ChatLinkedToAnotherUser_AsksForConfirmation_AndKeepsTheOldLink()
     {
-        using var a = await Factory.CreateClientForAsync(Guid.CreateVersion7());
-        using var b = await Factory.CreateClientForAsync(Guid.CreateVersion7());
-        await StartAsync(await RequestLinkCodeAsync(a));
-        await StartAsync(await RequestLinkCodeAsync(b));
+        using var owner = await Factory.CreateClientForAsync(Guid.CreateVersion7());
+        using var other = await Factory.CreateClientForAsync(Guid.CreateVersion7());
+        await StartAsync(await RequestLinkCodeAsync(owner));
+        Telegram.Reset();
 
-        (await StatusAsync(a)).GetProperty("linked").GetBoolean().ShouldBeFalse();
-        (await StatusAsync(b)).GetProperty("linked").GetBoolean().ShouldBeTrue();
+        await StartAsync(await RequestLinkCodeAsync(other));
+
+        (await StatusAsync(owner)).GetProperty("linked").GetBoolean().ShouldBeTrue();
+        (await StatusAsync(other)).GetProperty("linked").GetBoolean().ShouldBeFalse();
+        var warning = Telegram.Sent.ShouldHaveSingleItem();
+        warning.ChatId.ShouldBe(ChatId);
+        warning.Text.ShouldContain("уже привязан к другому аккаунту");
+        warning.Buttons.ShouldNotBeNull().ShouldHaveSingleItem().CallbackData.ShouldStartWith("relink:");
+        // Код не потрачен: им ещё можно подтвердить перенос.
+        (await WithDbAsync((db, _) => db.TelegramLinkCodes.CountAsync(Ct))).ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task ConfirmingRelink_MovesTheChatToTheNewOwner()
+    {
+        using var owner = await Factory.CreateClientForAsync(Guid.CreateVersion7());
+        using var other = await Factory.CreateClientForAsync(Guid.CreateVersion7());
+        await StartAsync(await RequestLinkCodeAsync(owner));
+        await StartAsync(await RequestLinkCodeAsync(other));
+        var button = Telegram.Sent.Last().Buttons.ShouldNotBeNull().Single();
+
+        await SendAsync(CallbackUpdate(button.CallbackData));
+
+        (await StatusAsync(owner)).GetProperty("linked").GetBoolean().ShouldBeFalse();
+        (await StatusAsync(other)).GetProperty("linked").GetBoolean().ShouldBeTrue();
+        Telegram.Answers.ShouldHaveSingleItem().Text.ShouldBe("Чат привязан к новому аккаунту");
+        (await WithDbAsync((db, _) => db.TelegramLinkCodes.CountAsync(Ct))).ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task ConfirmingRelink_AfterTheCodeExpired_ChangesNothing()
+    {
+        using var owner = await Factory.CreateClientForAsync(Guid.CreateVersion7());
+        using var other = await Factory.CreateClientForAsync(Guid.CreateVersion7());
+        await StartAsync(await RequestLinkCodeAsync(owner));
+        await StartAsync(await RequestLinkCodeAsync(other));
+        var button = Telegram.Sent.Last().Buttons.ShouldNotBeNull().Single();
+
+        Time.Advance(TelegramLinkService.CodeLifetime + TimeSpan.FromMinutes(1));
+        await SendAsync(CallbackUpdate(button.CallbackData));
+
+        (await StatusAsync(owner)).GetProperty("linked").GetBoolean().ShouldBeTrue();
+        (await StatusAsync(other)).GetProperty("linked").GetBoolean().ShouldBeFalse();
+        Telegram.Answers.ShouldHaveSingleItem().Text.ShouldNotBeNull().ShouldContain("недействительна");
     }
 
     [Fact]

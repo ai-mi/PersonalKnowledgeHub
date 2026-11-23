@@ -23,6 +23,15 @@ public sealed partial class ProcessUpdateJob(
 
     private const string PrivateChatOnlyText = "Я работаю только в личном чате. Напишите мне напрямую.";
 
+    private const string InvalidCodeText = "Ссылка привязки недействительна или устарела. Создайте новую в «Настройках».";
+
+    /// <summary>Callback кнопки подтверждения переноса: префикс + код привязки (22 символа, вместе меньше лимита Telegram в 64 байта).</summary>
+    private const string RelinkCallbackPrefix = "relink:";
+
+    private const string RelinkWarningText =
+        "Этот чат уже привязан к другому аккаунту Personal Knowledge Hub. Если вы сами не открывали ссылку привязки " +
+        "к новому аккаунту — ничего не нажимайте: возможно, вам прислали чужую ссылку, чтобы ваши сообщения сохранялись у другого человека.";
+
     private const string NotLinkedText =
         "Этот чат не привязан к аккаунту. Откройте «Настройки» в Personal Knowledge Hub, нажмите «Привязать Telegram» и перейдите по ссылке.";
 
@@ -88,6 +97,13 @@ public sealed partial class ProcessUpdateJob(
         {
             answer = PrivateChatOnlyText;
         }
+        else if (callback.Data?.StartsWith(RelinkCallbackPrefix, StringComparison.Ordinal) == true)
+        {
+            // Владелец чата сам подтвердил перенос кнопкой из предупреждения (см. LinkChatAsync).
+            answer = await links.RedeemAsync(callback.Data[RelinkCallbackPrefix.Length..], chatId, replaceOtherOwner: true, ct) == RedeemOutcome.Linked
+                ? "Чат привязан к новому аккаунту"
+                : InvalidCodeText;
+        }
         else if (await links.FindByChatAsync(chatId, ct) is { } link)
         {
             using var _ = systemContext.RunAs(link.UserId);
@@ -110,10 +126,19 @@ public sealed partial class ProcessUpdateJob(
 
     private async Task LinkChatAsync(long chatId, string code, CancellationToken ct)
     {
-        var text = await links.RedeemAsync(code, chatId, ct) is not null
-            ? "Аккаунт привязан. Присылайте ссылки, заметки и файлы — я их сохраню. Хэштеги в тексте станут тегами."
-            : "Ссылка привязки недействительна или устарела. Создайте новую в «Настройках».";
-        await ReplyAsync(chatId, text, ct);
+        switch (await links.RedeemAsync(code, chatId, replaceOtherOwner: false, ct))
+        {
+            case RedeemOutcome.Linked:
+                await ReplyAsync(chatId, "Аккаунт привязан. Присылайте ссылки, заметки и файлы — я их сохраню. Хэштеги в тексте станут тегами.", ct);
+                break;
+            case RedeemOutcome.NeedsConfirmation:
+                // Сообщение уходит в этот же чат, то есть текущему владельцу привязки: он и решает, отдавать ли чат.
+                await ReplyAsync(chatId, RelinkWarningText, ct, [new InlineButton("Привязать к новому аккаунту", RelinkCallbackPrefix + code)]);
+                break;
+            default:
+                await ReplyAsync(chatId, InvalidCodeText, ct);
+                break;
+        }
     }
 
     private async Task SaveAsync(long chatId, Message message, CancellationToken ct)
@@ -172,11 +197,11 @@ public sealed partial class ProcessUpdateJob(
         e.Errors?.Values.SelectMany(v => v).FirstOrDefault() ?? e.Message;
 
     // Ответ (HTML-разметка Telegram) — удобство: его сбой не должен повторять задачу (запись уже сохранена, повтор создал бы дубль заметки).
-    private async Task ReplyAsync(long chatId, string text, CancellationToken ct)
+    private async Task ReplyAsync(long chatId, string text, CancellationToken ct, IReadOnlyList<InlineButton>? buttons = null)
     {
         try
         {
-            await telegram.SendMessageAsync(chatId, text, ct);
+            await telegram.SendMessageAsync(chatId, text, ct, buttons);
         }
         catch (Exception e) when (e is not OperationCanceledException)
         {

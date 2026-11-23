@@ -7,6 +7,17 @@ using Microsoft.EntityFrameworkCore;
 
 namespace KnowledgeHub.Api.Modules.Bot;
 
+public enum RedeemOutcome
+{
+    Linked,
+
+    /// <summary>Код неверный, просрочен или уже использован.</summary>
+    Invalid,
+
+    /// <summary>Чат привязан к другому пользователю; код не потрачен, перенос — только после подтверждения.</summary>
+    NeedsConfirmation,
+}
+
 public sealed class TelegramLinkService(AppDbContext db, ICurrentUser currentUser, SystemContext systemContext, TimeProvider timeProvider)
 {
     public static readonly TimeSpan CodeLifetime = TimeSpan.FromMinutes(10);
@@ -29,19 +40,30 @@ public sealed class TelegramLinkService(AppDbContext db, ICurrentUser currentUse
 
     /// <summary>
     /// Привязывает чат к владельцу действующего кода; код одноразовый. Владелец кода заранее неизвестен, поэтому поиск идёт
-    /// в системном контексте. Чат, привязанный к другому пользователю, переходит к владельцу кода. <c>null</c> — код неверный или просрочен.
+    /// в системном контексте. Чат, привязанный к другому пользователю, переходит к владельцу кода только при
+    /// <paramref name="replaceOtherOwner"/> (подтверждение кнопкой в самом чате); иначе код не тратится и возвращается
+    /// <see cref="RedeemOutcome.NeedsConfirmation"/> — чужая ссылка привязки не должна молча увести чат.
     /// </summary>
-    public async Task<Guid?> RedeemAsync(string code, long chatId, CancellationToken ct)
+    public async Task<RedeemOutcome> RedeemAsync(string code, long chatId, bool replaceOtherOwner, CancellationToken ct)
     {
         using var _ = systemContext.Enter();
         var now = timeProvider.GetUtcNow();
         var hash = Hash(code);
         var entity = await db.TelegramLinkCodes.AsNoTracking().FirstOrDefaultAsync(c => c.CodeHash == hash && c.ExpiresAt > now, ct);
+        if (entity is null)
+        {
+            return RedeemOutcome.Invalid;
+        }
+
+        if (!replaceOtherOwner && await db.TelegramLinks.AnyAsync(l => l.ChatId == chatId && l.UserId != entity.UserId, ct))
+        {
+            return RedeemOutcome.NeedsConfirmation;
+        }
 
         // Параллельное использование того же кода: выигрывает тот, чей DELETE удалил строку.
-        if (entity is null || await db.TelegramLinkCodes.Where(c => c.Id == entity.Id).ExecuteDeleteAsync(ct) == 0)
+        if (await db.TelegramLinkCodes.Where(c => c.Id == entity.Id).ExecuteDeleteAsync(ct) == 0)
         {
-            return null;
+            return RedeemOutcome.Invalid;
         }
 
         await db.TelegramLinks.Where(l => l.ChatId == chatId && l.UserId != entity.UserId).ExecuteDeleteAsync(ct);
@@ -57,7 +79,7 @@ public sealed class TelegramLinkService(AppDbContext db, ICurrentUser currentUse
         }
 
         await db.SaveChangesAsync(ct);
-        return entity.UserId;
+        return RedeemOutcome.Linked;
     }
 
     /// <summary>Привязка текущего пользователя или <c>null</c>.</summary>
