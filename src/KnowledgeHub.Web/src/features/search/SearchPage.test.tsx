@@ -19,7 +19,7 @@ const item = {
   updatedAt: '2026-01-01T00:00:00Z',
   tags: [],
 }
-const defaultHits = [{ item, rank: 1, highlights: ['<mark>очереди</mark> сообщений &lt;b&gt;'] }]
+const defaultHits = [{ item, rank: 1, highlights: ['<mark>queue</mark> messages &lt;b&gt;'] }]
 let hits: unknown[] = defaultHits
 
 const server = setupServer(
@@ -52,22 +52,22 @@ function renderPage(path: string) {
 it('shows the empty prompt and sends no request without a query', async () => {
   renderPage('/search')
 
-  expect(await screen.findByText('Введите запрос, чтобы найти записи.')).toBeInTheDocument()
+  expect(await screen.findByText('Enter a query to search items.')).toBeInTheDocument()
   expect(requested).toHaveLength(0)
 })
 
 it('searches by the q from the URL and highlights the fragment', async () => {
-  renderPage('/search?q=очередь')
+  renderPage('/search?q=queue')
 
   expect(await screen.findByRole('link', { name: 'Service Bus' })).toBeInTheDocument()
-  expect(requested[0]?.searchParams.get('q')).toBe('очередь')
-  expect(screen.getByText('очереди').tagName).toBe('MARK')
-  expect(screen.getByText(/сообщений <b>/)).toBeInTheDocument()
+  expect(requested[0]?.searchParams.get('q')).toBe('queue')
+  expect(screen.getByText('queue').tagName).toBe('MARK')
+  expect(screen.getByText(/messages <b>/)).toBeInTheDocument()
 })
 
 it('debounces typing and puts the query into the URL', async () => {
   const router = renderPage('/search')
-  await userEvent.type(screen.getByRole('searchbox', { name: 'Запрос' }), 'azure')
+  await userEvent.type(screen.getByRole('searchbox', { name: 'Query' }), 'azure')
 
   expect(requested).toHaveLength(0)
   await waitFor(() => expect(router.state.location.search).toBe('?q=azure'))
@@ -100,7 +100,7 @@ it('shows "nothing found"', async () => {
   hits = []
   renderPage('/search?q=zzz')
 
-  expect(await screen.findByText('Ничего не найдено.')).toBeInTheDocument()
+  expect(await screen.findByText('Nothing found.')).toBeInTheDocument()
 })
 
 it('shows an ApiError', async () => {

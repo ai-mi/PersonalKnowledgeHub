@@ -43,20 +43,20 @@ function renderSection() {
 
 it('starts an export, disables the button while it runs and offers the download when ready', async () => {
   renderSection()
-  const button = await screen.findByRole('button', { name: 'Экспортировать' })
+  const button = await screen.findByRole('button', { name: 'Export' })
   expect(button).toBeEnabled()
 
   await userEvent.click(button)
 
-  await waitFor(() => expect(screen.getByRole('button', { name: 'Экспортировать' })).toBeDisabled())
-  expect(await screen.findByRole('status')).toHaveTextContent('Архив собирается')
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Export' })).toBeDisabled())
+  expect(await screen.findByRole('status')).toHaveTextContent('Preparing archive')
   expect(startRequests).toBe(1)
 
   exports = [{ id: 'new', status: 'ready', createdAt: '2026-10-27T10:00:00Z', expiresAt: '2026-11-03T10:00:00Z' }]
 
-  const link = await screen.findByRole('link', { name: 'Скачать' })
+  const link = await screen.findByRole('link', { name: 'Download' })
   expect(link).toHaveAttribute('href', '/api/exports/new/download')
-  expect(screen.getByRole('button', { name: 'Экспортировать' })).toBeEnabled()
+  expect(screen.getByRole('button', { name: 'Export' })).toBeEnabled()
   expect(screen.queryByRole('status')).not.toBeInTheDocument()
 })
 
@@ -64,12 +64,12 @@ it('keeps the button disabled when an export is already in progress and polls on
   exports = [{ id: 'a', status: 'processing', createdAt: '2026-10-27T10:00:00Z', expiresAt: null }]
   renderSection()
 
-  await waitFor(() => expect(screen.getByRole('button', { name: 'Экспортировать' })).toBeDisabled())
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Export' })).toBeDisabled())
   await waitFor(() => expect(listRequests).toBeGreaterThan(2))
 
   exports = [{ id: 'a', status: 'failed', createdAt: '2026-10-27T10:00:00Z', expiresAt: null }]
-  expect(await screen.findByText(/Ошибка/)).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'Экспортировать' })).toBeEnabled()
+  expect(await screen.findByText(/Failed/)).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Export' })).toBeEnabled()
   const settled = listRequests
   await new Promise((resolve) => setTimeout(resolve, 150))
   expect(listRequests).toBeLessThanOrEqual(settled + 1)
@@ -79,7 +79,7 @@ it('shows the error when the export cannot be started', async () => {
   server.use(http.post('*/api/exports', () => HttpResponse.json({ title: 'Conflict' }, { status: 409 })))
   renderSection()
 
-  await userEvent.click(await screen.findByRole('button', { name: 'Экспортировать' }))
+  await userEvent.click(await screen.findByRole('button', { name: 'Export' }))
 
   expect(await screen.findByRole('alert')).toHaveTextContent('Conflict')
 })

@@ -20,7 +20,7 @@ interface CreatedToken {
 const tokensQueryKey = ['tokens'] as const
 
 function formatDate(value: string | null): string {
-  return value === null ? '—' : new Date(value).toLocaleDateString('ru-RU')
+  return value === null ? '—' : new Date(value).toLocaleDateString('en-US')
 }
 
 export function ApiTokensSection() {
@@ -61,26 +61,26 @@ export function ApiTokensSection() {
   }
 
   const confirmRevoke = (token: TokenInfo) => {
-    if (window.confirm(`Отозвать токен «${token.name}»? Это действие нельзя отменить.`)) {
+    if (window.confirm(`Revoke the token "${token.name}"? This action cannot be undone.`)) {
       revoke.mutate(token.id)
     }
   }
 
   return (
     <section>
-      <h2>API-токены</h2>
+      <h2>API tokens</h2>
 
       {created && (
         <div role="alert">
           <p>
-            Токен «{created.name}» создан. Скопируйте его сейчас — позже он показан не будет.
+            Token "{created.name}" created. Copy it now — it will not be shown again.
           </p>
           <code>{created.token}</code>{' '}
           <button type="button" onClick={() => void copy(created.token)}>
-            {copied ? 'Скопировано' : 'Скопировать'}
+            {copied ? 'Copied' : 'Copy'}
           </button>{' '}
           <button type="button" onClick={() => setCreated(null)}>
-            Закрыть
+            Close
           </button>
         </div>
       )}
@@ -92,35 +92,35 @@ export function ApiTokensSection() {
         }}
       >
         <label>
-          Название <input value={name} onChange={(e) => setName(e.target.value)} maxLength={100} required />
+          Name <input value={name} onChange={(e) => setName(e.target.value)} maxLength={100} required />
         </label>{' '}
         <label>
-          Срок, дней{' '}
+          Expires in days{' '}
           <input
             type="number"
             min={1}
             value={expiresInDays}
             onChange={(e) => setExpiresInDays(e.target.value)}
-            placeholder="без срока"
+            placeholder="no expiration"
           />
         </label>{' '}
         <button type="submit" disabled={create.isPending}>
-          Создать токен
+          Create token
         </button>
         {create.error && <p role="alert">{create.error.message}</p>}
       </form>
 
-      {tokens.isPending && <p>Загрузка…</p>}
+      {tokens.isPending && <p>Loading…</p>}
       {tokens.error && <p role="alert">{tokens.error.message}</p>}
-      {tokens.data?.length === 0 && <p>Токенов пока нет.</p>}
+      {tokens.data?.length === 0 && <p>No tokens yet.</p>}
       {tokens.data && tokens.data.length > 0 && (
         <table>
           <thead>
             <tr>
-              <th>Название</th>
-              <th>Создан</th>
-              <th>Истекает</th>
-              <th>Использован</th>
+              <th>Name</th>
+              <th>Created</th>
+              <th>Expires</th>
+              <th>Last used</th>
               <th />
             </tr>
           </thead>
@@ -133,10 +133,10 @@ export function ApiTokensSection() {
                 <td>{formatDate(token.lastUsedAt)}</td>
                 <td>
                   {token.revokedAt ? (
-                    'Отозван'
+                    'Revoked'
                   ) : (
                     <button type="button" onClick={() => confirmRevoke(token)}>
-                      Отозвать
+                      Revoke
                     </button>
                   )}
                 </td>

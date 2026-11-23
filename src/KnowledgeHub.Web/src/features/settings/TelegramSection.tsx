@@ -51,28 +51,28 @@ export function TelegramSection({ pollIntervalMs = POLL_INTERVAL_MS }: { pollInt
       {status.error && <p role="alert">{status.error.message}</p>}
       {status.data?.linked ? (
         <p>
-          Привязан{status.data.linkedAt && ` ${new Date(status.data.linkedAt).toLocaleDateString('ru-RU')}`}.{' '}
+          Linked{status.data.linkedAt && ` ${new Date(status.data.linkedAt).toLocaleDateString('en-US')}`}.
           <button
             type="button"
             disabled={unlink.isPending}
             onClick={() => {
-              if (window.confirm('Отвязать Telegram?')) unlink.mutate()
+              if (window.confirm('Unlink Telegram?')) unlink.mutate()
             }}
           >
-            Отвязать
+            Unlink
           </button>
         </p>
       ) : (
         status.data && (
           <p>
-            Не привязан.{' '}
+            Not linked.{' '}
             <button type="button" disabled={link.isPending} onClick={() => link.mutate()}>
-              Привязать
+              Link
             </button>
           </p>
         )
       )}
-      {waiting && <p role="status">Откройте бота в Telegram и нажмите «Start» — ждём подтверждения…</p>}
+      {waiting && <p role="status">Open the bot in Telegram and press "Start" — waiting for confirmation…</p>}
       {link.error && <p role="alert">{link.error.message}</p>}
       {unlink.error && <p role="alert">{unlink.error.message}</p>}
     </section>

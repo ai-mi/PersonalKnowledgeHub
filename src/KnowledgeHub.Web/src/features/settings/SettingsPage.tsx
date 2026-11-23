@@ -10,7 +10,7 @@ export function SettingsPage() {
 
   return (
     <>
-      <h1>Настройки</h1>
+      <h1>Settings</h1>
       {me && <ProfileSection me={me} />}
       {me && <DigestSection me={me} />}
       <TelegramSection />

@@ -27,13 +27,13 @@ function renderPage() {
   )
 }
 
-const work: Collection = { id: 'c1', name: 'Работа', description: 'проекты', itemCount: 3 }
+const work: Collection = { id: 'c1', name: 'Work', description: 'projects', itemCount: 3 }
 
 it('shows an empty state', async () => {
   server.use(http.get('*/api/collections', () => HttpResponse.json([])))
   renderPage()
 
-  expect(await screen.findByText('Коллекций пока нет.')).toBeInTheDocument()
+  expect(await screen.findByText('No collections yet.')).toBeInTheDocument()
 })
 
 it('shows a load error', async () => {
@@ -58,15 +58,15 @@ it('creates a collection and clears the input; a failed create shows the error',
   const user = userEvent.setup()
   renderPage()
 
-  await user.type(await screen.findByLabelText('Новая коллекция'), 'Работа')
-  await user.click(screen.getByRole('button', { name: 'Создать' }))
+  await user.type(await screen.findByLabelText('New collection'), 'Work')
+  await user.click(screen.getByRole('button', { name: 'Create' }))
 
-  expect(await screen.findByRole('link', { name: 'Работа' })).toHaveAttribute('href', '/?collection=c1')
-  expect(screen.getByLabelText('Новая коллекция')).toHaveValue('')
+  expect(await screen.findByRole('link', { name: 'Work' })).toHaveAttribute('href', '/?collection=c1')
+  expect(screen.getByLabelText('New collection')).toHaveValue('')
 
   fail = true
-  await user.type(screen.getByLabelText('Новая коллекция'), 'Другая')
-  await user.click(screen.getByRole('button', { name: 'Создать' }))
+  await user.type(screen.getByLabelText('New collection'), 'Other')
+  await user.click(screen.getByRole('button', { name: 'Create' }))
 
   expect(await screen.findByRole('alert')).toHaveTextContent('Duplicate')
 })
@@ -86,17 +86,17 @@ it('renames a collection, and shows a rename error', async () => {
   const user = userEvent.setup()
   renderPage()
 
-  await user.click(await screen.findByRole('button', { name: 'Переименовать' }))
-  await user.click(screen.getByRole('button', { name: 'Сохранить' }))
+  await user.click(await screen.findByRole('button', { name: 'Rename' }))
+  await user.click(screen.getByRole('button', { name: 'Save' }))
   expect(await screen.findByRole('alert')).toHaveTextContent('Bad name')
 
   fail = false
-  await user.clear(screen.getByLabelText('Название'))
-  await user.type(screen.getByLabelText('Название'), 'Дом')
-  await user.clear(screen.getByLabelText('Описание'))
-  await user.click(screen.getByRole('button', { name: 'Сохранить' }))
+  await user.clear(screen.getByLabelText('Name'))
+  await user.type(screen.getByLabelText('Name'), 'Home')
+  await user.clear(screen.getByLabelText('Description'))
+  await user.click(screen.getByRole('button', { name: 'Save' }))
 
-  expect(await screen.findByRole('link', { name: 'Дом' })).toBeInTheDocument()
+  expect(await screen.findByRole('link', { name: 'Home' })).toBeInTheDocument()
   expect(list[0]?.description).toBeNull()
 })
 
@@ -105,10 +105,10 @@ it('cancels renaming', async () => {
   const user = userEvent.setup()
   renderPage()
 
-  await user.click(await screen.findByRole('button', { name: 'Переименовать' }))
-  await user.click(screen.getByRole('button', { name: 'Отмена' }))
+  await user.click(await screen.findByRole('button', { name: 'Rename' }))
+  await user.click(screen.getByRole('button', { name: 'Cancel' }))
 
-  expect(screen.getByRole('link', { name: 'Работа' })).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: 'Work' })).toBeInTheDocument()
 })
 
 it('deletes a collection only after confirmation, and shows a delete error', async () => {
@@ -124,7 +124,7 @@ it('deletes a collection only after confirmation, and shows a delete error', asy
   const user = userEvent.setup()
   renderPage()
 
-  const button = await screen.findByRole('button', { name: 'Удалить' })
+  const button = await screen.findByRole('button', { name: 'Delete' })
   await user.click(button)
   expect(deleted).toBe(0)
 

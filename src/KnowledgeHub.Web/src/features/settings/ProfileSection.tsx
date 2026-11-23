@@ -18,8 +18,8 @@ export function ProfileSection({ me }: { me: Me }) {
 
   return (
     <section>
-      <h2>Профиль</h2>
-      <p>Имя: {me.displayName}</p>
+      <h2>Profile</h2>
+      <p>Name: {me.displayName}</p>
       <p>E-mail: {me.email ?? '—'}</p>
       <form
         onSubmit={(e: SubmitEvent) => {
@@ -28,7 +28,7 @@ export function ProfileSection({ me }: { me: Me }) {
         }}
       >
         <label>
-          Часовой пояс{' '}
+          Time zone{' '}
           <select value={timezone} onChange={(e) => setTimezone(e.target.value)}>
             {timeZones(me.settings.timezone).map((zone) => (
               <option key={zone} value={zone}>
@@ -38,9 +38,9 @@ export function ProfileSection({ me }: { me: Me }) {
           </select>
         </label>{' '}
         <button type="submit" disabled={save.isPending}>
-          Сохранить
+          Save
         </button>
-        {save.isSuccess && <span role="status"> Сохранено</span>}
+        {save.isSuccess && <span role="status"> Saved</span>}
         {save.error && <p role="alert">{save.error.message}</p>}
       </form>
     </section>

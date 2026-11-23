@@ -41,7 +41,7 @@ function renderPicker() {
 }
 
 const pickDate = async (value: string) => {
-  const input = await screen.findByLabelText(/Дата и время/)
+  const input = await screen.findByLabelText(/Date and time/)
   fireEvent.change(input, { target: { value } })
 }
 
@@ -56,8 +56,8 @@ it('sends the time chosen in the user timezone as UTC', async () => {
   renderPicker()
 
   await pickDate('2026-06-10T09:00')
-  await userEvent.selectOptions(screen.getByLabelText('Канал'), 'both')
-  await userEvent.click(screen.getByRole('button', { name: 'Напомнить' }))
+  await userEvent.selectOptions(screen.getByLabelText('Channel'), 'both')
+  await userEvent.click(screen.getByRole('button', { name: 'Remind' }))
 
   await waitFor(() => expect(body).toEqual({ itemId: 'i1', remindAt: '2026-06-10T04:00:00.000Z', channel: 'both' }))
 })
@@ -66,8 +66,8 @@ it('does not allow a time in the past', async () => {
   renderPicker()
 
   await pickDate('2026-06-01T04:00') // 04:00 в Екатеринбурге = 23:00 UTC накануне, раньше «сейчас»
-  expect(await screen.findByRole('alert')).toHaveTextContent('Это время уже прошло.')
-  expect(screen.getByRole('button', { name: 'Напомнить' })).toBeDisabled()
+  expect(await screen.findByRole('alert')).toHaveTextContent('This time is in the past.')
+  expect(screen.getByRole('button', { name: 'Remind' })).toBeDisabled()
 })
 
 it('fills quick options at 9:00 local time', async () => {
@@ -80,12 +80,12 @@ it('fills quick options at 9:00 local time', async () => {
   )
   renderPicker()
 
-  await userEvent.click(await screen.findByRole('button', { name: 'Через неделю' }))
-  expect(screen.getByLabelText(/Дата и время/)).toHaveValue('2026-06-08T09:00')
-  await userEvent.click(screen.getByRole('button', { name: 'Через месяц' }))
-  expect(screen.getByLabelText(/Дата и время/)).toHaveValue('2026-07-01T09:00')
-  await userEvent.click(screen.getByRole('button', { name: 'Завтра' }))
-  await userEvent.click(screen.getByRole('button', { name: 'Напомнить' }))
+  await userEvent.click(await screen.findByRole('button', { name: 'In a week' }))
+  expect(screen.getByLabelText(/Date and time/)).toHaveValue('2026-06-08T09:00')
+  await userEvent.click(screen.getByRole('button', { name: 'In a month' }))
+  expect(screen.getByLabelText(/Date and time/)).toHaveValue('2026-07-01T09:00')
+  await userEvent.click(screen.getByRole('button', { name: 'Tomorrow' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Remind' }))
 
   await waitFor(() => expect(body).toMatchObject({ remindAt: '2026-06-02T04:00:00.000Z', channel: 'telegram' }))
 })
@@ -102,10 +102,10 @@ it('lists reminders of the item and deletes one', async () => {
   )
   renderPicker()
 
-  expect(await screen.findByText(/10\.06\.2026.*E-mail/)).toBeInTheDocument()
-  await userEvent.click(screen.getByRole('button', { name: 'Удалить напоминание' }))
+  expect(await screen.findByText(/6\/10\/(?:26|2026), 9:00 AM.*E-mail/)).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: 'Delete reminder' }))
 
-  expect(await screen.findByText('Напоминаний нет.')).toBeInTheDocument()
+  expect(await screen.findByText('No reminders.')).toBeInTheDocument()
   expect(deleted).toBe(1)
 })
 
@@ -114,7 +114,7 @@ it('shows a server error on create', async () => {
   renderPicker()
 
   await pickDate('2026-06-10T09:00')
-  await userEvent.click(screen.getByRole('button', { name: 'Напомнить' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Remind' }))
 
   expect(await screen.findByRole('alert')).toHaveTextContent('Nope')
 })

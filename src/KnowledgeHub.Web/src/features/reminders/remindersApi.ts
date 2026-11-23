@@ -6,7 +6,7 @@ export type ReminderChannel = 'telegram' | 'email' | 'both'
 export const channelLabels: Record<ReminderChannel, string> = {
   telegram: 'Telegram',
   email: 'E-mail',
-  both: 'Telegram и e-mail',
+  both: 'Telegram and e-mail',
 }
 
 export interface Reminder {
@@ -55,5 +55,5 @@ export function useReminderMutations() {
 }
 
 export function formatRemindAt(value: string, timeZone: string): string {
-  return new Date(value).toLocaleString('ru-RU', { timeZone, dateStyle: 'short', timeStyle: 'short' })
+  return new Date(value).toLocaleString('en-US', { timeZone, dateStyle: 'short', timeStyle: 'short' })
 }

@@ -11,10 +11,10 @@ export interface ExportRecord {
 }
 
 export const statusLabels: Record<ExportStatus, string> = {
-  pending: 'В очереди',
-  processing: 'Собирается',
-  ready: 'Готов',
-  failed: 'Ошибка',
+  pending: 'Queued',
+  processing: 'Processing',
+  ready: 'Ready',
+  failed: 'Failed',
 }
 
 const exportsKey = ['exports'] as const

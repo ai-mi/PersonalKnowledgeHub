@@ -3,10 +3,10 @@ import { expect, it } from 'vitest'
 import { Highlight } from './Highlight'
 
 it('renders <mark> as an element and the rest as text', () => {
-  const { container } = render(<Highlight text="очередь <mark>сообщений</mark> в Azure" />)
+  const { container } = render(<Highlight text="queue <mark>messages</mark> in Azure" />)
 
-  expect(screen.getByText('сообщений').tagName).toBe('MARK')
-  expect(container).toHaveTextContent('очередь сообщений в Azure')
+  expect(screen.getByText('messages').tagName).toBe('MARK')
+  expect(container).toHaveTextContent('queue messages in Azure')
 })
 
 it('keeps escaped HTML as literal text', () => {

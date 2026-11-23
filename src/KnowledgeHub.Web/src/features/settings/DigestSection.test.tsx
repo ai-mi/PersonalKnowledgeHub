@@ -42,18 +42,18 @@ it('saves frequency, day and channels keeping the other settings and the confirm
   )
   renderSection()
 
-  expect(screen.queryByLabelText('День недели')).not.toBeInTheDocument()
-  await userEvent.selectOptions(screen.getByLabelText('Частота'), 'weekly')
-  await userEvent.selectOptions(screen.getByLabelText('День недели'), 'friday')
+  expect(screen.queryByLabelText('Day of week')).not.toBeInTheDocument()
+  await userEvent.selectOptions(screen.getByLabelText('Frequency'), 'weekly')
+  await userEvent.selectOptions(screen.getByLabelText('Day of week'), 'friday')
   await userEvent.click(screen.getByRole('checkbox', { name: 'Telegram' }))
   await userEvent.click(screen.getByRole('checkbox', { name: 'E-mail' }))
   await userEvent.click(screen.getByRole('checkbox', { name: 'Telegram' }))
   // Адрес в поле, но не сохранён своей кнопкой: сохранение дайджеста его не меняет.
-  await userEvent.clear(screen.getByLabelText('E-mail для уведомлений'))
-  await userEvent.type(screen.getByLabelText('E-mail для уведомлений'), 'x@y.z')
-  await userEvent.click(screen.getByRole('button', { name: 'Сохранить дайджест' }))
+  await userEvent.clear(screen.getByLabelText('Notification e-mail'))
+  await userEvent.type(screen.getByLabelText('Notification e-mail'), 'x@y.z')
+  await userEvent.click(screen.getByRole('button', { name: 'Save digest' }))
 
-  expect(await screen.findByText('Сохранено')).toBeInTheDocument()
+  expect(await screen.findByText('Saved')).toBeInTheDocument()
   expect(body).toEqual({
     timezone: 'Europe/Berlin',
     digestFrequency: 'weekly',
@@ -67,7 +67,7 @@ it('shows a digest save error', async () => {
   server.use(http.put('*/api/me/settings', () => HttpResponse.json({ title: 'Unknown IANA time zone.' }, { status: 400 })))
   renderSection()
 
-  await userEvent.click(screen.getByRole('button', { name: 'Сохранить дайджест' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Save digest' }))
 
   expect(await screen.findByRole('alert')).toHaveTextContent('Unknown IANA time zone.')
 })
@@ -87,19 +87,19 @@ it('sends a code to a new address and switches to it after the code is confirmed
   )
   renderSection()
 
-  await userEvent.clear(screen.getByLabelText('E-mail для уведомлений'))
-  await userEvent.type(screen.getByLabelText('E-mail для уведомлений'), ' x@y.z ')
-  await userEvent.click(screen.getByRole('button', { name: 'Сохранить адрес' }))
+  await userEvent.clear(screen.getByLabelText('Notification e-mail'))
+  await userEvent.type(screen.getByLabelText('Notification e-mail'), ' x@y.z ')
+  await userEvent.click(screen.getByRole('button', { name: 'Save address' }))
 
-  expect(await screen.findByText(/Код отправлен на x@y\.z/)).toBeInTheDocument()
+  expect(await screen.findByText(/Code sent to x@y\.z/)).toBeInTheDocument()
   expect(requested).toEqual({ email: 'x@y.z' })
 
-  await userEvent.type(screen.getByLabelText('Код из письма'), '123456')
-  await userEvent.click(screen.getByRole('button', { name: 'Подтвердить' }))
+  await userEvent.type(screen.getByLabelText('Code from the e-mail'), '123456')
+  await userEvent.click(screen.getByRole('button', { name: 'Confirm' }))
 
-  expect(await screen.findByText('Адрес подтверждён')).toBeInTheDocument()
+  expect(await screen.findByText('Address confirmed')).toBeInTheDocument()
   expect(confirmed).toEqual({ code: '123456' })
-  expect(screen.queryByLabelText('Код из письма')).not.toBeInTheDocument()
+  expect(screen.queryByLabelText('Code from the e-mail')).not.toBeInTheDocument()
 })
 
 it('sends null for an empty address (mail goes to the profile address)', async () => {
@@ -112,18 +112,18 @@ it('sends null for an empty address (mail goes to the profile address)', async (
   )
   renderSection()
 
-  await userEvent.clear(screen.getByLabelText('E-mail для уведомлений'))
-  await userEvent.click(screen.getByRole('button', { name: 'Сохранить адрес' }))
+  await userEvent.clear(screen.getByLabelText('Notification e-mail'))
+  await userEvent.click(screen.getByRole('button', { name: 'Save address' }))
 
-  expect(await screen.findByText('Адрес сохранён')).toBeInTheDocument()
+  expect(await screen.findByText('Address saved')).toBeInTheDocument()
   expect(requested).toEqual({ email: null })
 })
 
 it('asks for the code right away when an address is already awaiting confirmation', () => {
   renderSection({ ...me, settings: { ...settings, pendingEmail: 'p@q.r' } })
 
-  expect(screen.getByText(/Код отправлен на p@q\.r/)).toBeInTheDocument()
-  expect(screen.getByLabelText('Код из письма')).toBeInTheDocument()
+  expect(screen.getByText(/Code sent to p@q\.r/)).toBeInTheDocument()
+  expect(screen.getByLabelText('Code from the e-mail')).toBeInTheDocument()
 })
 
 it('shows address and code errors', async () => {
@@ -133,10 +133,10 @@ it('shows address and code errors', async () => {
   )
   renderSection({ ...me, settings: { ...settings, pendingEmail: 'p@q.r' } })
 
-  await userEvent.click(screen.getByRole('button', { name: 'Сохранить адрес' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Save address' }))
   expect(await screen.findByText('Too Many Requests')).toBeInTheDocument()
 
-  await userEvent.type(screen.getByLabelText('Код из письма'), '000000')
-  await userEvent.click(screen.getByRole('button', { name: 'Подтвердить' }))
+  await userEvent.type(screen.getByLabelText('Code from the e-mail'), '000000')
+  await userEvent.click(screen.getByRole('button', { name: 'Confirm' }))
   expect(await screen.findByText('Invalid code.')).toBeInTheDocument()
 })

@@ -4,19 +4,19 @@ import { apiFetch } from '../../api/client'
 import { meQueryKey, type Me, type Settings } from '../auth/useMe'
 
 const frequencies = [
-  { value: 'off', label: 'Выключен' },
-  { value: 'daily', label: 'Каждый день' },
-  { value: 'weekly', label: 'Раз в неделю' },
+  { value: 'off', label: 'Off' },
+  { value: 'daily', label: 'Daily' },
+  { value: 'weekly', label: 'Weekly' },
 ]
 
 const days = [
-  { value: 'monday', label: 'Понедельник' },
-  { value: 'tuesday', label: 'Вторник' },
-  { value: 'wednesday', label: 'Среда' },
-  { value: 'thursday', label: 'Четверг' },
-  { value: 'friday', label: 'Пятница' },
-  { value: 'saturday', label: 'Суббота' },
-  { value: 'sunday', label: 'Воскресенье' },
+  { value: 'monday', label: 'Monday' },
+  { value: 'tuesday', label: 'Tuesday' },
+  { value: 'wednesday', label: 'Wednesday' },
+  { value: 'thursday', label: 'Thursday' },
+  { value: 'friday', label: 'Friday' },
+  { value: 'saturday', label: 'Saturday' },
+  { value: 'sunday', label: 'Sunday' },
 ]
 
 const channels = [
@@ -50,8 +50,8 @@ export function DigestSection({ me }: { me: Me }) {
 
   return (
     <section>
-      <h2>Дайджест</h2>
-      <p>Подборка приходит в 9:00 по вашему часовому поясу.</p>
+      <h2>Digest</h2>
+      <p>The digest is sent at 9:00 in your time zone.</p>
       <form
         onSubmit={(e: SubmitEvent) => {
           e.preventDefault()
@@ -60,7 +60,7 @@ export function DigestSection({ me }: { me: Me }) {
       >
         <p>
           <label>
-            Частота{' '}
+            Frequency{' '}
             <select value={frequency} onChange={(e) => setFrequency(e.target.value)}>
               {frequencies.map((f) => (
                 <option key={f.value} value={f.value}>
@@ -71,7 +71,7 @@ export function DigestSection({ me }: { me: Me }) {
           </label>{' '}
           {frequency === 'weekly' && (
             <label>
-              День недели{' '}
+              Day of week{' '}
               <select value={day} onChange={(e) => setDay(e.target.value)}>
                 {days.map((d) => (
                   <option key={d.value} value={d.value}>
@@ -83,7 +83,7 @@ export function DigestSection({ me }: { me: Me }) {
           )}
         </p>
         <fieldset>
-          <legend>Каналы</legend>
+          <legend>Channels</legend>
           {channels.map((c) => (
             <label key={c.value}>
               <input type="checkbox" checked={selected.includes(c.value)} onChange={(e) => toggleChannel(c.value, e.target.checked)} />{' '}
@@ -92,9 +92,9 @@ export function DigestSection({ me }: { me: Me }) {
           ))}
         </fieldset>
         <button type="submit" disabled={save.isPending}>
-          Сохранить дайджест
+          Save digest
         </button>
-        {save.isSuccess && <span role="status"> Сохранено</span>}
+        {save.isSuccess && <span role="status"> Saved</span>}
         {save.error && <p role="alert">{save.error.message}</p>}
       </form>
       <NotificationEmail me={me} />
@@ -142,13 +142,13 @@ function NotificationEmail({ me }: { me: Me }) {
       >
         <p>
           <label>
-            E-mail для уведомлений{' '}
+            Notification e-mail{' '}
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={me.email ?? ''} />
           </label>{' '}
           <button type="submit" disabled={request.isPending}>
-            Сохранить адрес
+            Save address
           </button>
-          {request.isSuccess && !pending && <span role="status"> Адрес сохранён</span>}
+          {request.isSuccess && !pending && <span role="status"> Address saved</span>}
         </p>
         {request.error && <p role="alert">{request.error.message}</p>}
       </form>
@@ -160,21 +160,21 @@ function NotificationEmail({ me }: { me: Me }) {
           }}
         >
           <p>
-            Код отправлен на {pending}. Введите его, чтобы письма шли на этот адрес; до тех пор они идут на прежний.
+            Code sent to {pending}. Enter it to confirm this address; until then, e-mails go to the previous address.
           </p>
           <p>
             <label>
-              Код из письма{' '}
+              Code from the e-mail{' '}
               <input inputMode="numeric" autoComplete="one-time-code" value={code} onChange={(e) => setCode(e.target.value)} />
             </label>{' '}
             <button type="submit" disabled={confirm.isPending || code.trim() === ''}>
-              Подтвердить
+              Confirm
             </button>
           </p>
           {confirm.error && <p role="alert">{confirm.error.message}</p>}
         </form>
       )}
-      {confirm.isSuccess && !pending && <p role="status">Адрес подтверждён</p>}
+      {confirm.isSuccess && !pending && <p role="status">Address confirmed</p>}
     </>
   )
 }

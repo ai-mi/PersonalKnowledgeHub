@@ -37,13 +37,13 @@ it('shows a new token once and hides it after closing', async () => {
   )
   renderSection()
 
-  await userEvent.type(await screen.findByLabelText('Название'), 'CI')
-  await userEvent.click(screen.getByRole('button', { name: 'Создать токен' }))
+  await userEvent.type(await screen.findByLabelText('Name'), 'CI')
+  await userEvent.click(screen.getByRole('button', { name: 'Create token' }))
 
   expect(await screen.findByText('kh_secret')).toBeInTheDocument()
   expect(await screen.findByRole('cell', { name: 'CI' })).toBeInTheDocument()
 
-  await userEvent.click(screen.getByRole('button', { name: 'Закрыть' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Close' }))
 
   expect(screen.queryByText('kh_secret')).not.toBeInTheDocument()
 })
@@ -57,12 +57,12 @@ it('copies the token to the clipboard', async () => {
   const writeText = vi.spyOn(navigator.clipboard, 'writeText')
   renderSection()
 
-  await user.type(await screen.findByLabelText('Название'), 'CI')
-  await user.click(screen.getByRole('button', { name: 'Создать токен' }))
-  await user.click(await screen.findByRole('button', { name: 'Скопировать' }))
+  await user.type(await screen.findByLabelText('Name'), 'CI')
+  await user.click(screen.getByRole('button', { name: 'Create token' }))
+  await user.click(await screen.findByRole('button', { name: 'Copy' }))
 
   expect(writeText).toHaveBeenCalledWith('kh_secret')
-  expect(await screen.findByRole('button', { name: 'Скопировано' })).toBeInTheDocument()
+  expect(await screen.findByRole('button', { name: 'Copied' })).toBeInTheDocument()
 })
 
 it('revokes a token only after confirmation', async () => {
@@ -77,7 +77,7 @@ it('revokes a token only after confirmation', async () => {
   const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true)
   renderSection()
 
-  const button = await screen.findByRole('button', { name: 'Отозвать' })
+  const button = await screen.findByRole('button', { name: 'Revoke' })
   await userEvent.click(button)
   expect(revoked).toBe(0)
 
@@ -97,9 +97,9 @@ it('sends expiresInDays as a number when set', async () => {
   )
   renderSection()
 
-  await userEvent.type(await screen.findByLabelText('Название'), 'CI')
-  await userEvent.type(screen.getByLabelText('Срок, дней'), '30')
-  await userEvent.click(screen.getByRole('button', { name: 'Создать токен' }))
+  await userEvent.type(await screen.findByLabelText('Name'), 'CI')
+  await userEvent.type(screen.getByLabelText('Expires in days'), '30')
+  await userEvent.click(screen.getByRole('button', { name: 'Create token' }))
 
   await screen.findByText('kh_x')
   expect(body).toEqual({ name: 'CI', expiresInDays: 30 })
@@ -111,10 +111,10 @@ it('shows the empty state, a load error and a create error', async () => {
     http.post('*/api/me/tokens', () => HttpResponse.json({ title: 'Too many' }, { status: 400 })),
   )
   renderSection()
-  expect(await screen.findByText('Токенов пока нет.')).toBeInTheDocument()
+  expect(await screen.findByText('No tokens yet.')).toBeInTheDocument()
 
-  await userEvent.type(screen.getByLabelText('Название'), 'CI')
-  await userEvent.click(screen.getByRole('button', { name: 'Создать токен' }))
+  await userEvent.type(screen.getByLabelText('Name'), 'CI')
+  await userEvent.click(screen.getByRole('button', { name: 'Create token' }))
   expect(await screen.findByRole('alert')).toHaveTextContent('Too many')
 })
 
@@ -138,10 +138,10 @@ it('shows dates, marks revoked tokens and reports a revoke error', async () => {
   vi.spyOn(window, 'confirm').mockReturnValue(true)
   renderSection()
 
-  expect(await screen.findByText('Отозван')).toBeInTheDocument()
-  expect(screen.getAllByRole('button', { name: 'Отозвать' })).toHaveLength(1)
-  expect(screen.getByText('01.03.2026')).toBeInTheDocument()
+  expect(await screen.findByText('Revoked')).toBeInTheDocument()
+  expect(screen.getAllByRole('button', { name: 'Revoke' })).toHaveLength(1)
+  expect(screen.getByText(/3\/1\/(?:26|2026)/)).toBeInTheDocument()
 
-  await userEvent.click(screen.getByRole('button', { name: 'Отозвать' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Revoke' }))
   expect(await screen.findByRole('alert')).toHaveTextContent('Gone')
 })

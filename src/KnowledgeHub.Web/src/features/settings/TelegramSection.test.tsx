@@ -41,14 +41,14 @@ it('opens the t.me link, polls until linked and then stops polling', async () =>
   server.use(http.post('*/api/me/telegram/link', linkResponse))
   renderSection()
 
-  await userEvent.click(await screen.findByRole('button', { name: 'Привязать' }))
+  await userEvent.click(await screen.findByRole('button', { name: 'Link' }))
   expect(open).toHaveBeenCalledWith('https://t.me/bot?start=abc', '_blank', 'noopener,noreferrer')
-  expect(await screen.findByRole('status')).toHaveTextContent('ждём подтверждения')
+  expect(await screen.findByRole('status')).toHaveTextContent('waiting for confirmation')
 
   await waitFor(() => expect(statusRequests).toBeGreaterThan(2)) // опрос идёт
   linked = true
 
-  expect(await screen.findByRole('button', { name: 'Отвязать' })).toBeInTheDocument()
+  expect(await screen.findByRole('button', { name: 'Unlink' })).toBeInTheDocument()
   expect(screen.queryByRole('status')).not.toBeInTheDocument()
   const requestsAtLink = statusRequests
   await new Promise((resolve) => setTimeout(resolve, 150))
@@ -58,7 +58,7 @@ it('opens the t.me link, polls until linked and then stops polling', async () =>
 it('does not poll before the link is requested', async () => {
   renderSection()
 
-  await screen.findByRole('button', { name: 'Привязать' })
+  await screen.findByRole('button', { name: 'Link' })
   await new Promise((resolve) => setTimeout(resolve, 100))
   expect(statusRequests).toBe(1)
 })
@@ -72,7 +72,7 @@ it('stops polling when the link code has expired', async () => {
   )
   renderSection()
 
-  await userEvent.click(await screen.findByRole('button', { name: 'Привязать' }))
+  await userEvent.click(await screen.findByRole('button', { name: 'Link' }))
   await new Promise((resolve) => setTimeout(resolve, 300))
   const settled = statusRequests
   await new Promise((resolve) => setTimeout(resolve, 150))
@@ -93,12 +93,12 @@ it('unlinks only after confirmation', async () => {
   vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true)
   renderSection()
 
-  const button = await screen.findByRole('button', { name: 'Отвязать' })
+  const button = await screen.findByRole('button', { name: 'Unlink' })
   await userEvent.click(button)
   expect(unlinked).toBe(0)
 
   await userEvent.click(button)
-  expect(await screen.findByRole('button', { name: 'Привязать' })).toBeInTheDocument()
+  expect(await screen.findByRole('button', { name: 'Link' })).toBeInTheDocument()
   expect(unlinked).toBe(1)
 })
 
@@ -106,7 +106,7 @@ it('shows an error when the bot is not configured', async () => {
   server.use(http.post('*/api/me/telegram/link', () => HttpResponse.json({ title: 'Service Unavailable' }, { status: 503 })))
   renderSection()
 
-  await userEvent.click(await screen.findByRole('button', { name: 'Привязать' }))
+  await userEvent.click(await screen.findByRole('button', { name: 'Link' }))
 
   expect(await screen.findByRole('alert')).toHaveTextContent('Service Unavailable')
 })

@@ -13,9 +13,9 @@ function quickValue(timeZone: string, shift: { days?: number; months?: number })
 }
 
 const quickOptions = [
-  { label: 'Завтра', shift: { days: 1 } },
-  { label: 'Через неделю', shift: { days: 7 } },
-  { label: 'Через месяц', shift: { months: 1 } },
+  { label: 'Tomorrow', shift: { days: 1 } },
+  { label: 'In a week', shift: { days: 7 } },
+  { label: 'In a month', shift: { months: 1 } },
 ]
 
 export function ReminderPicker({ itemId }: { itemId: string }) {
@@ -31,16 +31,16 @@ export function ReminderPicker({ itemId }: { itemId: string }) {
 
   return (
     <section>
-      <h2>Напоминания</h2>
+      <h2>Reminders</h2>
       {reminders.error && <p role="alert">{reminders.error.message}</p>}
-      {reminders.data?.length === 0 && <p>Напоминаний нет.</p>}
+      {reminders.data?.length === 0 && <p>No reminders.</p>}
       <ul>
         {reminders.data?.map((r) => (
           <li key={r.id}>
             {formatRemindAt(r.remindAt, timeZone)} · {channelLabels[r.channel]}
-            {r.sentAt && ' · отправлено'}{' '}
+            {r.sentAt && ' · sent'}{' '}
             <button type="button" onClick={() => remove.mutate(r.id)} disabled={remove.isPending}>
-              Удалить напоминание
+              Delete reminder
             </button>
           </li>
         ))}
@@ -53,7 +53,7 @@ export function ReminderPicker({ itemId }: { itemId: string }) {
         }}
       >
         <label>
-          Дата и время ({timeZone}){' '}
+          Date and time ({timeZone}){' '}
           <input
             type="datetime-local"
             value={value}
@@ -67,7 +67,7 @@ export function ReminderPicker({ itemId }: { itemId: string }) {
           </button>
         ))}{' '}
         <label>
-          Канал{' '}
+          Channel{' '}
           <select value={channel} onChange={(e) => setChannel(e.target.value as ReminderChannel)}>
             {Object.entries(channelLabels).map(([key, label]) => (
               <option key={key} value={key}>
@@ -77,9 +77,9 @@ export function ReminderPicker({ itemId }: { itemId: string }) {
           </select>
         </label>{' '}
         <button type="submit" disabled={remindAt === null || inPast || create.isPending}>
-          Напомнить
+          Remind
         </button>
-        {inPast && <p role="alert">Это время уже прошло.</p>}
+        {inPast && <p role="alert">This time is in the past.</p>}
         {create.error && <p role="alert">{create.error.message}</p>}
         {remove.error && <p role="alert">{remove.error.message}</p>}
       </form>

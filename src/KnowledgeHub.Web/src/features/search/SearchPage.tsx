@@ -45,32 +45,32 @@ export function SearchPage() {
 
   return (
     <>
-      <h1>Поиск</h1>
+      <h1>Search</h1>
       <p>
         <input
           type="search"
-          aria-label="Запрос"
-          placeholder={'Слова, "фраза", -исключение'}
+          aria-label="Query"
+          placeholder={'Words, "phrase", -excluded'}
           value={input}
           onChange={(e) => setInput(e.target.value)}
         />
       </p>
       <ItemFiltersBar filters={filters} onChange={setParam} />
 
-      {q.trim() === '' && <p>Введите запрос, чтобы найти записи.</p>}
-      {isFetching && <p>Поиск…</p>}
+      {q.trim() === '' && <p>Enter a query to search items.</p>}
+      {isFetching && <p>Searching…</p>}
       {error && <p role="alert">{error.message}</p>}
-      {data && q.trim() !== '' && data.items.length === 0 && <p>Ничего не найдено.</p>}
+      {data && q.trim() !== '' && data.items.length === 0 && <p>Nothing found.</p>}
       {q.trim() !== '' && data?.items.map((hit) => <SearchResult key={hit.item.id} hit={hit} />)}
 
       {data && pageCount > 1 && (
         <p>
           <button type="button" disabled={filters.page <= 1} onClick={() => setParam('page', String(filters.page - 1))}>
-            Назад
+            Previous
           </button>{' '}
-          Страница {filters.page} из {pageCount}{' '}
+          Page {filters.page} of {pageCount}{' '}
           <button type="button" disabled={filters.page >= pageCount} onClick={() => setParam('page', String(filters.page + 1))}>
-            Вперёд
+            Next
           </button>
         </p>
       )}

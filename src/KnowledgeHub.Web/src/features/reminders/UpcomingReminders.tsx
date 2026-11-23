@@ -8,7 +8,7 @@ function UpcomingRow({ reminder, timeZone }: { reminder: Reminder; timeZone: str
   return (
     <li>
       {formatRemindAt(reminder.remindAt, timeZone)} ·{' '}
-      <Link to={`/items/${reminder.itemId}`}>{item ? displayTitle(item) : 'Запись'}</Link>
+      <Link to={`/items/${reminder.itemId}`}>{item ? displayTitle(item) : 'Item'}</Link>
     </li>
   )
 }
@@ -22,8 +22,8 @@ export function UpcomingReminders() {
   if (!reminders?.length) return null
 
   return (
-    <section aria-label="Ближайшие напоминания">
-      <h2>Ближайшие напоминания</h2>
+    <section aria-label="Upcoming reminders">
+      <h2>Upcoming reminders</h2>
       <ul>
         {reminders.map((r) => (
           <UpcomingRow key={r.id} reminder={r} timeZone={timeZone} />

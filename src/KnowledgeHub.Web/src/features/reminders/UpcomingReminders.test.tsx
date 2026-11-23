@@ -30,12 +30,12 @@ it('lists upcoming reminders with item titles in the user timezone', async () =>
       expect(new URL(request.url).searchParams.get('upcoming')).toBe('true')
       return HttpResponse.json([{ id: 'r1', itemId: 'i1', remindAt: '2026-06-10T04:00:00Z', channel: 'telegram', sentAt: null }])
     }),
-    http.get('*/api/items/i1', () => HttpResponse.json({ id: 'i1', title: 'Статья', url: null })),
+    http.get('*/api/items/i1', () => HttpResponse.json({ id: 'i1', title: 'Article', url: null })),
   )
   renderBlock()
 
-  expect(await screen.findByRole('link', { name: 'Статья' })).toHaveAttribute('href', '/items/i1')
-  expect(screen.getByText(/10\.06\.2026, 09:00/)).toBeInTheDocument()
+  expect(await screen.findByRole('link', { name: 'Article' })).toHaveAttribute('href', '/items/i1')
+  expect(screen.getByText(/6\/10\/(?:26|2026), 9:00 AM/)).toBeInTheDocument()
 })
 
 it('renders nothing when there are no reminders', async () => {
