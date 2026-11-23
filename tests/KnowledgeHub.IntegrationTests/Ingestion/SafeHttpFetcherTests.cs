@@ -123,6 +123,22 @@ public sealed class SafeHttpFetcherTests : IDisposable
     }
 
     [Theory]
+    [InlineData(401)]
+    [InlineData(403)]
+    public async Task SiteThatRefusesAutomaticDownloads_GetsAnExplainingMessage(int status)
+    {
+        // Многие сайты (Cloudflare, Medium) отказывают ботам: это не сбой приложения, а запись остаётся закладкой.
+        Serve("/page", r => r.WithStatusCode(status));
+        using var fetcher = Fetcher();
+
+        var error = await FailureAsync(fetcher);
+
+        error.Retryable.ShouldBeFalse();
+        error.Message.ShouldBe(
+            $"This site does not allow automatic downloads (HTTP {status}). The link is saved as a bookmark; you can add the text or a note yourself.");
+    }
+
+    [Theory]
     [InlineData("application/json")]
     [InlineData(null)]
     public async Task NonHtmlResponse_IsRejected(string? contentType)

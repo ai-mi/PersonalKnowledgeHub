@@ -119,6 +119,15 @@ public sealed partial class SafeHttpFetcher : IDisposable
 
         var status = (int)response.StatusCode;
 
+        // 401/403: сайт отказывает автоматической загрузке (часто Cloudflare, Medium). Это не сбой приложения, а запись
+        // остаётся закладкой — сообщение объясняет это, чтобы «ошибка 403» не выглядела поломкой.
+        if (status is 401 or 403)
+        {
+            throw new IngestionException(
+                $"This site does not allow automatic downloads (HTTP {status}). The link is saved as a bookmark; you can add the text or a note yourself.",
+                retryable: false);
+        }
+
         // 5xx, 429 и 408 — временные: повтор может помочь; остальные 4xx — нет.
         var retryable = status >= 500 || status is 429 or 408;
         throw new IngestionException($"Страница ответила кодом {status}.", retryable);
