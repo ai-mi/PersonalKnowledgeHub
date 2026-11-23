@@ -13,6 +13,13 @@ using KnowledgeHub.Api.Modules.Jobs;
 using KnowledgeHub.Api.Modules.Reminders;
 using KnowledgeHub.Api.Modules.Search;
 
+// Процесс разбора документа (его запускает DocumentTextExtractor): веб-приложение не поднимается.
+if (args is [DocumentTextExtractor.ChildCommand, var documentKind])
+{
+    Environment.ExitCode = await DocumentTextExtractor.RunParserProcessAsync(documentKind);
+    return;
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddHealthChecks();
