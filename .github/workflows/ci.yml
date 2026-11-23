@@ -41,6 +41,10 @@ jobs:
         run: dotnet test KnowledgeHub.slnx --no-build
 
       - name: Bicep — build
+        # Проверка шаблонов, не развёртывание: alertEmail обязателен (@minLength(3)), поэтому нужна заглушка.
+        # Настоящий адрес задаётся при ручном развёртывании инфраструктуры (infra/README.md).
+        env:
+          ALERT_EMAIL: ci@example.invalid
         run: |
           az bicep build --file infra/main.bicep --outfile "$RUNNER_TEMP/main.json"
           az bicep build-params --file infra/main.bicepparam --outfile "$RUNNER_TEMP/main.parameters.json"
