@@ -6,7 +6,7 @@ interface TagInputProps {
   onChange: (tags: string[]) => void
 }
 
-/** Теги чипами; Enter или запятая добавляют, автодополнение — из существующих тегов пользователя. */
+/** Tags as chips; Enter or comma adds a tag, autocomplete comes from user's existing tags. */
 export function TagInput({ value, onChange }: TagInputProps) {
   const [draft, setDraft] = useState('')
   const listId = useId()
@@ -32,18 +32,18 @@ export function TagInput({ value, onChange }: TagInputProps) {
   return (
     <span>
       {value.map((tag) => (
-        <button key={tag} type="button" aria-label={`Убрать тег ${tag}`} onClick={() => onChange(value.filter((t) => t !== tag))}>
+        <button key={tag} type="button" aria-label={`Remove tag ${tag}`} onClick={() => onChange(value.filter((t) => t !== tag))}>
           #{tag} ×
         </button>
       ))}{' '}
       <input
-        aria-label="Теги"
+        aria-label="Tags"
         list={listId}
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         onKeyDown={onKeyDown}
         onBlur={add}
-        placeholder="Добавить тег"
+        placeholder="Add tag"
       />
       <datalist id={listId}>
         {known?.map((tag) => (

@@ -8,7 +8,7 @@ interface Props {
   onChange: (key: FilterKey, value: string) => void
 }
 
-/** Общие фильтры списка записей и поиска. */
+/** Shared filters for the items list and search. */
 export function ItemFiltersBar({ filters, onChange }: Props) {
   const { data: tags } = useTags()
   const { data: collections } = useCollections()
@@ -16,9 +16,9 @@ export function ItemFiltersBar({ filters, onChange }: Props) {
   return (
     <p>
       <label>
-        Тип{' '}
+        Type{' '}
         <select value={filters.type} onChange={(e) => onChange('type', e.target.value)}>
-          <option value="">Все</option>
+          <option value="">All</option>
           {Object.entries(itemTypeLabels).map(([value, label]) => (
             <option key={value} value={value}>
               {label}
@@ -27,9 +27,9 @@ export function ItemFiltersBar({ filters, onChange }: Props) {
         </select>
       </label>{' '}
       <label>
-        Тег{' '}
+        Tag{' '}
         <select value={filters.tag} onChange={(e) => onChange('tag', e.target.value)}>
-          <option value="">Все</option>
+          <option value="">All</option>
           {tags?.map((t) => (
             <option key={t.id} value={t.name}>
               {t.name}
@@ -38,9 +38,9 @@ export function ItemFiltersBar({ filters, onChange }: Props) {
         </select>
       </label>{' '}
       <label>
-        Коллекция{' '}
+        Collection{' '}
         <select value={filters.collection} onChange={(e) => onChange('collection', e.target.value)}>
-          <option value="">Все</option>
+          <option value="">All</option>
           {collections?.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
@@ -49,8 +49,7 @@ export function ItemFiltersBar({ filters, onChange }: Props) {
         </select>
       </label>{' '}
       <label>
-        <input type="checkbox" checked={filters.unread} onChange={(e) => onChange('unread', e.target.checked ? 'true' : '')} />{' '}
-        Непрочитанное
+        <input type="checkbox" checked={filters.unread} onChange={(e) => onChange('unread', e.target.checked ? 'true' : '')} /> Unread
       </label>
     </p>
   )

@@ -4,10 +4,10 @@ import { apiFetch, apiUpload } from '../../api/client'
 export type ItemType = 'link' | 'note' | 'snippet' | 'document'
 
 export const itemTypeLabels: Record<ItemType, string> = {
-  link: 'Ссылка',
-  note: 'Заметка',
-  snippet: 'Фрагмент кода',
-  document: 'Документ',
+  link: 'Link',
+  note: 'Note',
+  snippet: 'Code snippet',
+  document: 'Document',
 }
 
 export interface ItemSummary {
@@ -35,7 +35,7 @@ export interface Item extends ItemSummary {
   collections: CollectionRef[]
 }
 
-export const displayTitle = (item: Pick<ItemSummary, 'title' | 'url'>) => item.title ?? item.url ?? 'Без названия'
+export const displayTitle = (item: Pick<ItemSummary, 'title' | 'url'>) => item.title ?? item.url ?? 'Untitled'
 
 export interface Paged<T> {
   items: T[]
@@ -50,7 +50,7 @@ export interface TagInfo {
   itemCount: number
 }
 
-/** Тело `POST /api/items`; для `PUT` лишние `type` и `url` сервер игнорирует. */
+/** Body of `POST /api/items`; for `PUT` the extra `type` and `url` are ignored by the server. */
 export interface ItemInput {
   type: ItemType
   title: string | null
@@ -111,7 +111,7 @@ export const isInProgress = (status: string) => status === 'pending' || status =
 
 const POLL_INTERVAL_MS = 2000
 
-/** Пока запись обрабатывается, опрашивает её раз в 2 с; на `ready`/`failed` опрос прекращается. */
+/** While the item is being processed, polls it every 2 s; on `ready`/`failed` polling stops. */
 export const useItem = (id: string) =>
   useQuery({
     queryKey: ['items', 'one', id],
@@ -123,7 +123,7 @@ export const useTags = () => useQuery({ queryKey: ['tags'], queryFn: () => apiFe
 
 export function useItemMutations() {
   const queryClient = useQueryClient()
-  // Любое изменение записи может поменять списки, счётчики тегов и коллекций.
+  // Any item change may affect lists and tag/collection counters.
   const onSuccess = () =>
     Promise.all([
       queryClient.invalidateQueries({ queryKey: ['items'] }),

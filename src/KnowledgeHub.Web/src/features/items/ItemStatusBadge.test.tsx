@@ -12,7 +12,7 @@ import type { Item } from './itemsApi'
 const doc: Item = {
   id: 'd1',
   type: 'document',
-  title: 'Отчёт',
+  title: 'Report',
   url: null,
   status: 'pending',
   readAt: null,
@@ -41,10 +41,10 @@ const wrap = (ui: React.ReactNode) => (
 )
 
 it.each([
-  ['pending', 'В обработке'],
-  ['processing', 'В обработке'],
-  ['ready', 'Готово'],
-  ['failed', 'Ошибка'],
+  ['pending', 'Processing'],
+  ['processing', 'Processing'],
+  ['ready', 'Ready'],
+  ['failed', 'Error'],
 ])('labels status %s', (status, label) => {
   render(wrap(<ItemStatusBadge item={{ id: 'd1', status }} />))
   expect(screen.getByText(label)).toBeInTheDocument()
@@ -61,7 +61,7 @@ it('retries a failed item through the reprocess endpoint', async () => {
   render(wrap(<ItemStatusBadge item={{ id: 'd1', status: 'failed', error: 'timeout' }} withRetry />))
 
   expect(screen.getByText(/timeout/)).toBeInTheDocument()
-  await userEvent.click(screen.getByRole('button', { name: 'Повторить' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Retry' }))
   await waitFor(() => expect(calls).toBe(1))
 })
 
@@ -70,7 +70,7 @@ it('polls a pending document until it is ready, then stops', async () => {
   server.use(
     http.get('*/api/items/d1', () => {
       requests++
-      return HttpResponse.json({ ...doc, status: requests >= 2 ? 'ready' : 'processing', body: requests >= 2 ? 'Извлечённый текст' : null })
+      return HttpResponse.json({ ...doc, status: requests >= 2 ? 'ready' : 'processing', body: requests >= 2 ? 'Extracted text' : null })
     }),
   )
   render(
@@ -81,9 +81,9 @@ it('polls a pending document until it is ready, then stops', async () => {
     ),
   )
 
-  expect(await screen.findByText('В обработке')).toBeInTheDocument()
-  expect(await screen.findByText('Извлечённый текст', {}, { timeout: 5000 })).toBeInTheDocument()
-  expect(screen.getByRole('link', { name: 'Скачать' })).toHaveAttribute('href', '/api/items/d1/file')
+  expect(await screen.findByText('Processing')).toBeInTheDocument()
+  expect(await screen.findByText('Extracted text', {}, { timeout: 5000 })).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: 'Download' })).toHaveAttribute('href', '/api/items/d1/file')
 
   const settled = requests
   await new Promise((r) => setTimeout(r, 2500))

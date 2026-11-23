@@ -14,9 +14,9 @@ export function NewItemPage() {
 
   return (
     <>
-      <h1>Новая запись</h1>
+      <h1>New item</h1>
       <ItemForm
-        submitLabel="Сохранить"
+        submitLabel="Save"
         onSubmit={async (input) => {
           const item = await create.mutateAsync(input)
           await navigate(`/items/${item.id}`)
@@ -31,7 +31,7 @@ export function UploadItemPage() {
 
   return (
     <>
-      <h1>Загрузить документ</h1>
+      <h1>Upload document</h1>
       <UploadForm onUploaded={(item) => void navigate(`/items/${item.id}`)} />
     </>
   )
@@ -55,7 +55,7 @@ function ItemView({ item }: { item: Item }) {
       {item.type === 'document' && (
         <p>
           <a href={`/api/items/${item.id}/file`} download>
-            Скачать
+            Download
           </a>
         </p>
       )}
@@ -71,7 +71,7 @@ function ItemView({ item }: { item: Item }) {
       </p>
       {item.collections.length > 0 && (
         <p>
-          Коллекции:{' '}
+          Collections:{' '}
           {item.collections.map((c) => (
             <Link key={c.id} to={`/?collection=${c.id}`}>
               {c.name}{' '}
@@ -90,7 +90,7 @@ export function ItemPage() {
   const { data: item, isPending, error } = useItem(id)
   const { update, setRead, remove } = useItemMutations()
 
-  if (isPending) return <p>Загрузка…</p>
+  if (isPending) return <p>Loading…</p>
   if (error) return <p role="alert">{error.message}</p>
 
   const save = async (input: ItemInput) => {
@@ -98,7 +98,7 @@ export function ItemPage() {
     setEditing(false)
   }
   const confirmRemove = async () => {
-    if (window.confirm(`Удалить запись «${displayTitle(item)}»?`)) {
+    if (window.confirm(`Delete item "${displayTitle(item)}"?`)) {
       await remove.mutateAsync(id)
       await navigate('/')
     }
@@ -110,16 +110,16 @@ export function ItemPage() {
       <h1>{displayTitle(item)}</h1>
       <p>
         <button type="button" onClick={() => setRead.mutate({ id, read: item.readAt === null })} disabled={setRead.isPending}>
-          {item.readAt === null ? 'Прочитано' : 'Вернуть в непрочитанное'}
+          {item.readAt === null ? 'Mark as read' : 'Mark as unread'}
         </button>{' '}
         <button type="button" onClick={() => setEditing((v) => !v)}>
-          {editing ? 'Отмена' : 'Редактировать'}
+          {editing ? 'Cancel' : 'Edit'}
         </button>{' '}
         <button type="button" onClick={() => void confirmRemove()}>
-          Удалить
+          Delete
         </button>
       </p>
-      {editing ? <ItemForm item={item} submitLabel="Сохранить" onSubmit={save} /> : <ItemView item={item} />}
+      {editing ? <ItemForm item={item} submitLabel="Save" onSubmit={save} /> : <ItemView item={item} />}
       <ReminderPicker itemId={id} />
     </>
   )

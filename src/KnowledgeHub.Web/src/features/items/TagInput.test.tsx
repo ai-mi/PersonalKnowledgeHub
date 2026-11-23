@@ -35,7 +35,7 @@ it('adds tags on Enter and comma, stripping leading #', async () => {
   const user = userEvent.setup()
   renderInput()
 
-  await user.type(screen.getByLabelText('Теги'), '##one{Enter}two,')
+  await user.type(screen.getByLabelText('Tags'), '##one{Enter}two,')
 
   expect(screen.getByRole('status')).toHaveTextContent('one|two')
 })
@@ -44,7 +44,7 @@ it('ignores empty input and case-insensitive duplicates', async () => {
   const user = userEvent.setup()
   renderInput(['Azure'])
 
-  await user.type(screen.getByLabelText('Теги'), '   {Enter}azure{Enter}#')
+  await user.type(screen.getByLabelText('Tags'), '   {Enter}azure{Enter}#')
 
   expect(screen.getByRole('status')).toHaveTextContent(/^Azure$/)
 })
@@ -53,7 +53,7 @@ it('adds a pending tag on blur', async () => {
   const user = userEvent.setup()
   renderInput()
 
-  await user.type(screen.getByLabelText('Теги'), 'later')
+  await user.type(screen.getByLabelText('Tags'), 'later')
   await user.tab()
 
   expect(screen.getByRole('status')).toHaveTextContent('later')
@@ -63,7 +63,7 @@ it('removes the last tag on Backspace with an empty draft, but not with text', a
   const user = userEvent.setup()
   renderInput(['a', 'b'])
 
-  const input = screen.getByLabelText('Теги')
+  const input = screen.getByLabelText('Tags')
   await user.type(input, 'x{Backspace}')
   expect(screen.getByRole('status')).toHaveTextContent('a|b')
 
@@ -75,7 +75,7 @@ it('removes a tag by clicking it', async () => {
   const user = userEvent.setup()
   renderInput(['a', 'b'])
 
-  await user.click(screen.getByRole('button', { name: 'Убрать тег a' }))
+  await user.click(screen.getByRole('button', { name: 'Remove tag a' }))
 
   expect(screen.getByRole('status')).toHaveTextContent(/^b$/)
 })

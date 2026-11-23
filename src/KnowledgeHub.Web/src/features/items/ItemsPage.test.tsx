@@ -11,7 +11,7 @@ const requested: URL[] = []
 const summary = {
   id: 'i1',
   type: 'note',
-  title: 'Первая',
+  title: 'First',
   url: null,
   status: 'ready',
   readAt: null,
@@ -29,7 +29,7 @@ const server = setupServer(
   }),
   http.get('*/api/reminders', () => HttpResponse.json([])),
   http.get('*/api/tags', () => HttpResponse.json([{ id: 't1', name: 'azure', itemCount: 1 }])),
-  http.get('*/api/collections', () => HttpResponse.json([{ id: 'c1', name: 'Работа', description: null, itemCount: 1 }])),
+  http.get('*/api/collections', () => HttpResponse.json([{ id: 'c1', name: 'Work', description: null, itemCount: 1 }])),
 )
 
 beforeAll(() => server.listen({ onUnhandledFrame: 'error' }))
@@ -56,32 +56,32 @@ const lastParam = (name: string) => requested.at(-1)?.searchParams.get(name)
 it('lists items with their tags', async () => {
   renderPage()
 
-  expect(await screen.findByRole('link', { name: 'Первая' })).toBeInTheDocument()
+  expect(await screen.findByRole('link', { name: 'First' })).toBeInTheDocument()
   expect(screen.getByRole('link', { name: '#azure' })).toBeInTheDocument()
   expect(requested[0]?.searchParams.has('unread')).toBe(false)
 })
 
 it('passes unread=true when the unread filter is on, and drops it when off', async () => {
   renderPage()
-  await screen.findByRole('link', { name: 'Первая' })
+  await screen.findByRole('link', { name: 'First' })
 
-  await userEvent.click(screen.getByRole('checkbox', { name: 'Непрочитанное' }))
+  await userEvent.click(screen.getByRole('checkbox', { name: 'Unread' }))
   await waitFor(() => expect(lastParam('unread')).toBe('true'))
 
-  await userEvent.click(screen.getByRole('checkbox', { name: 'Непрочитанное' }))
+  await userEvent.click(screen.getByRole('checkbox', { name: 'Unread' }))
   await waitFor(() => expect(requested.at(-1)?.searchParams.has('unread')).toBe(false))
 })
 
 it('passes type, tag and collection filters', async () => {
   const user = userEvent.setup()
   renderPage()
-  await screen.findByRole('link', { name: 'Первая' })
+  await screen.findByRole('link', { name: 'First' })
   await screen.findByRole('option', { name: 'azure' })
-  await screen.findByRole('option', { name: 'Работа' })
+  await screen.findByRole('option', { name: 'Work' })
 
-  await user.selectOptions(screen.getByLabelText('Тип'), 'snippet')
-  await user.selectOptions(screen.getByLabelText('Тег'), 'azure')
-  await user.selectOptions(screen.getByLabelText('Коллекция'), 'c1')
+  await user.selectOptions(screen.getByLabelText('Type'), 'snippet')
+  await user.selectOptions(screen.getByLabelText('Tag'), 'azure')
+  await user.selectOptions(screen.getByLabelText('Collection'), 'c1')
 
   await waitFor(() => {
     expect(lastParam('type')).toBe('snippet')
@@ -93,7 +93,7 @@ it('passes type, tag and collection filters', async () => {
 it('reads filters from the URL', async () => {
   renderPage('/?type=link&tag=azure&unread=true')
 
-  await screen.findByRole('link', { name: 'Первая' })
+  await screen.findByRole('link', { name: 'First' })
   expect(lastParam('type')).toBe('link')
   expect(lastParam('tags')).toBe('azure')
   expect(lastParam('unread')).toBe('true')
@@ -102,7 +102,7 @@ it('reads filters from the URL', async () => {
 it.each(['abc', '0', '-5'])('falls back to page 1 for page=%s', async (page) => {
   renderPage(`/?page=${page}`)
 
-  await screen.findByRole('link', { name: 'Первая' })
+  await screen.findByRole('link', { name: 'First' })
   expect(lastParam('page')).toBe('1')
 })
 
@@ -111,8 +111,8 @@ it('shows an empty state and hides paging', async () => {
   total = 0
   renderPage()
 
-  expect(await screen.findByText('Записей не найдено.')).toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: 'Вперёд' })).not.toBeInTheDocument()
+  expect(await screen.findByText('No items found.')).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Next' })).not.toBeInTheDocument()
 })
 
 it('shows a load error', async () => {
@@ -126,20 +126,20 @@ it('pages forward and back, and a filter change resets to page 1', async () => {
   total = 45
   const user = userEvent.setup()
   renderPage()
-  await screen.findByText('Страница 1 из 3')
-  expect(screen.getByRole('button', { name: 'Назад' })).toBeDisabled()
+  await screen.findByText('Page 1 of 3')
+  expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled()
 
-  await user.click(screen.getByRole('button', { name: 'Вперёд' }))
-  await screen.findByText('Страница 2 из 3')
-  await user.click(screen.getByRole('button', { name: 'Вперёд' }))
-  await screen.findByText('Страница 3 из 3')
-  expect(screen.getByRole('button', { name: 'Вперёд' })).toBeDisabled()
+  await user.click(screen.getByRole('button', { name: 'Next' }))
+  await screen.findByText('Page 2 of 3')
+  await user.click(screen.getByRole('button', { name: 'Next' }))
+  await screen.findByText('Page 3 of 3')
+  expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled()
 
-  await user.click(screen.getByRole('button', { name: 'Назад' }))
-  await screen.findByText('Страница 2 из 3')
+  await user.click(screen.getByRole('button', { name: 'Previous' }))
+  await screen.findByText('Page 2 of 3')
 
-  await user.click(screen.getByRole('checkbox', { name: 'Непрочитанное' }))
-  await screen.findByText('Страница 1 из 3')
+  await user.click(screen.getByRole('checkbox', { name: 'Unread' }))
+  await screen.findByText('Page 1 of 3')
 })
 
 it('marks an item read and back from the card', async () => {
@@ -151,13 +151,13 @@ it('marks an item read and back from the card', async () => {
     }),
   )
   renderPage()
-  await userEvent.click(await screen.findByRole('button', { name: 'Прочитано' }))
+  await userEvent.click(await screen.findByRole('button', { name: 'Mark as read' }))
   await waitFor(() => expect(bodies).toEqual([{ read: true }]))
 
   items = [{ ...summary, readAt: '2026-01-02T00:00:00Z' }]
-  await userEvent.click(screen.getByRole('checkbox', { name: 'Непрочитанное' }))
-  await userEvent.click(screen.getByRole('checkbox', { name: 'Непрочитанное' }))
-  await userEvent.click(await screen.findByRole('button', { name: 'Вернуть в непрочитанное' }))
+  await userEvent.click(screen.getByRole('checkbox', { name: 'Unread' }))
+  await userEvent.click(screen.getByRole('checkbox', { name: 'Unread' }))
+  await userEvent.click(await screen.findByRole('button', { name: 'Mark as unread' }))
   await waitFor(() => expect(bodies).toEqual([{ read: true }, { read: false }]))
 })
 
@@ -169,5 +169,5 @@ it('shows the url for an untitled link and a placeholder when there is neither',
   renderPage()
 
   expect(await screen.findByRole('link', { name: 'https://e.com' })).toBeInTheDocument()
-  expect(screen.getByRole('link', { name: 'Без названия' })).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: 'Untitled' })).toBeInTheDocument()
 })

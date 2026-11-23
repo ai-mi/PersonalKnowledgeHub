@@ -8,7 +8,7 @@ import { UploadForm } from './UploadForm'
 
 const server = setupServer(
   http.get('*/api/tags', () => HttpResponse.json([])),
-  http.get('*/api/collections', () => HttpResponse.json([{ id: 'c1', name: 'Работа', description: null, itemCount: 0 }])),
+  http.get('*/api/collections', () => HttpResponse.json([{ id: 'c1', name: 'Work', description: null, itemCount: 0 }])),
 )
 beforeAll(() => server.listen({ onUnhandledFrame: 'error' }))
 afterEach(() => server.resetHandlers())
@@ -23,8 +23,8 @@ const renderForm = (onUploaded = vi.fn()) => {
   return onUploaded
 }
 
-const fileInput = () => screen.getByLabelText(/Файл/) as HTMLInputElement
-// `accept` в userEvent.upload отсекает файлы по расширению, поэтому проверку формата ведём с applyAccept: false.
+const fileInput = () => screen.getByLabelText(/File/) as HTMLInputElement
+// userEvent.upload filters files by extension via `accept`; we validate formats ourselves with applyAccept: false.
 const user = () => userEvent.setup({ applyAccept: false })
 
 it('rejects a 25 MB file without sending a request', async () => {
@@ -36,15 +36,15 @@ it('rejects a 25 MB file without sending a request', async () => {
   Object.defineProperty(big, 'size', { value: 25 * 1024 * 1024 })
   await user().upload(fileInput(), big)
 
-  expect(screen.getByRole('alert')).toHaveTextContent('больше 20 МБ')
-  await user().click(screen.getByRole('button', { name: 'Загрузить' }))
+  expect(screen.getByRole('alert')).toHaveTextContent('larger than 20 MB')
+  await user().click(screen.getByRole('button', { name: 'Upload' }))
   expect(uploads).toBe(0)
 })
 
 it('rejects an unsupported extension', async () => {
   renderForm()
   await user().upload(fileInput(), new File(['x'], 'run.exe'))
-  expect(screen.getByRole('alert')).toHaveTextContent('Допустимые форматы')
+  expect(screen.getByRole('alert')).toHaveTextContent('Allowed formats')
 })
 
 it('uploads the file with title, tags and collections as multipart', async () => {
@@ -59,15 +59,15 @@ it('uploads the file with title, tags and collections as multipart', async () =>
   const u = user()
 
   await u.upload(fileInput(), new File(['%PDF-1'], 'report.pdf', { type: 'application/pdf' }))
-  await u.type(screen.getByLabelText('Заголовок'), 'Отчёт')
-  await u.type(screen.getByLabelText('Теги'), 'azure{Enter}')
-  await u.click(await screen.findByRole('checkbox', { name: 'Работа' }))
-  await u.click(screen.getByRole('button', { name: 'Загрузить' }))
+  await u.type(screen.getByLabelText('Title'), 'Report')
+  await u.type(screen.getByLabelText('Tags'), 'azure{Enter}')
+  await u.click(await screen.findByRole('checkbox', { name: 'Work' }))
+  await u.click(screen.getByRole('button', { name: 'Upload' }))
 
   await waitFor(() => expect(onUploaded).toHaveBeenCalledWith({ id: 'd1' }))
-  // undici не разбирает multipart от jsdom-XHR, поэтому проверяем сырое тело.
+  // undici does not parse multipart from jsdom-XHR; assert the raw body instead.
   expect(raw).toContain('name="file"; filename="report.pdf"')
-  expect(raw).toMatch(/name="title"\r\n\r\nОтчёт/)
+  expect(raw).toMatch(/name="title"\r\n\r\nReport/)
   expect(raw).toMatch(/name="tags"\r\n\r\nazure/)
   expect(raw).toMatch(/name="collectionIds"\r\n\r\nc1/)
 })

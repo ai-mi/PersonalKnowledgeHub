@@ -34,7 +34,7 @@ export function UploadForm({ onUploaded }: { onUploaded: (item: Item) => void })
   const submit = async (e: SubmitEvent) => {
     e.preventDefault()
     if (!file) {
-      setError('Выберите файл')
+      setError('Select a file')
       return
     }
     setError(null)
@@ -46,7 +46,7 @@ export function UploadForm({ onUploaded }: { onUploaded: (item: Item) => void })
       })
       onUploaded(item)
     } catch (err) {
-      setError(err instanceof ApiError ? (err.errors ? Object.values(err.errors).flat().join(' ') : err.message) : 'Не удалось загрузить файл')
+      setError(err instanceof ApiError ? (err.errors ? Object.values(err.errors).flat().join(' ') : err.message) : 'Could not upload the file')
     } finally {
       setProgress(null)
     }
@@ -56,29 +56,29 @@ export function UploadForm({ onUploaded }: { onUploaded: (item: Item) => void })
     <form onSubmit={(e) => void submit(e)}>
       <div onDragOver={(e) => e.preventDefault()} onDrop={onDrop}>
         <label>
-          Файл (PDF, DOCX, TXT, MD, до 20 МБ){' '}
+          File (PDF, DOCX, TXT, MD, up to 20 MB){' '}
           <input type="file" accept={allowedExtensions.join(',')} onChange={(e) => choose(e.target.files?.[0])} />
         </label>
-        <p>{file ? `Выбрано: ${file.name}` : 'или перетащите файл сюда'}</p>
+        <p>{file ? `Selected: ${file.name}` : 'or drag and drop a file here'}</p>
       </div>
       <p>
         <label>
-          Заголовок <input value={title} onChange={(e) => setTitle(e.target.value)} />
+          Title <input value={title} onChange={(e) => setTitle(e.target.value)} />
         </label>
       </p>
       <p>
         <label>
-          Моя заметка
+          My note
           <br />
           <textarea value={userNote} onChange={(e) => setUserNote(e.target.value)} rows={3} cols={80} />
         </label>
       </p>
       <p>
-        Теги: <TagInput value={tags} onChange={setTags} />
+        Tags: <TagInput value={tags} onChange={setTags} />
       </p>
       {collections && collections.length > 0 && (
         <fieldset>
-          <legend>Коллекции</legend>
+          <legend>Collections</legend>
           {collections.map((c) => (
             <label key={c.id}>
               <input type="checkbox" checked={collectionIds.includes(c.id)} onChange={() => toggleCollection(c.id)} /> {c.name}{' '}
@@ -87,9 +87,9 @@ export function UploadForm({ onUploaded }: { onUploaded: (item: Item) => void })
         </fieldset>
       )}
       <button type="submit" disabled={upload.isPending}>
-        Загрузить
+        Upload
       </button>
-      {progress !== null && <progress aria-label="Прогресс отправки" value={progress} max={1} />}
+      {progress !== null && <progress aria-label="Upload progress" value={progress} max={1} />}
       {error && <p role="alert">{error}</p>}
     </form>
   )

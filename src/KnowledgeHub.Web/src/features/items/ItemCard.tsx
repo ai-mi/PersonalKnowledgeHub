@@ -16,9 +16,9 @@ export function ItemCard({ item }: { item: ItemSummary }) {
         </Link>
       ))}
       {item.type !== 'note' && item.type !== 'snippet' && <ItemStatusBadge item={item} />}{' '}
-      <small>{new Date(item.createdAt).toLocaleDateString('ru-RU')}</small>{' '}
+      <small>{new Date(item.createdAt).toLocaleDateString('en-US')}</small>{' '}
       <button type="button" disabled={setRead.isPending} onClick={() => setRead.mutate({ id: item.id, read: !isRead })}>
-        {isRead ? 'Вернуть в непрочитанное' : 'Прочитано'}
+        {isRead ? 'Mark as unread' : 'Mark as read'}
       </button>
     </article>
   )

@@ -1,8 +1,8 @@
 import { isInProgress, useItemMutations, type Item } from './itemsApi'
 
-const labels: Record<string, string> = { pending: 'В обработке', processing: 'В обработке', ready: 'Готово', failed: 'Ошибка' }
+const labels: Record<string, string> = { pending: 'Processing', processing: 'Processing', ready: 'Ready', failed: 'Error' }
 
-/** Статус обработки записи; для ошибки — текст и кнопка «Повторить». */
+/** Processing status; for errors — the message and a "Retry" button. */
 export function ItemStatusBadge({ item, withRetry = false }: { item: Pick<Item, 'id' | 'status'> & { error?: string | null }; withRetry?: boolean }) {
   const { reprocess } = useItemMutations()
   const label = labels[item.status] ?? item.status
@@ -15,7 +15,7 @@ export function ItemStatusBadge({ item, withRetry = false }: { item: Pick<Item, 
         <>
           {' '}
           <button type="button" disabled={reprocess.isPending} onClick={() => reprocess.mutate(item.id)}>
-            Повторить
+            Retry
           </button>
         </>
       )}

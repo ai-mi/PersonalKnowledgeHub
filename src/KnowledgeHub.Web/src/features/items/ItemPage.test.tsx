@@ -11,18 +11,18 @@ import type { Item } from './itemsApi'
 const base: Item = {
   id: 'i1',
   type: 'note',
-  title: 'Заметка',
+  title: 'Note',
   url: null,
   status: 'ready',
   readAt: null,
   createdAt: '2026-01-01T00:00:00Z',
   updatedAt: '2026-01-01T00:00:00Z',
   tags: ['azure'],
-  body: 'Текст **жирный**',
-  userNote: 'моя',
+  body: 'Text **bold**',
+  userNote: 'mine',
   codeLanguage: null,
   error: null,
-  collections: [{ id: 'c1', name: 'Работа' }],
+  collections: [{ id: 'c1', name: 'Work' }],
 }
 
 const server = setupServer(
@@ -42,7 +42,7 @@ afterAll(() => server.close())
 function renderAt(path: string) {
   const router = createMemoryRouter(
     [
-      { path: '/', element: <h1>Список</h1> },
+      { path: '/', element: <h1>List</h1> },
       { path: '/items/new', element: <NewItemPage /> },
       { path: '/items/:id', element: <ItemPage /> },
     ],
@@ -60,10 +60,10 @@ it('shows a note with markdown, tags and collections', async () => {
   server.use(http.get('*/api/items/i1', () => HttpResponse.json(base)))
   renderAt('/items/i1')
 
-  expect(await screen.findByRole('heading', { name: 'Заметка' })).toBeInTheDocument()
-  expect(screen.getByText('жирный').tagName).toBe('STRONG')
+  expect(await screen.findByRole('heading', { name: 'Note' })).toBeInTheDocument()
+  expect(screen.getByText('bold').tagName).toBe('STRONG')
   expect(screen.getByRole('link', { name: '#azure' })).toBeInTheDocument()
-  expect(screen.getByRole('link', { name: 'Работа' })).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: 'Work' })).toBeInTheDocument()
 })
 
 it('shows a link source, falls back to url as title and reports a failed status', async () => {
@@ -87,7 +87,7 @@ it('shows an untitled snippet as highlighted code', async () => {
   )
   renderAt('/items/i1')
 
-  expect(await screen.findByRole('heading', { name: 'Без названия' })).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: 'Untitled' })).toBeInTheDocument()
   expect(document.querySelector('code.hljs')).not.toBeNull()
 })
 
@@ -112,8 +112,8 @@ it('toggles the read mark', async () => {
   )
   renderAt('/items/i1')
 
-  await userEvent.click(await screen.findByRole('button', { name: 'Прочитано' }))
-  await userEvent.click(await screen.findByRole('button', { name: 'Вернуть в непрочитанное' }))
+  await userEvent.click(await screen.findByRole('button', { name: 'Mark as read' }))
+  await userEvent.click(await screen.findByRole('button', { name: 'Mark as unread' }))
 
   await waitFor(() => expect(bodies).toEqual([{ read: true }, { read: false }]))
 })
@@ -125,25 +125,25 @@ it('edits an item, and cancel leaves edit mode', async () => {
     http.get('*/api/items/i1', () => HttpResponse.json(item)),
     http.put('*/api/items/i1', async ({ request }) => {
       put = await request.json()
-      item = { ...item, title: 'Новое' }
+      item = { ...item, title: 'New' }
       return HttpResponse.json(item)
     }),
   )
   const user = userEvent.setup()
   renderAt('/items/i1')
 
-  await user.click(await screen.findByRole('button', { name: 'Редактировать' }))
-  expect(screen.getByLabelText('Тип')).toBeDisabled()
-  await user.click(screen.getByRole('button', { name: 'Отмена' }))
-  expect(screen.queryByLabelText('Заголовок')).not.toBeInTheDocument()
+  await user.click(await screen.findByRole('button', { name: 'Edit' }))
+  expect(screen.getByLabelText('Type')).toBeDisabled()
+  await user.click(screen.getByRole('button', { name: 'Cancel' }))
+  expect(screen.queryByLabelText('Title')).not.toBeInTheDocument()
 
-  await user.click(screen.getByRole('button', { name: 'Редактировать' }))
-  await user.clear(screen.getByLabelText('Заголовок'))
-  await user.type(screen.getByLabelText('Заголовок'), 'Новое')
-  await user.click(screen.getByRole('button', { name: 'Сохранить' }))
+  await user.click(screen.getByRole('button', { name: 'Edit' }))
+  await user.clear(screen.getByLabelText('Title'))
+  await user.type(screen.getByLabelText('Title'), 'New')
+  await user.click(screen.getByRole('button', { name: 'Save' }))
 
-  expect(await screen.findByRole('heading', { name: 'Новое' })).toBeInTheDocument()
-  expect(put).toMatchObject({ title: 'Новое', tags: ['azure'], collectionIds: ['c1'] })
+  expect(await screen.findByRole('heading', { name: 'New' })).toBeInTheDocument()
+  expect(put).toMatchObject({ title: 'New', tags: ['azure'], collectionIds: ['c1'] })
 })
 
 it('deletes only after confirmation and returns to the list', async () => {
@@ -158,12 +158,12 @@ it('deletes only after confirmation and returns to the list', async () => {
   vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true)
   renderAt('/items/i1')
 
-  const button = await screen.findByRole('button', { name: 'Удалить' })
+  const button = await screen.findByRole('button', { name: 'Delete' })
   await userEvent.click(button)
   expect(deleted).toBe(0)
 
   await userEvent.click(button)
-  expect(await screen.findByRole('heading', { name: 'Список' })).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: 'List' })).toBeInTheDocument()
   expect(deleted).toBe(1)
 })
 
@@ -179,9 +179,9 @@ it('creates a new note and opens it', async () => {
   const user = userEvent.setup()
   renderAt('/items/new')
 
-  await user.type(screen.getByLabelText('Заголовок'), 'Заметка')
-  await user.click(screen.getByRole('button', { name: 'Сохранить' }))
+  await user.type(screen.getByLabelText('Title'), 'Note')
+  await user.click(screen.getByRole('button', { name: 'Save' }))
 
-  expect(await screen.findByRole('heading', { name: 'Заметка' })).toBeInTheDocument()
-  expect(posted).toMatchObject({ type: 'note', title: 'Заметка', body: null, tags: [], collectionIds: [] })
+  expect(await screen.findByRole('heading', { name: 'Note' })).toBeInTheDocument()
+  expect(posted).toMatchObject({ type: 'note', title: 'Note', body: null, tags: [], collectionIds: [] })
 })

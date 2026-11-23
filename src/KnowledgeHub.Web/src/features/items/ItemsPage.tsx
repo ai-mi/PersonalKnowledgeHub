@@ -15,7 +15,7 @@ export function ItemsPage() {
   }
   const { data, isPending, error } = useItems(filters)
 
-  // Смена любого фильтра возвращает на первую страницу.
+  // Changing any filter resets paging to the first page.
   const setParam = (key: string, value: string) =>
     setParams((prev) => {
       const next = new URLSearchParams(prev)
@@ -29,26 +29,26 @@ export function ItemsPage() {
 
   return (
     <>
-      <h1>Записи</h1>
+      <h1>Items</h1>
       <p>
-        <Link to="/items/new">Новая запись</Link> · <Link to="/items/upload">Загрузить документ</Link>
+        <Link to="/items/new">New item</Link> · <Link to="/items/upload">Upload document</Link>
       </p>
       <UpcomingReminders />
       <ItemFiltersBar filters={filters} onChange={setParam} />
 
-      {isPending && <p>Загрузка…</p>}
+      {isPending && <p>Loading…</p>}
       {error && <p role="alert">{error.message}</p>}
-      {data?.items.length === 0 && <p>Записей не найдено.</p>}
+      {data?.items.length === 0 && <p>No items found.</p>}
       {data?.items.map((item) => <ItemCard key={item.id} item={item} />)}
 
       {data && pageCount > 1 && (
         <p>
           <button type="button" disabled={filters.page <= 1} onClick={() => setParam('page', String(filters.page - 1))}>
-            Назад
+            Previous
           </button>{' '}
-          Страница {filters.page} из {pageCount}{' '}
+          Page {filters.page} of {pageCount}{' '}
           <button type="button" disabled={filters.page >= pageCount} onClick={() => setParam('page', String(filters.page + 1))}>
-            Вперёд
+            Next
           </button>
         </p>
       )}

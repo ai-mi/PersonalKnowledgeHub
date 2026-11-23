@@ -10,7 +10,7 @@ import type { Item } from './itemsApi'
 
 const server = setupServer(
   http.get('*/api/tags', () => HttpResponse.json([{ id: 't1', name: 'azure', itemCount: 1 }])),
-  http.get('*/api/collections', () => HttpResponse.json([{ id: 'c1', name: 'Работа', description: null, itemCount: 0 }])),
+  http.get('*/api/collections', () => HttpResponse.json([{ id: 'c1', name: 'Work', description: null, itemCount: 0 }])),
 )
 
 beforeAll(() => server.listen({ onUnhandledFrame: 'error' }))
@@ -20,19 +20,19 @@ afterAll(() => server.close())
 function renderForm(onSubmit: Parameters<typeof ItemForm>[0]['onSubmit']) {
   render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-      <ItemForm submitLabel="Сохранить" onSubmit={onSubmit} />
+      <ItemForm submitLabel="Save" onSubmit={onSubmit} />
     </QueryClientProvider>,
   )
 }
 
 it('shows a field error from ProblemDetails next to the field', async () => {
-  const onSubmit = vi.fn().mockRejectedValue(new ApiError(400, { errors: { title: ['Заголовок слишком длинный.'] } }))
+  const onSubmit = vi.fn().mockRejectedValue(new ApiError(400, { errors: { title: ['Title is too long.'] } }))
   renderForm(onSubmit)
 
-  await userEvent.type(screen.getByLabelText('Заголовок'), 'x')
-  await userEvent.click(screen.getByRole('button', { name: 'Сохранить' }))
+  await userEvent.type(screen.getByLabelText('Title'), 'x')
+  await userEvent.click(screen.getByRole('button', { name: 'Save' }))
 
-  expect(await screen.findByText('Заголовок слишком длинный.')).toBeInTheDocument()
+  expect(await screen.findByText('Title is too long.')).toBeInTheDocument()
 })
 
 it('submits type-specific fields with tags and collections', async () => {
@@ -40,12 +40,12 @@ it('submits type-specific fields with tags and collections', async () => {
   const user = userEvent.setup()
   renderForm(onSubmit)
 
-  await user.selectOptions(screen.getByLabelText('Тип'), 'snippet')
-  await user.type(screen.getByLabelText('Язык'), 'js')
-  await user.type(screen.getByLabelText('Код'), 'let a = 1')
-  await user.type(screen.getByLabelText('Теги'), '#azure{Enter}new,')
-  await user.click(await screen.findByRole('checkbox', { name: 'Работа' }))
-  await user.click(screen.getByRole('button', { name: 'Сохранить' }))
+  await user.selectOptions(screen.getByLabelText('Type'), 'snippet')
+  await user.type(screen.getByLabelText('Language'), 'js')
+  await user.type(screen.getByLabelText('Code'), 'let a = 1')
+  await user.type(screen.getByLabelText('Tags'), '#azure{Enter}new,')
+  await user.click(await screen.findByRole('checkbox', { name: 'Work' }))
+  await user.click(screen.getByRole('button', { name: 'Save' }))
 
   expect(onSubmit).toHaveBeenCalledWith({
     type: 'snippet',
@@ -64,11 +64,11 @@ it('submits a link with its url and nulls out blank fields', async () => {
   const user = userEvent.setup()
   renderForm(onSubmit)
 
-  await user.selectOptions(screen.getByLabelText('Тип'), 'link')
-  await user.type(screen.getByLabelText('Адрес'), 'https://e.com/a')
-  await user.type(screen.getByLabelText('Заголовок'), '   ')
-  await user.type(screen.getByLabelText('Моя заметка'), '  ')
-  await user.click(screen.getByRole('button', { name: 'Сохранить' }))
+  await user.selectOptions(screen.getByLabelText('Type'), 'link')
+  await user.type(screen.getByLabelText('URL'), 'https://e.com/a')
+  await user.type(screen.getByLabelText('Title'), '   ')
+  await user.type(screen.getByLabelText('My note'), '  ')
+  await user.click(screen.getByRole('button', { name: 'Save' }))
 
   expect(onSubmit).toHaveBeenCalledWith({
     type: 'link',
@@ -83,15 +83,15 @@ it('submits a link with its url and nulls out blank fields', async () => {
 })
 
 it('shows non-field errors, with a fallback for non-Error rejections', async () => {
-  const onSubmit = vi.fn().mockRejectedValueOnce(new Error('Сеть недоступна')).mockRejectedValueOnce('boom')
+  const onSubmit = vi.fn().mockRejectedValueOnce(new Error('Network is unavailable')).mockRejectedValueOnce('boom')
   const user = userEvent.setup()
   renderForm(onSubmit)
 
-  await user.click(screen.getByRole('button', { name: 'Сохранить' }))
-  expect(await screen.findByRole('alert')).toHaveTextContent('Сеть недоступна')
+  await user.click(screen.getByRole('button', { name: 'Save' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Network is unavailable')
 
-  await user.click(screen.getByRole('button', { name: 'Сохранить' }))
-  expect(await screen.findByText('Не удалось сохранить')).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Save' }))
+  expect(await screen.findByText('Could not save')).toBeInTheDocument()
 })
 
 it('shows errors for every field and clears them on resubmit', async () => {
@@ -102,11 +102,11 @@ it('shows errors for every field and clears them on resubmit', async () => {
   const user = userEvent.setup()
   renderForm(onSubmit)
 
-  await user.click(screen.getByRole('button', { name: 'Сохранить' }))
+  await user.click(screen.getByRole('button', { name: 'Save' }))
   expect(await screen.findByText('body!')).toBeInTheDocument()
   expect(screen.getByText('note!')).toBeInTheDocument()
 
-  await user.click(screen.getByRole('button', { name: 'Сохранить' }))
+  await user.click(screen.getByRole('button', { name: 'Save' }))
   await waitFor(() => expect(screen.queryByText('body!')).not.toBeInTheDocument())
 })
 
@@ -115,13 +115,13 @@ it('shows url and codeLanguage errors', async () => {
   const user = userEvent.setup()
   renderForm(onSubmit)
 
-  await user.selectOptions(screen.getByLabelText('Тип'), 'link')
-  await user.type(screen.getByLabelText('Адрес'), 'https://e.com')
-  await user.click(screen.getByRole('button', { name: 'Сохранить' }))
+  await user.selectOptions(screen.getByLabelText('Type'), 'link')
+  await user.type(screen.getByLabelText('URL'), 'https://e.com')
+  await user.click(screen.getByRole('button', { name: 'Save' }))
   expect(await screen.findByText('url!')).toBeInTheDocument()
 
-  await user.selectOptions(screen.getByLabelText('Тип'), 'snippet')
-  await user.click(screen.getByRole('button', { name: 'Сохранить' }))
+  await user.selectOptions(screen.getByLabelText('Type'), 'snippet')
+  await user.click(screen.getByRole('button', { name: 'Save' }))
   expect(await screen.findByText('lang!')).toBeInTheDocument()
 })
 
@@ -141,19 +141,19 @@ it('edits an existing link: type and url are locked, collections can be unticked
     userNote: 'n',
     codeLanguage: null,
     error: null,
-    collections: [{ id: 'c1', name: 'Работа' }],
+    collections: [{ id: 'c1', name: 'Work' }],
   }
   const user = userEvent.setup()
   render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-      <ItemForm item={item} submitLabel="Сохранить" onSubmit={onSubmit} />
+      <ItemForm item={item} submitLabel="Save" onSubmit={onSubmit} />
     </QueryClientProvider>,
   )
 
-  expect(screen.getByLabelText('Тип')).toBeDisabled()
-  expect(screen.getByLabelText('Адрес')).toBeDisabled()
-  await user.click(await screen.findByRole('checkbox', { name: 'Работа' }))
-  await user.click(screen.getByRole('button', { name: 'Сохранить' }))
+  expect(screen.getByLabelText('Type')).toBeDisabled()
+  expect(screen.getByLabelText('URL')).toBeDisabled()
+  await user.click(await screen.findByRole('checkbox', { name: 'Work' }))
+  await user.click(screen.getByRole('button', { name: 'Save' }))
 
   expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ title: 'T', userNote: 'n', tags: ['x'], collectionIds: [] }))
 })
