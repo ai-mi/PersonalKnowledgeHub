@@ -81,9 +81,9 @@ it('a filter change updates the URL and the request, and resets the page', async
   await screen.findByRole('link', { name: 'Service Bus' })
   await screen.findByRole('option', { name: 'azure' })
 
-  await user.selectOptions(screen.getByLabelText('Тип'), 'link')
-  await user.selectOptions(screen.getByLabelText('Тег'), 'azure')
-  await user.click(screen.getByRole('checkbox', { name: 'Непрочитанное' }))
+  await user.selectOptions(screen.getByLabelText('Type'), 'link')
+  await user.selectOptions(screen.getByLabelText('Tag'), 'azure')
+  await user.click(screen.getByRole('checkbox', { name: 'Unread' }))
 
   await waitFor(() => {
     const last = requested.at(-1)!.searchParams
